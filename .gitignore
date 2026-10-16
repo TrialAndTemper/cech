@@ -1,0 +1,6 @@
+# Maintainer-only notes and inputs. Never committed.
+.private/
+SEED.md
+
+# Local agent settings
+.claude/settings.local.json
