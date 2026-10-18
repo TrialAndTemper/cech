@@ -10,3 +10,8 @@
 6. [Claude Code and Codex from one source](0006-claude-code-and-codex-from-one-source.md)
 7. [One plugin, one skill](0007-one-plugin-one-skill.md)
 8. [Categories and names](0008-categories-and-names.md)
+9. [Generated files](0009-generated-files.md)
+10. [Gates and CI](0010-gates-and-ci.md)
+11. [Change record](0011-change-record.md)
+12. [Attribution](0012-attribution.md)
+13. [Markdown source format](0013-markdown-source-format.md)
