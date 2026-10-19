@@ -1,0 +1,3 @@
+# Every text file gets LF line endings; the scripts need them to run in
+# Windows checkouts.
+* text=auto eol=lf
