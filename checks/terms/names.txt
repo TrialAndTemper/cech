@@ -1,0 +1,7 @@
+# Term check, tier 2: product and brand names CECH does not cover (ADR 4).
+# One name per line; `#` starts a comment line.
+# Matching ignores case. An end that is a letter, digit or `_` must sit at
+# a word boundary, so "foo" does not find "food". Spaces, `-` and `_`
+# between words are optional and interchangeable, so "foo bar" also finds
+# "Foo-Bar" and "FooBar".
+# A skill about a public product may name it: drop the name from this list.

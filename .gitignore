@@ -4,3 +4,12 @@ SEED.md
 
 # Local agent settings
 .claude/settings.local.json
+
+# Local tool and environment overrides
+mise.local.toml
+.mise.local.toml
+mise.*.local.toml
+.mise.*.local.toml
+.env
+.env.*
+!.env.example

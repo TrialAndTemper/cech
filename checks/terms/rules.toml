@@ -1,0 +1,84 @@
+# Term check, tier 1: generic rules (ADR 4).
+# These name no private organisation. They flag shapes that suggest
+# content copied from a private environment. gitleaks' own secret rules
+# run alongside them.
+#
+# A false positive gets an allowlist entry here, or the inline marker
+# `cech-terms: allow <reason>` on the same line.
+
+title = "cech terms: generic"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Inline marker with a reason"
+regexTarget = "line"
+regexes = ['''cech-terms: allow \S''']
+
+[[allowlists]]
+description = "The rule files themselves"
+paths = ['''^checks/terms/[^/]+\.toml$''']
+
+[[rules]]
+id = "email"
+description = "Email address outside the allowlist"
+regex = '''(?i)\b[a-z0-9._%+-]+@(?:[a-z0-9-]+\.)+[a-z]{2,}\b'''
+keywords = ["@"]
+[[rules.allowlists]]
+description = "Example domains, forge no-reply addresses, public forge remotes"
+regexTarget = "match"
+regexes = [
+  '''(?i)@(?:[a-z0-9-]+\.)*example(?:\.(?:com|org|net))?$''',
+  '''(?i)@(?:[a-z0-9-]+\.)+(?:test|invalid|localhost)$''',
+  '''(?i)@users\.noreply\.github\.com$''',
+  '''(?i)^noreply@github\.com$''',
+  '''(?i)^git@(?:github\.com|gitlab\.com|bitbucket\.org|codeberg\.org)$''',
+]
+[[rules.allowlists]]
+description = "Authors, sign-offs, co-authors and credited people"
+regexTarget = "match"
+regexes = [
+  '''(?i)^michal\.b\.bozek@gmail\.com$''',
+  '''(?i)^noreply@anthropic\.com$''',
+]
+
+[[rules]]
+id = "aws-arn"
+description = "AWS ARN with a real-looking account number"
+regex = '''\barn:aws[a-z-]*:[a-z0-9-]+:[a-z0-9-]*:\d{12}:'''
+keywords = ["arn:aws"]
+[[rules.allowlists]]
+description = "Account numbers used in AWS documentation"
+regexTarget = "match"
+regexes = [''':(?:123456789012|111122223333|444455556666|000000000000):$''']
+
+[[rules]]
+id = "azure-subscription"
+description = "Azure subscription id in a resource path"
+regex = '''(?i)/subscriptions/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'''
+keywords = ["/subscriptions/"]
+[[rules.allowlists]]
+regexTarget = "match"
+regexes = ['''/00000000-0000-0000-0000-000000000000$''']
+
+[[rules]]
+id = "gcp-project"
+description = "Google Cloud project id in a console or API URL"
+regex = '''(?i)(?:console\.cloud\.google\.com/\S*[?&]project=|googleapis\.com/\S*/projects/)[a-z][a-z0-9-]{4,28}[a-z0-9]\b'''
+keywords = ["cloud.google.com", "googleapis.com"]
+[[rules.allowlists]]
+regexTarget = "match"
+regexes = ['''(?i)[=/](?:my|example|acme)(?:-[a-z0-9]+)*$''']
+
+[[rules]]
+id = "signed-url"
+description = "Signed or shared-access URL parameter"
+regex = '''(?i)[?&](?:x-amz-signature|x-goog-signature|signature|sig)=[a-z0-9%/+=_-]{16,}'''
+keywords = ["signature=", "sig="]
+
+[[rules]]
+id = "sso-user"
+description = "Single-sign-on user or role format"
+regex = '''(?i)(?:#EXT#@|\bAWSReservedSSO_[A-Za-z0-9_+=,.@-]+)'''
+keywords = ["#ext#@", "awsreservedsso_"]

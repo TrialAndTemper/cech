@@ -1,0 +1,11 @@
+# Term check, tier 1: rules for commit and tag messages and ref names only
+# (ADR 4). CECH refers to its own issues as #N.
+
+[[rules]]
+id = "tracker-key"
+description = "Issue key from another tracker; refer to CECH issues as #N"
+regex = '''\b[A-Z][A-Z0-9]{1,9}-\d+\b'''
+[[rules.allowlists]]
+description = "Standards and encodings, not issue keys"
+regexTarget = "match"
+regexes = ['''^(?:UTF|UCS|ISO|IEC|SHA|MD|RFC|CVE|GHSA|IEEE|ECMA|PEP|TLS|SSL|AES|RSA|ES|CP|SPDX|IPV)-\d+$''']

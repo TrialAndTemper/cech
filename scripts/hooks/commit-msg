@@ -1,0 +1,15 @@
+#!/bin/sh
+# Optional hook (ADR 10): runs the commit-msg gates through mise.
+# Enable with: git config core.hooksPath scripts/hooks
+set -eu
+command -v mise > /dev/null 2>&1 || {
+  echo "commit-msg: mise not found; install it, then run mise trust and mise install" >&2
+  exit 2
+}
+# mise runs the task from the repository root, so pass an absolute path.
+dir=$(dirname -- "$1")
+dir=$(CDPATH='' cd -- "${dir}" && pwd)
+base=$(basename -- "$1")
+top=$(git rev-parse --show-toplevel)
+cd -- "${top}"
+exec mise run commit-msg "${dir}/${base}"

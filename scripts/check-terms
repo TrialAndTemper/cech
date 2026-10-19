@@ -1,0 +1,369 @@
+#!/bin/sh
+# Term check (ADR 4): the terms gate of ADR 10, run as `mise run terms`.
+# POSIX sh (ADR 10): it must run under dash, macOS sh and Git Bash.
+#
+# Usage: mise run terms -- [--staged | --message FILE | --range RANGE | --all]
+#
+#   (none)         staged tree, ref names, tag messages, and the commits
+#                  missing from origin/main (every commit reachable from
+#                  HEAD if origin/main is absent)
+#   --staged       staged tree only (pre-commit hook)
+#   --message FILE one commit message (commit-msg hook)
+#   --range RANGE  staged tree, ref names, tag messages, and the diffs,
+#                  paths and messages of the commits in a revision range (CI)
+#   --all          the same for every commit reachable from any ref
+#                  (before going public)
+#   -h, --help     show usage
+#
+# The options pick one mode each, so they are parsed by hand; a parser
+# would be one more dependency for five options.
+#
+# Requires: git, gitleaks (pinned in mise.toml; `mise run` puts it on
+# PATH), and the POSIX awk, sed, tr and mktemp.
+#
+# Tiers 1 and 2 come from checks/terms/. Tier 3 reads the file named by
+# CECH_PRIVATE_TERMS (default .private/denylist.txt): one case-insensitive
+# regex per line, `#` for comments. Without it tier 3 is skipped, unless
+# CECH_REQUIRE_PRIVATE_TERMS=1. A tier-3 hit prints file, line and the
+# term's line number in the list, never the term. If a file path holds a
+# private term, later tier-3 hits print only their rule and commit. While
+# tier 3 has hits, public hits print only their rule, since their text or
+# path could hold a private term.
+#
+# Exit status: 0 clean, 1 hits found, 2 the check could not run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+readonly ROOT
+readonly TERMS_DIR="${ROOT}/checks/terms"
+
+MODE=default
+ARG=''
+PRIVATE=''
+HEAD_REF=''
+REVS=''
+TMP=''
+HITS=0
+BROKEN=0
+
+usage() {
+  cat << 'EOF'
+Usage: mise run terms -- [--staged | --message FILE | --range RANGE | --all]
+
+  (none)         staged tree, ref names, tag messages, and the commits
+                 missing from origin/main
+  --staged       staged tree only
+  --message FILE one commit message
+  --range RANGE  as (none), for the commits in a revision range
+  --all          as (none), for every commit reachable from any ref
+
+Tier 3 reads the file named by CECH_PRIVATE_TERMS
+(default .private/denylist.txt).
+Exit status: 0 clean, 1 hits found, 2 the check could not run.
+EOF
+}
+
+die() {
+  printf 'terms: %s\n' "$*" >&2
+  exit 2
+}
+
+cleanup() {
+  if [ -n "${TMP}" ]; then rm -rf -- "${TMP}"; fi
+}
+
+on_signal() {
+  cleanup
+  trap - "$1"
+  kill -s "$1" "$$"
+}
+
+# clean <line>: drop carriage returns and surrounding white space.
+clean() {
+  printf '%s\n' "$1" | tr -d '\r' |
+    sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//'
+}
+
+parse_args() {
+  local used
+  used=1
+  case "${1:-}" in
+    '') used=0 ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    --staged) MODE=staged ;;
+    --all) MODE=all ;;
+    --message | --range)
+      [ "$#" -ge 2 ] || die "$1 needs a value"
+      MODE=${1#--}
+      ARG=$2
+      used=2
+      ;;
+    *)
+      usage >&2
+      die "unknown option: $1"
+      ;;
+  esac
+  shift "${used}"
+  if [ "$#" -ne 0 ]; then
+    usage >&2
+    die "unexpected argument: $1"
+  fi
+  if [ "${MODE}" = message ] && [ ! -r "${ARG}" ]; then
+    die "cannot read message file: ${ARG}"
+  fi
+}
+
+check_gitleaks() {
+  command -v gitleaks > /dev/null 2>&1 ||
+    die "gitleaks not found; run the check as \`mise run terms\`, which puts the pinned gitleaks on PATH"
+}
+
+# Read the environment once: the private list, and the branch name that
+# GitHub Actions passes for a pull request.
+read_env() {
+  HEAD_REF=${GITHUB_HEAD_REF:-}
+  PRIVATE=${CECH_PRIVATE_TERMS:-${ROOT}/.private/denylist.txt}
+  if [ ! -f "${PRIVATE}" ]; then
+    if [ "${CECH_REQUIRE_PRIVATE_TERMS:-}" = 1 ]; then
+      die "private term list not found, but CECH_REQUIRE_PRIVATE_TERMS=1"
+    fi
+    PRIVATE=''
+  fi
+}
+
+# gitleaks drops any finding listed in a .gitleaksignore file. Exceptions
+# belong in checks/terms/ or the private list, so refuse to run with one.
+refuse_ignore_file() {
+  local tracked
+  tracked=$(git -C "${ROOT}" ls-files -- .gitleaksignore '*/.gitleaksignore')
+  if [ -e "${ROOT}/.gitleaksignore" ] || [ -n "${tracked}" ]; then
+    die "remove .gitleaksignore; put exceptions in checks/terms/ or the private list"
+  fi
+}
+
+# Tier 2: one rule per listed name. Escape regex characters, let spaces,
+# `-` and `_` between words match each other or nothing, and require a
+# word boundary at each end that is a word character.
+write_public_config() {
+  local n line name words re start end
+  cat "${TERMS_DIR}/rules.toml"
+  n=0
+  while IFS= read -r line || [ -n "${line}" ]; do
+    n=$((n + 1))
+    name=$(clean "${line}")
+    case "${name}" in
+      '' | '#'*) continue ;;
+      *) ;;
+    esac
+    words=$(printf '%s\n' "${name}" | tr '_-' '  ')
+    words=$(clean "${words}")
+    re=$(printf '%s\n' "${words}" |
+      sed -e 's/[][\\.*^$+?(){}|/]/\\&/g' \
+        -e 's/[[:space:]][[:space:]]*/[\\s_-]*/g')
+    start='' end=''
+    case "${name}" in
+      [A-Za-z0-9_]*) start='\b' ;;
+      *) ;;
+    esac
+    case "${name}" in
+      *[A-Za-z0-9_]) end='\b' ;;
+      *) ;;
+    esac
+    printf '\n[[rules]]\nid = "name-%s"\n' "${n}"
+    printf 'description = "Name on line %s of checks/terms/names.txt"\n' "${n}"
+    printf "regex = '''(?i)%s%s%s'''\n" "${start}" "${re}" "${end}"
+    printf "[[rules.allowlists]]\npaths = ['''^checks/terms/names\\\\.txt\$''']\n"
+  done < "${TERMS_DIR}/names.txt"
+}
+
+# Tier 3: one rule per line of the private list, named by its line number.
+write_private_config() {
+  local n line term
+  n=0
+  while IFS= read -r line || [ -n "${line}" ]; do
+    n=$((n + 1))
+    term=$(clean "${line}")
+    case "${term}" in
+      '' | '#'*) continue ;;
+      *"'''"*) die "private term list line ${n} contains ''' and cannot be used" ;;
+      *) ;;
+    esac
+    printf "[[rules]]\nid = \"private-term-%s\"\nregex = '''(?i)%s'''\n\n" \
+      "${n}" "${term}"
+  done < "${PRIVATE}"
+}
+
+write_templates() {
+  local where
+  where='{{ .File }}:{{ .StartLine }}: {{ .RuleID }}{{ if .Commit }} in commit {{ trunc 12 .Commit }}{{ end }}'
+  # shellcheck disable=SC3050 # %q is for the Go template, not this printf
+  printf '{{ range . }}%s: {{ printf "%%q" .Match }}\n{{ end }}' "${where}" \
+    > "${TMP}/public.tmpl"
+  printf '{{ range . }}%s\n{{ end }}' "${where}" > "${TMP}/private.tmpl"
+  printf '{{ range . }}{{ .RuleID }} (location hidden)\n{{ end }}' \
+    > "${TMP}/hidden.tmpl"
+  printf '{{ range . }}{{ .RuleID }}{{ if .Commit }} in commit {{ trunc 12 .Commit }}{{ end }} (location hidden: a path holds a private term)\n{{ end }}' \
+    > "${TMP}/private-hidden.tmpl"
+}
+
+# scan <template> <config> <tree | paths | meta | git>: run one gitleaks
+# scan over that directory under TMP, or over history, and print its
+# hits. Private runs hide gitleaks' own messages, which could quote a
+# term.
+scan() {
+  local template config target out status
+  template=$1 config=$2 target=$3
+  set -- -c "${config}" --no-banner --exit-code 3 --ignore-gitleaks-allow \
+    -i "${TMP}/empty" -f template --report-template "${TMP}/${template}.tmpl" -r -
+  if [ "${target}" = git ]; then
+    set -- git "$@" --log-opts="${REVS}" .
+    target=${ROOT}
+  else
+    set -- dir "$@" .
+    target=${TMP}/${target}
+  fi
+  status=0
+  case "${template}" in
+    public | hidden)
+      out=$(cd -- "${target}" && gitleaks "$@" -l error) || status=$?
+      ;;
+    *)
+      out=$(cd -- "${target}" && gitleaks "$@" -l fatal 2> /dev/null) || status=$?
+      ;;
+  esac
+  if [ -n "${out}" ]; then printf '%s\n' "${out}"; fi
+  case "${status}" in
+    0) ;;
+    3) HITS=1 ;;
+    *)
+      printf 'terms: gitleaks failed (%s, exit %s)\n' "${template}" "${status}" >&2
+      BROKEN=1
+      ;;
+  esac
+}
+
+# Write what the mode scans under TMP: the staged tree and its paths;
+# for --message, the cleaned message; for history modes, the commit
+# messages, paths, ref names and tag messages. Path lists use -z, so git
+# does not quote unusual names.
+collect() {
+  local cc c
+  git -C "${ROOT}" checkout-index -a --ignore-skip-worktree-bits --prefix="${TMP}/tree/"
+  git -C "${ROOT}" ls-files -z > "${TMP}/paths.z"
+  tr '\0' '\n' < "${TMP}/paths.z" > "${TMP}/paths/paths"
+
+  case "${MODE}" in
+    message)
+      # Cut at the scissors line that `git commit -v` adds, then drop
+      # comments. With core.commentChar=auto git picks the character per
+      # message; this assumes `#`, so other comment lines are scanned.
+      cc=$(git -C "${ROOT}" config core.commentChar) || cc=''
+      case "${cc}" in
+        '' | auto) cc='#' ;;
+        *) ;;
+      esac
+      awk -v cc="${cc}" '
+        $0 == cc " ------------------------ >8 ------------------------" { exit }
+        index($0, cc) != 1
+      ' "${ARG}" > "${TMP}/meta/commit-message"
+      return
+      ;;
+    staged) return ;;
+    all) REVS=--all ;;
+    range) REVS=${ARG} ;;
+    default)
+      if git -C "${ROOT}" rev-parse -q --verify origin/main > /dev/null; then
+        REVS=origin/main..HEAD
+      elif git -C "${ROOT}" rev-parse -q --verify HEAD > /dev/null; then
+        REVS=HEAD
+      fi
+      ;;
+    *) die "unknown mode: ${MODE}" ;;
+  esac
+
+  if [ -n "${REVS}" ]; then
+    git -C "${ROOT}" rev-list "${REVS}" > "${TMP}/revs" 2> /dev/null ||
+      die "bad revision range: ${REVS}"
+    while IFS= read -r c; do
+      git -C "${ROOT}" log -1 --format=%B "${c}" > "${TMP}/meta/commit-${c}"
+      git -C "${ROOT}" log -1 -m -z --format= --name-only "${c}" > "${TMP}/paths.z"
+      tr '\0' '\n' < "${TMP}/paths.z" >> "${TMP}/paths/paths"
+    done < "${TMP}/revs"
+    if [ ! -s "${TMP}/revs" ]; then REVS=''; fi
+  fi
+  git -C "${ROOT}" for-each-ref --format='%(refname:short)' \
+    refs/heads refs/tags refs/remotes > "${TMP}/meta/ref-names"
+  if [ -n "${HEAD_REF}" ]; then
+    printf '%s\n' "${HEAD_REF}" >> "${TMP}/meta/ref-names"
+  fi
+  git -C "${ROOT}" for-each-ref --format='%(contents)' refs/tags \
+    > "${TMP}/meta/tag-messages"
+}
+
+main() {
+  local targets template t private_hits
+
+  parse_args "$@"
+  check_gitleaks
+  read_env
+  refuse_ignore_file
+
+  trap cleanup EXIT
+  trap 'on_signal INT' INT
+  trap 'on_signal TERM' TERM
+  TMP=$(mktemp -d)
+  mkdir "${TMP}/tree" "${TMP}/meta" "${TMP}/paths" "${TMP}/empty"
+
+  write_public_config > "${TMP}/public.toml"
+  cat "${TMP}/public.toml" "${TERMS_DIR}/messages.toml" > "${TMP}/meta.toml"
+  if [ -n "${PRIVATE}" ]; then write_private_config > "${TMP}/private.toml"; fi
+  write_templates
+  collect
+
+  # What to scan, as <public config>:<target> pairs. Diffs are scanned so
+  # that text added and later removed is found too.
+  targets=''
+  if [ "${MODE}" != message ]; then targets="public:paths public:tree"; fi
+  if [ "${MODE}" != staged ]; then targets="${targets} meta:meta"; fi
+  if [ -n "${REVS}" ]; then targets="${targets} public:git"; fi
+
+  # Private tier first: if it finds anything, public hits hide their
+  # location. Paths come first, so that if a path holds a term, no later
+  # hit prints it.
+  if [ -n "${PRIVATE}" ]; then
+    template=private
+    for t in ${targets}; do
+      scan "${template}" "${TMP}/private.toml" "${t#*:}"
+      if [ "${t#*:}" = paths ] && [ "${HITS}" != 0 ]; then
+        template=private-hidden
+      fi
+    done
+    # Without a clean private run, public hits could print a private term.
+    [ "${BROKEN}" = 0 ] || die "private tier could not run; check the private list"
+  fi
+  private_hits=${HITS}
+  template=public
+  if [ "${private_hits}" != 0 ]; then template=hidden; fi
+  for t in ${targets}; do
+    scan "${template}" "${TMP}/${t%%:*}.toml" "${t#*:}"
+  done
+
+  if [ -z "${PRIVATE}" ]; then
+    echo "terms: private tier skipped (no list)" >&2
+  fi
+  if [ "${private_hits}" != 0 ]; then
+    echo "terms: fix the private-term hits first; public hits show no location until then" >&2
+  fi
+  [ "${BROKEN}" = 0 ] || exit 2
+  if [ "${HITS}" != 0 ]; then
+    echo "terms: hits found" >&2
+    exit 1
+  fi
+  echo "terms: ok"
+}
+
+main "$@"

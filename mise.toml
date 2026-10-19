@@ -1,0 +1,56 @@
+# mise is CECH's task runner (ADR 10): `mise run check` runs every gate,
+# and `mise run <gate>` runs one. Run `mise trust` and `mise install`
+# once per clone.
+min_version = "2026.10.3"
+
+[settings]
+lockfile = true
+# When mise resolves a version, as in `mise use` or `mise upgrade`, skip
+# releases younger than a week. A version written here by hand is not
+# checked, so review its release date.
+minimum_release_age = "168h"
+
+# Pinned exactly; mise.lock records each download and its checksum.
+[tools]
+# bats has no Windows build. Its download is GitHub's archive of the
+# release tag, for which `mise lock` records no checksum, so the
+# checksum in mise.lock was added by hand: on a bump, put the new
+# archive's sha256 there for each platform.
+bats = { version = "1.14.0", os = ["linux", "macos"] }
+gitleaks = "8.30.1"
+
+# Every task runs through sh, with errexit as in mise's default on
+# Unix, since on Windows mise would run it with cmd, which cannot start
+# a POSIX script. sh must be on PATH there, as it is in Git Bash; the
+# tasks have not yet run on Windows.
+[task_config]
+shell = "sh -o errexit -c"
+
+# Entry point (ADR 10): every gate.
+
+[tasks.check]
+description = "Every gate"
+depends = ["terms", "test"]
+run = "echo check: every gate passed"
+
+# Gates (ADR 10): one task per gate, with its subtasks.
+
+[tasks.terms]
+description = "Term check (ADR 4); mise run terms -- --help lists its modes"
+run = "scripts/check-terms"
+
+[tasks.test]
+description = "bats suites under test/; options after -- go to bats"
+run = "bats test"
+run_windows = "echo test: skipped, bats has no Windows build"
+
+# Hooks (ADR 10): scripts/hooks/ runs these tasks.
+
+[tasks.commit-msg]
+description = "commit-msg hook: the term check on a commit message"
+usage = 'arg "<file>" help="The commit message file"'
+run = 'scripts/check-terms --message "${usage_file?}"'
+
+[tasks.pre-commit]
+description = "pre-commit hook: the term check on the staged tree"
+run = "scripts/check-terms --staged"
