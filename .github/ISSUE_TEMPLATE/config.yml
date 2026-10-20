@@ -1,6 +1,10 @@
-# Issue forms only; security reports go through SECURITY.md.
+# Issue forms only; questions go to Discussions, and security reports
+# through SECURITY.md.
 blank_issues_enabled: false
 contact_links:
+  - name: Ask a question
+    url: https://github.com/TrialAndTemper/cech/discussions
+    about: Ask and discuss in Discussions; issues are for bugs and proposals.
   - name: Report a security vulnerability
     url: https://github.com/TrialAndTemper/cech/security/policy
     about: Report it privately, as the security policy explains, not in an issue.

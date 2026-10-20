@@ -15,7 +15,8 @@ It has no skills and no `cech` tool yet, so there is nothing to install.
 ## Learn more
 
 - [Architecture decision records](docs/adr/README.md): the contracts CECH follows, and why.
-- [Contributing](CONTRIBUTING.md): set-up, gates and commit rules.
+- [Contributing](CONTRIBUTING.md): set-up, gates, commit rules and issue labels.
+- [Discussions](https://github.com/TrialAndTemper/cech/discussions): questions and ideas.
 - [Code of conduct](CODE_OF_CONDUCT.md)
 - [Security policy](SECURITY.md)
 
