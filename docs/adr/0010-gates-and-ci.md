@@ -73,6 +73,11 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    CI installs an exact mise version, then the tools with `locked` set; `mise.toml` sets mise's `min_version`.
    Pins are added and bumped by letting mise resolve them under a week's `minimum_release_age`; review checks the release date of a version given by hand.
    The table holds only tools that build or check CECH; `data/tools.toml` ([ADR 5](0005-native-tool-features-first.md)) records the agent tools CECH relies on.
+
+   > **Amendment (2026-10-20).**
+   > A tool that mise builds from source with its `go` backend, such as govulncheck, has no download to record: `mise.lock` holds only its version, and the Go checksum database checks the source that `go install` fetches.
+   > Evidence: `mise.toml` and `mise.lock`, with mise 2026.10.3 and Go 1.27.2.
+
 7. **Workflow safety.**
    Third-party actions are pinned by full commit SHA.
    Workflows default to `permissions: contents: read`, widened per job only where needed.

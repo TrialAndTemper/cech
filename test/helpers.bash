@@ -68,6 +68,21 @@ commit_and_drop() {
   g commit -q -m "docs: drop note"
 }
 
+# fake_tool <tool> <script body>: put a fake tool first on PATH for the
+# rest of the case. In the body, REAL names the real tool.
+fake_tool() {
+  local real
+  real=$(command -v "$1")
+  if [[ ${real} == *"'"* ]]; then
+    printf 'cannot wrap a path that holds a quote: %s\n' "${real}"
+    return 1
+  fi
+  mkdir -p -- "${BATS_TEST_TMPDIR}/bin"
+  printf "#!/bin/sh\nREAL='%s'\n%s\n" "${real}" "$2" > "${BATS_TEST_TMPDIR}/bin/$1"
+  chmod 755 "${BATS_TEST_TMPDIR}/bin/$1"
+  PATH="${BATS_TEST_TMPDIR}/bin:${PATH}"
+}
+
 # assert_status <code>: fail the case unless the last `run` exited so.
 assert_status() {
   if [[ ${status} -ne $1 ]]; then
