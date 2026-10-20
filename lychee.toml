@@ -1,0 +1,16 @@
+# Link check settings for `mise run docs:check` (ADR 10). lychee reads
+# this file from the repository root and skips git-ignored files.
+
+# Keep results for a day in .lycheecache, which git ignores, so a second
+# run does not ask the same hosts again.
+cache = true
+max_cache_age = "1d"
+
+# A link to a heading must name one that exists.
+include_fragments = "anchor-only"
+
+# Links to this machine cannot work for anyone else.
+exclude_loopback = true
+
+max_retries = 2
+timeout = 20

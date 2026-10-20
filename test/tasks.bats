@@ -89,28 +89,34 @@ assert_task() {
 }
 
 @test "check depends on every gate" {
-  assert_task check depends terms lint format:check test
+  assert_task check depends terms lint format:check docs:check test
 }
 
 @test "the task list is exactly the gates and hooks" {
   run mise tasks ls --name-only --hidden
   assert_status 0
-  assert_output_is "$(printf '%s\n' check commit-msg format:check format:check:shell format:fix format:fix:shell lint lint:shell pre-commit terms test)"
+  assert_output_is "$(printf '%s\n' check commit-msg docs:check format:check format:check:markdown format:check:shell format:fix format:fix:markdown format:fix:shell lint lint:markdown lint:shell pre-commit terms test)"
 }
 
 @test "each task runs its gate" {
   assert_task terms run "scripts/check-terms"
   assert_task lint:shell run "scripts/check-shell lint"
+  assert_task lint:markdown run "rumdl check ."
   assert_task lint depends "lint:*"
   assert_task format:check:shell run "scripts/check-shell format"
+  assert_task format:check:markdown run "rumdl fmt --check ."
   assert_task format:check depends "format:check:*"
   assert_task format:fix:shell run "scripts/check-shell fix"
+  assert_task format:fix:markdown run "rumdl fmt ."
   assert_task format:fix depends "format:fix:*"
+  assert_task docs:check run "lychee --no-progress ."
   assert_task test run "bats test"
   assert_task check run "echo check: every gate passed"
   assert_task pre-commit run "scripts/check-terms --staged" \
     "scripts/staged-tree scripts/check-shell lint" \
-    "scripts/staged-tree scripts/check-shell format"
+    "scripts/staged-tree scripts/check-shell format" \
+    "scripts/staged-tree rumdl check ." \
+    "scripts/staged-tree rumdl fmt --check ."
   # shellcheck disable=SC2016 # mise expands usage_file, not this shell
   assert_task commit-msg run 'scripts/check-terms --message \"${usage_file?}\"'
 }
@@ -178,6 +184,32 @@ assert_task() {
   run mise run format:check
   assert_status 1
   assert_output_has "scripts/flat"
+}
+
+@test "lint task lints the Markdown" {
+  # A first line that is not a heading, which rumdl cannot fix.
+  printf 'Text.\n' > note.md
+  g add note.md
+  run mise run lint
+  assert_status 1
+  assert_output_has "MD041"
+}
+
+@test "format:check task checks the Markdown format" {
+  printf '# Note\n\nOne sentence. Another sentence.\n' > note.md
+  g add note.md
+  run mise run format:check
+  assert_status 1
+  assert_output_has "note.md"
+}
+
+@test "docs:check task finds a dead local link" {
+  printf '# Note\n\nSee [the guide](missing-guide.md).\n' > note.md
+  g add note.md
+  # Offline, so the case checks local links only.
+  run mise run docs:check -- --offline
+  assert_status 2
+  assert_output_has "missing-guide.md"
 }
 
 @test "format:fix task rewrites the shell code" {
@@ -250,6 +282,24 @@ assert_task() {
   commit_with_hooks -m "chore: add script"
   assert_status 1
   assert_output_has "scripts/flat"
+}
+
+@test "pre-commit hook lints the staged Markdown" {
+  printf 'Text.\n' > note.md
+  g add note.md
+  printf '# Note\n\nText.\n' > note.md
+  commit_with_hooks -m "docs: add note"
+  assert_status 1
+  assert_output_has "MD041"
+}
+
+@test "pre-commit hook checks the staged Markdown format" {
+  printf '# Note\n\nOne sentence. Another sentence.\n' > note.md
+  g add note.md
+  printf '# Note\n\nOne sentence.\nAnother sentence.\n' > note.md
+  commit_with_hooks -m "docs: add note"
+  assert_status 1
+  assert_output_has "note.md"
 }
 
 @test "hooks let a clean commit through" {

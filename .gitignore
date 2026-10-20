@@ -13,3 +13,8 @@ mise.*.local.toml
 .env
 .env.*
 !.env.example
+
+# lychee keeps link results here (lychee.toml).
+.lycheecache
+# rumdl's cache. rumdl also ignores it with its own .gitignore inside.
+.rumdl_cache/
