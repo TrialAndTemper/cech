@@ -19,6 +19,12 @@ actionlint = "1.7.12"
 # archive's sha256 there for each platform.
 bats = { version = "1.14.0", os = ["linux", "macos"] }
 gitleaks = "8.30.1"
+go = "1.27.2"
+# mise builds govulncheck from source with the pinned go, which checks
+# the module against the Go checksum database; mise.lock records the
+# version only, with no download or checksum.
+"go:golang.org/x/vuln/cmd/govulncheck" = "1.9.0"
+golangci-lint = "2.14.0"
 lychee = "0.24.2"
 rumdl = "0.2.79"
 shellcheck = "0.11.0"
@@ -40,8 +46,8 @@ depends = ["commits", "terms", "lint", "format:check", "docs:check", "test"]
 run = "echo check: every gate passed"
 
 # Gates (ADR 10): one task per gate, with its subtasks.
-# lint and format:check run every task that matches their pattern,
-# hidden ones too, so a task named like lint:x joins lint, and
+# lint, format:check and test run every task that matches their
+# pattern, hidden ones too, so a task named like lint:x joins lint, and
 # through it check; the pre-commit task lists its checks by hand.
 
 [tasks.commits]
@@ -55,6 +61,10 @@ run = "lychee --no-progress ."
 [tasks."format:check"]
 description = "Every format check"
 depends = ["format:check:*"]
+
+[tasks."format:check:go"]
+description = "Fail with the diff the Go formatters would apply"
+run = "scripts/check-go format"
 
 [tasks."format:check:markdown"]
 description = "Fail if rumdl would reformat a Markdown file"
@@ -76,6 +86,10 @@ depends = ["lint:*"]
 description = "Lint the GitHub Actions workflows"
 run = ["actionlint .github/workflows/*.yml", "zizmor --offline --pedantic --strict-collection ."]
 
+[tasks."lint:go"]
+description = "go vet, golangci-lint and go mod tidy -diff on the CLI"
+run = "scripts/check-go lint"
+
 [tasks."lint:markdown"]
 description = "Lint the Markdown files"
 run = "rumdl check ."
@@ -89,9 +103,25 @@ description = "Term check (ADR 4); mise run terms -- --help lists its modes"
 run = "scripts/check-terms"
 
 [tasks.test]
+description = "Every test suite; test:bats takes bats options after --"
+depends = ["test:*"]
+
+[tasks."test:bats"]
 description = "bats suites under test/; options after -- go to bats"
 run = "bats test"
-run_windows = "echo test: skipped, bats has no Windows build"
+run_windows = "echo test:bats: skipped, bats has no Windows build"
+
+[tasks."test:go"]
+description = "Go tests of the CLI, with -race where the platform and cgo allow"
+run = "scripts/check-go test"
+
+# govulncheck asks the Go vulnerability database, so it needs the
+# network, and a new report can fail a branch that has not changed. So
+# check leaves it out, and .github/workflows/vuln.yml runs it instead,
+# without blocking a merge (ADR 14 item 10).
+[tasks.vuln]
+description = "Known vulnerabilities in the CLI and the Go it is built with"
+run = "scripts/check-go vuln"
 
 # Fixers: they rewrite files, so check does not run them. format:fix
 # runs every task that matches format:fix:*.
@@ -99,6 +129,10 @@ run_windows = "echo test: skipped, bats has no Windows build"
 [tasks."format:fix"]
 description = "Every formatter, rewriting the files"
 depends = ["format:fix:*"]
+
+[tasks."format:fix:go"]
+description = "Let the Go formatters rewrite the CLI's code"
+run = "scripts/check-go fix"
 
 [tasks."format:fix:markdown"]
 description = "Let rumdl rewrite the Markdown files"
@@ -120,13 +154,16 @@ run = [
 
 # The pre-commit task checks what is staged: scripts/staged-tree
 # runs each lint and format check in a checkout of the index. It
-# skips the link check, which needs the network.
+# skips the link and vulnerability checks, which need the network, and
+# the tests.
 [tasks.pre-commit]
 description = "pre-commit hook: the term check, lint and format check on the staged tree"
 run = [
   "scripts/check-terms --staged",
   "scripts/staged-tree scripts/check-shell lint",
   "scripts/staged-tree scripts/check-shell format",
+  "scripts/staged-tree scripts/check-go lint",
+  "scripts/staged-tree scripts/check-go format",
   "scripts/staged-tree sh -c 'actionlint .github/workflows/*.yml'",
   "scripts/staged-tree zizmor --offline --pedantic --strict-collection .",
   "scripts/staged-tree rumdl check .",

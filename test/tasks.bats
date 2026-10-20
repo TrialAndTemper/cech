@@ -44,6 +44,8 @@ setup() {
   use_template
   printf '%s\n' "${SECRET}" > "${BATS_TEST_TMPDIR}/private.txt"
   export CECH_PRIVATE_TERMS="${BATS_TEST_TMPDIR}/private.txt"
+  # Keep go off the network: a case that needs a module fails at once.
+  export GOPROXY=off
   cd -- "${REPO}" || return
 }
 
@@ -114,7 +116,7 @@ assert_task() {
 @test "the task list is exactly the gates and hooks" {
   run mise tasks ls --name-only --hidden
   assert_status 0
-  assert_output_is "$(printf '%s\n' check commit-msg commits docs:check format:check format:check:markdown format:check:shell format:fix format:fix:markdown format:fix:shell lint lint:actions lint:markdown lint:shell pre-commit terms test)"
+  assert_output_is "$(printf '%s\n' check commit-msg commits docs:check format:check format:check:go format:check:markdown format:check:shell format:fix format:fix:go format:fix:markdown format:fix:shell lint lint:actions lint:go lint:markdown lint:shell pre-commit terms test test:bats test:go vuln)"
 }
 
 @test "each task runs its gate" {
@@ -124,19 +126,27 @@ assert_task() {
     "zizmor --offline --pedantic --strict-collection ."
   assert_task lint:shell run "scripts/check-shell lint"
   assert_task lint:markdown run "rumdl check ."
+  assert_task lint:go run "scripts/check-go lint"
   assert_task lint depends "lint:*"
   assert_task format:check:shell run "scripts/check-shell format"
   assert_task format:check:markdown run "rumdl fmt --check ."
+  assert_task format:check:go run "scripts/check-go format"
   assert_task format:check depends "format:check:*"
   assert_task format:fix:shell run "scripts/check-shell fix"
   assert_task format:fix:markdown run "rumdl fmt ."
+  assert_task format:fix:go run "scripts/check-go fix"
   assert_task format:fix depends "format:fix:*"
   assert_task docs:check run "lychee --no-progress ."
-  assert_task test run "bats test"
+  assert_task test depends "test:*"
+  assert_task test:bats run "bats test"
+  assert_task test:go run "scripts/check-go test"
+  assert_task vuln run "scripts/check-go vuln"
   assert_task check run "echo check: every gate passed"
   assert_task pre-commit run "scripts/check-terms --staged" \
     "scripts/staged-tree scripts/check-shell lint" \
     "scripts/staged-tree scripts/check-shell format" \
+    "scripts/staged-tree scripts/check-go lint" \
+    "scripts/staged-tree scripts/check-go format" \
     "scripts/staged-tree sh -c 'actionlint .github/workflows/*.yml'" \
     "scripts/staged-tree zizmor --offline --pedantic --strict-collection ." \
     "scripts/staged-tree rumdl check ." \
@@ -154,7 +164,7 @@ assert_task() {
   for task in $(mise tasks ls --name-only --hidden); do
     assert_task "${task}" env
     case "${task}" in
-      check | lint | format:check | format:fix) ;;
+      check | lint | format:check | format:fix | test) ;;
       *) assert_task "${task}" depends ;;
     esac
     run mise tasks info "${task}" --json
@@ -163,17 +173,17 @@ assert_task() {
   done
 }
 
-@test "only the test task has a Windows command" {
+@test "only the test:bats task has a Windows command" {
   run grep -c '^run_windows = ' mise.toml
   assert_output_is 1
-  run grep -A3 '^\[tasks.test\]$' mise.toml
+  run grep -A3 '^\[tasks."test:bats"\]$' mise.toml
   assert_output_has "run_windows"
 }
 
-@test "test task runs every suite" {
+@test "test:bats task runs every suite" {
   local want
   want=$(bats --count test)
-  run mise run -q test -- --count
+  run mise run -q test:bats -- --count
   assert_status 0
   assert_output_is "${want}"
 }
@@ -445,6 +455,18 @@ EOF
   commit_with_hooks -m "ci: add workflow"
   assert_status 1
   assert_output_has '"runs-on" section is missing'
+}
+
+# Guards a change to check-go or staged-tree after which check-go finds
+# cli/ somewhere other than in the staged tree, so the hook checks the
+# working copy and passes. assert_task pins the task's text, not this.
+@test "pre-commit hook lints the staged Go code" {
+  printf 'package bad\n\nimport "os"\n\n// Remove drops its error.\nfunc Remove() { os.Remove("x") }\n' > cli/bad.go
+  g add cli/bad.go
+  printf 'package bad\n' > cli/bad.go
+  commit_with_hooks -m "feat(cli): add bad code"
+  assert_status 1
+  assert_output_has "(errcheck)"
 }
 
 @test "pre-commit hook lints the staged Markdown" {

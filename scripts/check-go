@@ -1,0 +1,176 @@
+#!/bin/sh
+# Go gates for the cech CLI in cli/ (ADR 14): lint, format check, tests
+# and the vulnerability check of ADR 10, run as `mise run lint`,
+# `mise run format:check`, `mise run format:fix`, `mise run test` and
+# `mise run vuln`.
+# POSIX sh (ADR 10): it must run under dash, macOS sh and Git Bash.
+#
+# Usage: scripts/check-go lint | format | fix | test | vuln
+#
+#   lint    go vet, golangci-lint (cli/.golangci.yml), and go mod tidy
+#           -diff, which fails if go.mod or go.sum is not tidy
+#   format  show what gofumpt and goimports, run by golangci-lint fmt,
+#           would change
+#   fix     let them rewrite the files
+#   test    go test, with the race detector where cgo is on, the
+#           platform has one and it builds
+#   vuln    govulncheck; needs the network for the vulnerability database
+#
+# The tools run in cli/ with GOTOOLCHAIN=local, so only the Go that mise
+# pins runs and go never downloads another toolchain, and with
+# GOWORK=off, so a go.work file in a parent directory cannot change the
+# build.
+#
+# Requires: go, golangci-lint and govulncheck (pinned in mise.toml;
+# `mise run` puts them on PATH).
+#
+# Exit status: 0 clean (or formatted), 1 findings, 2 the check could not
+# run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+readonly ROOT
+# A failed `.` exits 1 in some shells; 1 means findings, so check first.
+[ -r "${ROOT}/scripts/lib/common.sh" ] || {
+  printf 'go: cannot read scripts/lib/common.sh\n' >&2
+  exit 2
+}
+# shellcheck source=lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+PROG=go
+readonly PROG
+
+STATUS=0
+
+usage() {
+  cat << 'EOF'
+Usage: mise run lint | format:check | format:fix | test | vuln
+       (scripts/check-go lint | format | fix | test | vuln)
+
+  lint     go vet, golangci-lint and go mod tidy -diff
+  format   show what the Go formatters would change
+  fix      let the Go formatters rewrite the files
+  test     go test, with -race where the platform has a race
+           detector, cgo is on and it builds
+  vuln     govulncheck; needs the network
+
+Exit status: 0 clean, 1 findings, 2 the check could not run.
+EOF
+}
+
+# require_tool <tool>: stop unless the tool is on PATH.
+require_tool() {
+  command -v "$1" > /dev/null 2>&1 ||
+    die "$1 not found; run the check through mise run, which puts the pinned $1 on PATH"
+}
+
+# step <findings-code> <command...>: run a check. Its exit code
+# <findings-code> means findings; any other failure means it could not
+# run.
+step() {
+  local findings rc
+  findings=$1
+  shift
+  rc=0
+  "$@" || rc=$?
+  case "${rc}" in
+    0) ;;
+    "${findings}") STATUS=1 ;;
+    *) die "$1 failed (exit ${rc})" ;;
+  esac
+}
+
+main() {
+  local mode race cgo goos goarch probe
+
+  case "${1:-}" in
+    lint | format | fix | test | vuln) mode=$1 ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    '')
+      usage >&2
+      die "no mode given"
+      ;;
+    *)
+      usage >&2
+      die "unknown mode: $1"
+      ;;
+  esac
+  [ "$#" -le 1 ] || die "unexpected argument: $2"
+
+  require_tool go
+  case "${mode}" in
+    lint | format | fix) require_tool golangci-lint ;;
+    vuln) require_tool govulncheck ;;
+    *) ;;
+  esac
+
+  [ -f "${ROOT}/cli/go.mod" ] || die "no Go module found at cli/go.mod"
+  cd -- "${ROOT}/cli"
+  GOTOOLCHAIN=local GOWORK=off
+  export GOTOOLCHAIN GOWORK
+
+  # go vet, go test and golangci-lint exit 1 both for findings and for
+  # code that does not build, so this script counts both as findings.
+  # govulncheck exits 3 when it finds a vulnerability. Each mode runs
+  # all its checks, so one run reports every finding.
+  case "${mode}" in
+    lint)
+      step 1 go vet ./...
+      step 1 golangci-lint run ./...
+      step 1 go mod tidy -diff
+      ;;
+    format) step 1 golangci-lint fmt --diff ./... ;;
+    fix)
+      golangci-lint fmt ./... || die "golangci-lint fmt failed"
+      printf 'go: formatted\n'
+      exit 0
+      ;;
+    test)
+      # The race detector needs cgo, which go turns off where it finds no
+      # C compiler, and runs only on the platforms listed below: Go 1.27's
+      # list in internal/platform/supported.go, to recheck on a Go bump.
+      # Its runtime must also build with the C compiler found, which
+      # fails with some MinGW set-ups on Windows, so a build of the race
+      # runtime alone tries it first; the module's own code is left to
+      # go test, so an error in it cannot turn -race off.
+      race=''
+      cgo=$(go env CGO_ENABLED) || die "go env failed"
+      goos=$(go env GOOS) || die "go env failed"
+      goarch=$(go env GOARCH) || die "go env failed"
+      if [ "${cgo}" != 1 ]; then
+        printf 'go: cgo is off, so the tests run without -race\n' >&2
+      else
+        case "${goos}/${goarch}" in
+          linux/amd64 | linux/arm64 | linux/loong64 | linux/ppc64le | linux/riscv64 | linux/s390x | \
+            darwin/amd64 | darwin/arm64 | freebsd/amd64 | netbsd/amd64 | windows/amd64)
+            if probe=$(go build -race runtime/race 2>&1); then
+              race=-race
+            else
+              printf 'go: the race detector does not build here, so the tests run without -race:\n%s\n' \
+                "${probe}" >&2
+            fi
+            ;;
+          *)
+            printf 'go: %s has no race detector, so the tests run without -race\n' \
+              "${goos}/${goarch}" >&2
+            ;;
+        esac
+      fi
+      step 1 go test ${race:+"${race}"} ./...
+      ;;
+    vuln) step 3 govulncheck ./... ;;
+    *) die "unknown mode: ${mode}" ;;
+  esac
+
+  if [ "${STATUS}" != 0 ]; then
+    printf 'go: %s findings\n' "${mode}" >&2
+    exit 1
+  fi
+  printf 'go: %s ok\n' "${mode}"
+}
+
+main "$@"

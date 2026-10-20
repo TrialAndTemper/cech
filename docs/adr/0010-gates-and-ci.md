@@ -1,6 +1,6 @@
 # 10. Gates and CI
 
-- Status: accepted; Last amended: 2026-10-20
+- Status: accepted; Last amended: 2026-10-26
 - Date: 2026-10-19
 - Deciders: Michał Bożek
 
@@ -69,10 +69,24 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    - `cech build --check` and `cech validate`;
    - eval case lint and grader tests (a later ADR on evals);
    - CLI tests on Linux, macOS and Windows.
+
+   > **Amendment (2026-10-26).**
+   > A gate script has a test for each way the gate could pass when it should fail, where review would likely miss it, such as a finding it loses or a check it skips.
+   > Such a way mostly hides outside the diff: in a bumped tool pin, on a platform the reviewer does not run, or in a gate run indirectly, such as on the staged tree.
+   > Each case added from this amendment on says in a comment which way it guards.
+   > Any other way is checked by hand when the gate is added or changed, and the pull request records that check.
+   > A gate that fails when it should pass shows itself the first time it runs on that input, so that case needs no test.
+   > Evidence: the cases and comments in `test/go.bats` and `test/tasks.bats`; `CONTRIBUTING.md` restates the rule and `AGENTS.md` routes to it.
+
 6. **Tool versions are pinned exactly** in the `[tools]` table of `mise.toml`, with downloads and checksums in `mise.lock`.
    CI installs an exact mise version, then the tools with `locked` set; `mise.toml` sets mise's `min_version`.
    Pins are added and bumped by letting mise resolve them under a week's `minimum_release_age`; review checks the release date of a version given by hand.
    The table holds only tools that build or check CECH; `data/tools.toml` ([ADR 5](0005-native-tool-features-first.md)) records the agent tools CECH relies on.
+
+   > **Amendment (2026-10-20).**
+   > A tool that mise builds from source with its `go` backend, such as govulncheck, has no download to record: `mise.lock` holds only its version, and the Go checksum database checks the source that `go install` fetches.
+   > Evidence: `mise.toml` and `mise.lock`, with mise 2026.10.3 and Go 1.27.2.
+
 7. **Workflow safety.**
    Third-party actions are pinned by full commit SHA.
    Workflows default to `permissions: contents: read`, widened per job only where needed.
