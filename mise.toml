@@ -34,13 +34,17 @@ shell = "sh -o errexit -c"
 
 [tasks.check]
 description = "Every gate"
-depends = ["terms", "lint", "format:check", "docs:check", "test"]
+depends = ["commits", "terms", "lint", "format:check", "docs:check", "test"]
 run = "echo check: every gate passed"
 
 # Gates (ADR 10): one task per gate, with its subtasks.
 # lint and format:check run every task that matches their pattern,
 # hidden ones too, so a task named like lint:x joins lint, and
 # through it check; the pre-commit task lists its checks by hand.
+
+[tasks.commits]
+description = "Commit message gate (ADR 11); mise run commits -- --help lists its modes"
+run = "scripts/check-commits"
 
 [tasks."docs:check"]
 description = "Check the links in the Markdown files"
@@ -97,9 +101,12 @@ run = "scripts/check-shell fix"
 # Hooks (ADR 10): scripts/hooks/ runs these tasks.
 
 [tasks.commit-msg]
-description = "commit-msg hook: the term check on a commit message"
+description = "commit-msg hook: the term check and the commit message gate on a message"
 usage = 'arg "<file>" help="The commit message file"'
-run = 'scripts/check-terms --message "${usage_file?}"'
+run = [
+  'scripts/check-terms --message "${usage_file?}"',
+  'scripts/check-commits --message "${usage_file?}"',
+]
 
 # The pre-commit task checks what is staged: scripts/staged-tree
 # runs each lint and format check in a checkout of the index. It

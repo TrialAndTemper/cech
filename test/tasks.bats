@@ -59,9 +59,10 @@ message() {
   printf '%s\n' "$1" > "${MESSAGE}"
 }
 
-# commit_with_hooks <git commit args...>: commit through scripts/hooks.
+# commit_with_hooks <git commit args...>: commit through scripts/hooks,
+# signed off.
 commit_with_hooks() {
-  run g -c core.hooksPath=scripts/hooks commit -q "$@"
+  run g -c core.hooksPath=scripts/hooks commit -q -s "$@"
   refute_output_has "${SECRET}"
 }
 
@@ -89,17 +90,18 @@ assert_task() {
 }
 
 @test "check depends on every gate" {
-  assert_task check depends terms lint format:check docs:check test
+  assert_task check depends commits terms lint format:check docs:check test
 }
 
 @test "the task list is exactly the gates and hooks" {
   run mise tasks ls --name-only --hidden
   assert_status 0
-  assert_output_is "$(printf '%s\n' check commit-msg docs:check format:check format:check:markdown format:check:shell format:fix format:fix:markdown format:fix:shell lint lint:markdown lint:shell pre-commit terms test)"
+  assert_output_is "$(printf '%s\n' check commit-msg commits docs:check format:check format:check:markdown format:check:shell format:fix format:fix:markdown format:fix:shell lint lint:markdown lint:shell pre-commit terms test)"
 }
 
 @test "each task runs its gate" {
   assert_task terms run "scripts/check-terms"
+  assert_task commits run "scripts/check-commits"
   assert_task lint:shell run "scripts/check-shell lint"
   assert_task lint:markdown run "rumdl check ."
   assert_task lint depends "lint:*"
@@ -118,7 +120,8 @@ assert_task() {
     "scripts/staged-tree rumdl check ." \
     "scripts/staged-tree rumdl fmt --check ."
   # shellcheck disable=SC2016 # mise expands usage_file, not this shell
-  assert_task commit-msg run 'scripts/check-terms --message \"${usage_file?}\"'
+  assert_task commit-msg run 'scripts/check-terms --message \"${usage_file?}\"' \
+    'scripts/check-commits --message \"${usage_file?}\"'
 }
 
 @test "no task sets its own shell, environment or directory" {
@@ -263,13 +266,34 @@ EOF
 }
 
 @test "commit-msg task checks its file" {
-  message "fix: thing ABC-123"
+  message "$(printf 'fix: thing ABC-123\n\nSigned-off-by: Test <test@example.com>')"
   run mise run commit-msg "${MESSAGE}"
   assert_status 1
   assert_output_has "tracker-key"
-  message "fix: thing"
+  message "$(printf 'Fix thing\n\nSigned-off-by: Test <test@example.com>')"
+  run mise run commit-msg "${MESSAGE}"
+  assert_status 1
+  assert_output_has "header type"
+  message "$(printf 'fix: thing\n\nSigned-off-by: Test <test@example.com>')"
   run mise run commit-msg "${MESSAGE}"
   assert_status 0
+}
+
+@test "commits task checks the commits missing from origin/main" {
+  # The template's commit has no sign-off, so a pass shows it was left out.
+  g update-ref refs/remotes/origin/main HEAD
+  plant "Clean text."
+  g commit -q -s -m "docs: add note"
+  run mise run commits
+  assert_status 0
+  printf 'More text.\n' >> planted.txt
+  g add planted.txt
+  g commit -q -m "docs: add more"
+  local bad
+  bad=$(g rev-parse --short=12 HEAD)
+  run mise run commits
+  assert_status 1
+  assert_output_has "commit ${bad}: no Signed-off-by: trailer"
 }
 
 @test "commit-msg task needs a file" {
@@ -282,6 +306,37 @@ EOF
   commit_with_hooks -m "docs: add note"
   assert_status 1
   assert_output_has "planted.txt:1"
+}
+
+@test "commit-msg hook blocks a commit without sign-off" {
+  plant "Clean text."
+  run g -c core.hooksPath=scripts/hooks commit -q -m "docs: add note"
+  assert_status 1
+  assert_output_has "no Signed-off-by: trailer"
+}
+
+@test "commit-msg hook checks the sign-off against the author" {
+  plant "Clean text."
+  commit_with_hooks --author "Other <other@example.com>" -m "docs: add note"
+  assert_status 1
+  assert_output_has "no Signed-off-by: trailer carries the author's email"
+}
+
+@test "commit-msg hook blocks a bad header" {
+  plant "Clean text."
+  commit_with_hooks -m "Add note."
+  assert_status 1
+  assert_output_has "header type"
+}
+
+@test "commit-msg hook lets a fixup through" {
+  plant "Clean text."
+  commit_with_hooks -m "docs: add note"
+  assert_status 0
+  printf 'More text.\n' >> planted.txt
+  g add planted.txt
+  run g -c core.hooksPath=scripts/hooks commit -q --fixup HEAD
+  assert_status 0
 }
 
 @test "commit-msg hook blocks a tracker key" {
