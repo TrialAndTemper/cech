@@ -89,20 +89,28 @@ assert_task() {
 }
 
 @test "check depends on every gate" {
-  assert_task check depends terms test
+  assert_task check depends terms lint format:check test
 }
 
 @test "the task list is exactly the gates and hooks" {
   run mise tasks ls --name-only --hidden
   assert_status 0
-  assert_output_is "$(printf '%s\n' check commit-msg pre-commit terms test)"
+  assert_output_is "$(printf '%s\n' check commit-msg format:check format:check:shell format:fix format:fix:shell lint lint:shell pre-commit terms test)"
 }
 
 @test "each task runs its gate" {
   assert_task terms run "scripts/check-terms"
+  assert_task lint:shell run "scripts/check-shell lint"
+  assert_task lint depends "lint:*"
+  assert_task format:check:shell run "scripts/check-shell format"
+  assert_task format:check depends "format:check:*"
+  assert_task format:fix:shell run "scripts/check-shell fix"
+  assert_task format:fix depends "format:fix:*"
   assert_task test run "bats test"
   assert_task check run "echo check: every gate passed"
-  assert_task pre-commit run "scripts/check-terms --staged"
+  assert_task pre-commit run "scripts/check-terms --staged" \
+    "scripts/staged-tree scripts/check-shell lint" \
+    "scripts/staged-tree scripts/check-shell format"
   # shellcheck disable=SC2016 # mise expands usage_file, not this shell
   assert_task commit-msg run 'scripts/check-terms --message \"${usage_file?}\"'
 }
@@ -155,6 +163,32 @@ assert_task() {
   assert_output_has "tracker-key"
 }
 
+@test "lint task lints the shell code" {
+  # shellcheck disable=SC2016 # the planted script must hold a literal $1
+  printf '#!/bin/sh\necho $1\n' > scripts/bad
+  g add --chmod=+x scripts/bad
+  run mise run lint
+  assert_status 1
+  assert_output_has "SC2086"
+}
+
+@test "format:check task checks the shell format" {
+  printf '#!/bin/sh\nif true; then\necho x\nfi\n' > scripts/flat
+  g add --chmod=+x scripts/flat
+  run mise run format:check
+  assert_status 1
+  assert_output_has "scripts/flat"
+}
+
+@test "format:fix task rewrites the shell code" {
+  printf '#!/bin/sh\nif true; then\necho x\nfi\n' > scripts/flat
+  g add --chmod=+x scripts/flat
+  run mise run format:fix
+  assert_status 0
+  run cat scripts/flat
+  assert_output_is "$(printf '#!/bin/sh\nif true; then\n  echo x\nfi')"
+}
+
 @test "terms task uses the caller's private list" {
   plant "Write to ${SECRET}."
   run mise run terms -- --staged
@@ -196,6 +230,26 @@ assert_task() {
   commit_with_hooks -m "docs: add note for ABC-123"
   assert_status 1
   assert_output_has "tracker-key"
+}
+
+@test "pre-commit hook lints the staged shell code" {
+  # shellcheck disable=SC2016 # the planted script must hold a literal $1
+  printf '#!/bin/sh\necho $1\n' > scripts/bad
+  g add --chmod=+x scripts/bad
+  # shellcheck disable=SC2016 # the fixed copy on disk is not staged
+  printf '#!/bin/sh\necho "$1"\n' > scripts/bad
+  commit_with_hooks -m "chore: add script"
+  assert_status 1
+  assert_output_has "SC2086"
+}
+
+@test "pre-commit hook checks the staged format" {
+  printf '#!/bin/sh\nif true; then\necho x\nfi\n' > scripts/flat
+  g add --chmod=+x scripts/flat
+  printf '#!/bin/sh\nif true; then\n  echo x\nfi\n' > scripts/flat
+  commit_with_hooks -m "chore: add script"
+  assert_status 1
+  assert_output_has "scripts/flat"
 }
 
 @test "hooks let a clean commit through" {

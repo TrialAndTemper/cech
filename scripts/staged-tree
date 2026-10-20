@@ -1,0 +1,68 @@
+#!/bin/sh
+# Run a command in a checkout of the index, so that a check sees the
+# files as they are staged, not as they are on disk. The pre-commit task
+# runs its lint and format checks through it (ADR 10). git commands run
+# by the command see the repository's index, with the checkout as the
+# work tree.
+#
+# Usage: scripts/staged-tree <command> [args...]
+#
+# Requires: git and mktemp.
+#
+# Exit status: the command's, or 2 if staged-tree cannot run (no command,
+# no repository, or no checkout).
+
+set -eu
+
+TMP=''
+
+die() {
+  printf 'staged-tree: %s\n' "$*" >&2
+  exit 2
+}
+
+cleanup() {
+  if [ -n "${TMP}" ]; then rm -rf -- "${TMP}"; fi
+}
+
+on_signal() {
+  cleanup
+  trap - "$1"
+  kill -s "$1" "$$"
+}
+
+main() {
+  local git_dir status
+
+  case "${1:-}" in
+    '') die "no command given" ;;
+    -h | --help)
+      sed -n 's/^# Usage: //p' "$0"
+      exit 0
+      ;;
+    *) ;;
+  esac
+
+  git_dir=$(git rev-parse --absolute-git-dir) || die "not in a git repository"
+  # During a commit git can name the index by a path relative to this
+  # directory; keep it valid inside the checkout.
+  case "${GIT_INDEX_FILE:-/}" in
+    /*) ;;
+    *)
+      GIT_INDEX_FILE="$(pwd)/${GIT_INDEX_FILE}"
+      export GIT_INDEX_FILE
+      ;;
+  esac
+  trap cleanup EXIT
+  trap 'on_signal INT' INT
+  trap 'on_signal TERM' TERM
+  TMP=$(mktemp -d)
+  git checkout-index -a --ignore-skip-worktree-bits --prefix="${TMP}/tree/" || die "cannot check out the index"
+
+  cd -- "${TMP}/tree"
+  status=0
+  GIT_DIR=${git_dir} GIT_WORK_TREE=${TMP}/tree "$@" || status=$?
+  return "${status}"
+}
+
+main "$@"

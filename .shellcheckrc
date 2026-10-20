@@ -1,0 +1,31 @@
+# ShellCheck settings for CECH's scripts.
+# The scripts under scripts/ are POSIX sh (ADR 10), so the dialect is
+# sh. Optional checks are listed one by one, each a deliberate choice.
+# Exceptions go inline on the line they cover, with a reason; the one
+# project-wide exception is at the end of this file.
+
+shell=sh
+severity=style
+external-sources=true
+
+# A case without a default branch leaves inputs unhandled.
+enable=add-default-case
+# `[ $x ]` is fragile; use -n or -z.
+enable=avoid-nullary-conditions
+# Find exit codes hidden inside command substitutions.
+enable=check-extra-masked-returns
+# Find places where set -e is silently off.
+enable=check-set-e-suppressed
+# Catch uppercase variables that are never assigned (typos).
+enable=check-unassigned-uppercase
+# Use `command -v`, not `which`.
+enable=deprecate-which
+# Quote every expansion, with no judgement calls.
+enable=quote-safe-variables
+# Write ${var}, not $var.
+enable=require-variable-braces
+
+# Project-level exceptions, one reason each.
+# `local` is not in POSIX, but dash, BusyBox ash and bash as sh all have
+# it, and it keeps function variables out of the script's scope.
+disable=SC3043

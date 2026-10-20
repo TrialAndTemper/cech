@@ -1,0 +1,213 @@
+#!/bin/sh
+# Shell lint and format check over the shell code tracked under scripts/
+# and test/: the lint and format gates of ADR 10 for shell, run as
+# `mise run lint`, `mise run format:check` and `mise run format:fix`.
+# POSIX sh (ADR 10): it must run under dash, macOS sh and Git Bash.
+#
+# Each kind of file declares its dialect on its first lines, which the
+# linter reads; shfmt takes it from .editorconfig in scripts/ and from the
+# extension in test/:
+#   scripts/ executables   executable, first line #!/bin/sh
+#   scripts/ libraries     *.sh, not executable, first line
+#                          `# shellcheck shell=sh`
+#   test/ suites           *.bats, not executable, first lines
+#                          #!/usr/bin/env bats and `# shellcheck shell=bats`
+#   test/ helpers          *.bash, not executable, first line
+#                          `# shellcheck shell=bash`
+# In lint mode, a file that breaks its kind's rule is a finding, and so is
+# a suite line that starts with [[ or ((, which bash before 4.1 does not
+# treat as a failure. The format modes skip files that break their kind's
+# rule; lint reports them. Other files in test/ are fixtures and are not
+# checked.
+#
+# Usage: scripts/check-shell lint | format | fix
+#
+# The settings live in .shellcheckrc and .editorconfig. shfmt gets no
+# parser or printer flags, since those make it ignore .editorconfig.
+#
+# Requires: git, and shellcheck and shfmt (pinned in mise.toml; `mise run`
+# puts them on PATH).
+#
+# Exit status: 0 clean (or formatted), 1 findings, 2 the check could not
+# run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+readonly ROOT
+
+TMP=''
+
+usage() {
+  cat << 'EOF2'
+Usage: mise run lint | format:check | format:fix
+       (scripts/check-shell lint | format | fix)
+
+  lint     shellcheck, and the rules for each kind of file
+  format   show what shfmt would change
+  fix      let shfmt rewrite the files
+
+Exit status: 0 clean, 1 findings, 2 the check could not run.
+EOF2
+}
+
+die() {
+  printf 'shell: %s\n' "$*" >&2
+  exit 2
+}
+
+cleanup() {
+  if [ -n "${TMP}" ]; then rm -rf -- "${TMP}"; fi
+}
+
+on_signal() {
+  cleanup
+  trap - "$1"
+  kill -s "$1" "$$"
+}
+
+# require_tool <tool>: stop unless the tool is on PATH.
+require_tool() {
+  command -v "$1" > /dev/null 2>&1 ||
+    die "$1 not found; run the check through mise run, which puts the pinned $1 on PATH"
+}
+
+# finding <format> <args...>: in lint mode, report a rule finding.
+finding() {
+  local format
+  if [ "${MODE}" = lint ]; then
+    format=$1
+    shift
+    # shellcheck disable=SC2059 # the format is the caller's
+    printf "shell: ${format}\n" "$@" >&2
+    STATUS=1
+  fi
+}
+
+main() {
+  local tab meta f first second rc
+
+  case "${1:-}" in
+    lint | format | fix) MODE=$1 ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    '')
+      usage >&2
+      die "no mode given"
+      ;;
+    *)
+      usage >&2
+      die "unknown mode: $1"
+      ;;
+  esac
+  [ "$#" -le 1 ] || die "unexpected argument: $2"
+
+  trap cleanup EXIT
+  trap 'on_signal INT' INT
+  trap 'on_signal TERM' TERM
+  TMP=$(mktemp -d)
+
+  # Run the tools from the repository root, where they read their
+  # settings.
+  cd -- "${ROOT}"
+  case "${MODE}" in
+    lint) require_tool shellcheck ;;
+    *) require_tool shfmt ;;
+  esac
+
+  # Check the tracked files under scripts/ and test/ against the rules in
+  # the header, and collect the shell code. A file deleted but not yet
+  # staged has nothing to check.
+  git ls-files -s -z -- scripts test > "${TMP}/files.z"
+  tr '\0' '\n' < "${TMP}/files.z" > "${TMP}/files"
+  tab=$(printf '\t')
+  STATUS=0
+  set --
+  while IFS="${tab}" read -r meta f; do
+    [ -f "${f}" ] || continue
+    first=$(sed -n 1p "${f}")
+    case "${f}" in
+      test/*.bats)
+        second=$(sed -n 2p "${f}")
+        case "${meta%% *}:${first}:${second}" in
+          '100644:#!/usr/bin/env bats:# shellcheck shell=bats')
+            set -- "$@" "${f}"
+            if [ "${MODE}" = lint ] &&
+              grep -n -E '^[[:space:]]*(\[\[|\(\()' "${f}" > "${TMP}/bare"; then
+              sed "s|^|shell: ${f}:|; s|\$| (a bare [[ or (( does not fail a case on bash 3.2; use the assert_* helpers)|" \
+                "${TMP}/bare" >&2
+              STATUS=1
+            fi
+            ;;
+          *)
+            finding '%s: a bats suite must not be executable and must start with %s' \
+              "${f}" '#!/usr/bin/env bats and # shellcheck shell=bats'
+            ;;
+        esac
+        continue
+        ;;
+      test/*.bash)
+        case "${meta%% *}:${first}" in
+          100644:'# shellcheck shell=bash') set -- "$@" "${f}" ;;
+          *)
+            finding '%s: a bash helper must not be executable and must start with %s' \
+              "${f}" '# shellcheck shell=bash'
+            ;;
+        esac
+        continue
+        ;;
+      test/*) continue ;;
+      *.sh)
+        case "${meta%% *}:${first}" in
+          100644:'# shellcheck shell=sh') set -- "$@" "${f}" ;;
+          *)
+            finding '%s: a library must not be executable and must start with %s' \
+              "${f}" '# shellcheck shell=sh'
+            ;;
+        esac
+        continue
+        ;;
+      *) ;;
+    esac
+    case "${meta%% *}:${first}" in
+      100755:'#!/bin/sh' | 100755:'#!/bin/sh '*) set -- "$@" "${f}" ;;
+      100755:*) finding '%s: first line is not #!/bin/sh' "${f}" ;;
+      100644:'#!'*)
+        finding '%s: has a shebang but is not executable; run git add --chmod=+x %s' \
+          "${f}" "${f}"
+        ;;
+      *) ;;
+    esac
+  done < "${TMP}/files"
+  [ "$#" -gt 0 ] || die "no shell code found under scripts/ or test/"
+
+  case "${MODE}" in
+    lint)
+      rc=0
+      shellcheck "$@" || rc=$?
+      case "${rc}" in
+        0) ;;
+        1) STATUS=1 ;;
+        *) die "shellcheck failed (exit ${rc})" ;;
+      esac
+      ;;
+    # shfmt exits 1 for a diff and for a parse error alike; lint reports
+    # the parse error.
+    format) shfmt -d "$@" || STATUS=1 ;;
+    *)
+      shfmt -w "$@" || die "shfmt failed"
+      printf 'shell: formatted (files: %s)\n' "$#"
+      exit 0
+      ;;
+  esac
+
+  if [ "${STATUS}" != 0 ]; then
+    printf 'shell: %s findings\n' "${MODE}" >&2
+    exit 1
+  fi
+  printf 'shell: %s ok (files: %s)\n' "${MODE}" "$#"
+}
+
+main "$@"

@@ -7,3 +7,18 @@ indent_style = space
 indent_size = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
+
+# shfmt reads these for the POSIX sh scripts, which have no extension.
+[scripts/**]
+shell_variant = posix
+switch_case_indent = true
+space_redirects = true
+binary_next_line = false
+function_next_line = false
+
+# shfmt reads the dialect of the tests from their extension.
+[test/**]
+switch_case_indent = true
+space_redirects = true
+binary_next_line = false
+function_next_line = false
