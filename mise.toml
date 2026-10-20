@@ -49,7 +49,7 @@ description = "Commit message gate (ADR 11); mise run commits -- --help lists it
 run = "scripts/check-commits"
 
 [tasks."docs:check"]
-description = "Check the links in the Markdown files"
+description = "Check the links in the Markdown, YAML and text files"
 run = "lychee --no-progress ."
 
 [tasks."format:check"]

@@ -10,11 +10,18 @@ max_cache_age = "1d"
 include_fragments = "anchor-only"
 
 # Check hidden paths too, such as .github/, which holds the pull request
-# template. lychee still skips git-ignored files, and does not read YAML,
-# so the issue forms go unchecked. With hidden on, lychee would walk into
-# .git/ as well, at any depth, so exclude_path keeps it out.
+# template and the issue forms. lychee still skips git-ignored files. With
+# hidden on, lychee would walk into .git/ as well, at any depth, so
+# exclude_path keeps it out.
 hidden = true
 exclude_path = ['(^|/)\.git/']
+
+# lychee 0.24.2's default file types, plus YAML for the issue forms and
+# workflows. It reads YAML as plain text, so it finds full URLs only.
+extensions = [
+  "md", "mkd", "mdx", "mdown", "mdwn", "mkdn", "mkdown", "markdown",
+  "html", "htm", "css", "txt", "xml", "yml", "yaml",
+]
 
 # Links to this machine cannot work for anyone else.
 exclude_loopback = true
