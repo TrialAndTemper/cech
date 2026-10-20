@@ -1,0 +1,6 @@
+Usage: cech <command> [flags]
+
+Commands:
+  version   print the version of cech
+
+Run cech help <command>, or cech <command> -h, for the flags of a command.

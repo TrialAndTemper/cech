@@ -14,6 +14,10 @@ mise.*.local.toml
 .env.*
 !.env.example
 
+# A cech binary built with go build in cli/.
+/cli/cech
+/cli/cech.exe
+
 # lychee keeps link results here (lychee.toml).
 .lycheecache
 # rumdl's cache. rumdl also ignores it with its own .gitignore inside.
