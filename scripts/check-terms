@@ -98,6 +98,11 @@ parse_args() {
     --all) MODE=all ;;
     --message | --range)
       [ "$#" -ge 2 ] || die "$1 needs a value"
+      # A value such as --all or --output=x would reach git as an option.
+      case "$2" in
+        -*) die "$1 value must not start with -: $2" ;;
+        *) ;;
+      esac
       MODE=${1#--}
       ARG=$2
       used=2

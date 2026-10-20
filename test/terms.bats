@@ -74,6 +74,12 @@ plant() {
   assert_output_has "--range needs a value"
 }
 
+@test "a value that looks like an option" {
+  run_terms --range --all
+  assert_status 2
+  assert_output_has "--range value must not start with -: --all"
+}
+
 @test "extra argument" {
   run_terms --staged --all
   assert_status 2
