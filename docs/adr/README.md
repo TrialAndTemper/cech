@@ -15,3 +15,4 @@
 11. [Change record](0011-change-record.md)
 12. [Attribution](0012-attribution.md)
 13. [Markdown source format](0013-markdown-source-format.md)
+14. [The cech CLI](0014-the-cech-cli.md)
