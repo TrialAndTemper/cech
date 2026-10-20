@@ -18,6 +18,7 @@ setup_file() {
   REPO=${TEMPLATE}
   mkdir -p "${REPO}/scripts"
   cp -- "${SRC}/scripts/check-commits" "${REPO}/scripts/"
+  cp -R -- "${SRC}/scripts/lib" "${REPO}/scripts/"
   commit_template
 }
 
@@ -380,6 +381,7 @@ commit() {
   REPO="${BATS_TEST_TMPDIR}/empty"
   mkdir -p "${REPO}/scripts"
   cp -- "${SRC}/scripts/check-commits" "${REPO}/scripts/"
+  cp -R -- "${SRC}/scripts/lib" "${REPO}/scripts/"
   g init -q -b main
   run_commits
   assert_status 0

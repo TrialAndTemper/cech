@@ -36,6 +36,15 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 readonly ROOT
+# A failed `.` exits 1 in some shells; 1 means findings, so check first.
+[ -r "${ROOT}/scripts/lib/common.sh" ] || {
+  printf 'terms: cannot read scripts/lib/common.sh\n' >&2
+  exit 2
+}
+# shellcheck source=lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+PROG=terms
+readonly PROG
 readonly TERMS_DIR="${ROOT}/checks/terms"
 
 MODE=default
@@ -43,7 +52,6 @@ ARG=''
 PRIVATE=''
 HEAD_REF=''
 REVS=''
-TMP=''
 HITS=0
 BROKEN=0
 
@@ -62,21 +70,6 @@ Tier 3 reads the file named by CECH_PRIVATE_TERMS
 (default .private/denylist.txt).
 Exit status: 0 clean, 1 hits found, 2 the check could not run.
 EOF
-}
-
-die() {
-  printf 'terms: %s\n' "$*" >&2
-  exit 2
-}
-
-cleanup() {
-  if [ -n "${TMP}" ]; then rm -rf -- "${TMP}"; fi
-}
-
-on_signal() {
-  cleanup
-  trap - "$1"
-  kill -s "$1" "$$"
 }
 
 # clean <line>: drop carriage returns and surrounding white space.
@@ -317,10 +310,7 @@ main() {
   read_env
   refuse_ignore_file
 
-  trap cleanup EXIT
-  trap 'on_signal INT' INT
-  trap 'on_signal TERM' TERM
-  TMP=$(mktemp -d)
+  make_tmp
   mkdir "${TMP}/tree" "${TMP}/meta" "${TMP}/paths" "${TMP}/empty"
 
   write_public_config > "${TMP}/public.toml"

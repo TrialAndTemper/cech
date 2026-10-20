@@ -15,6 +15,7 @@ setup_file() {
   REPO=${TEMPLATE}
   mkdir -p "${REPO}/scripts"
   cp -- "${SRC}/scripts/staged-tree" "${REPO}/scripts/"
+  cp -R -- "${SRC}/scripts/lib" "${REPO}/scripts/"
   printf 'committed\n' > "${REPO}/note.txt"
   commit_template
 }
@@ -84,6 +85,13 @@ staged_tree() {
   staged_tree
   assert_status 2
   assert_output_has "no command given"
+}
+
+@test "missing library" {
+  rm -- "${REPO}/scripts/lib/common.sh"
+  staged_tree true
+  assert_status 2
+  assert_output_is "staged-tree: cannot read scripts/lib/common.sh"
 }
 
 @test "outside a repository" {

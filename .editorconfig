@@ -8,7 +8,8 @@ indent_size = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
 
-# shfmt reads these for the POSIX sh scripts, which have no extension.
+# shfmt reads these for the POSIX sh scripts: executables with no
+# extension and *.sh libraries.
 [scripts/**]
 shell_variant = posix
 switch_case_indent = true

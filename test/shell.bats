@@ -16,6 +16,7 @@ setup_file() {
   REPO=${TEMPLATE}
   mkdir -p "${REPO}/scripts"
   cp -- "${SRC}/scripts/check-shell" "${REPO}/scripts/"
+  cp -R -- "${SRC}/scripts/lib" "${REPO}/scripts/"
   cp -- "${SRC}/.shellcheckrc" "${SRC}/.editorconfig" "${REPO}/"
   commit_template
 }
@@ -70,10 +71,10 @@ fake_tool() {
 @test "clean code" {
   run_shell lint
   assert_status 0
-  assert_output_has "shell: lint ok (files: 1)"
+  assert_output_has "shell: lint ok (files: 2)"
   run_shell format
   assert_status 0
-  assert_output_has "shell: format ok (files: 1)"
+  assert_output_has "shell: format ok (files: 2)"
 }
 
 @test "help" {
@@ -125,7 +126,7 @@ fi
   assert_output_has "scripts/format"
   run_shell fix
   assert_status 0
-  assert_output_has "shell: formatted (files: 2)"
+  assert_output_has "shell: formatted (files: 3)"
   run_shell format
   assert_status 0
 }
@@ -226,7 +227,7 @@ h() {
 '
   run_shell lint
   assert_status 0
-  assert_output_has "shell: lint ok (files: 3)"
+  assert_output_has "shell: lint ok (files: 4)"
 }
 
 @test "bats suite without its dialect line" {
