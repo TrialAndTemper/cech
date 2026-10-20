@@ -48,9 +48,9 @@ This runs every gate, as CI does.
 | --- | --- |
 | `commits` | commit message format and sign-off |
 | `terms` | names and data that must not be in the repository |
-| `lint` | Markdown, shell scripts and workflows |
-| `format:check` | formatting of Markdown and shell scripts |
-| `test` | the tests of the gate scripts (not on Windows) |
+| `lint` | Markdown, shell scripts, workflows and the CLI's Go code |
+| `format:check` | formatting of Markdown, shell scripts and Go code |
+| `test` | the tests of the CLI, and of the gate scripts (not on Windows) |
 | `docs:check` | links in the Markdown, YAML and text files; needs the network |
 
 `mise run format:fix` rewrites the files the format check would change.
@@ -68,6 +68,30 @@ With a token, lychee checks only that a GitHub repository exists, not the file o
 CI runs the same gates on every pull request and every push to `main`, on Linux, macOS and Windows; the link check runs on Linux only.
 A pull request merges only when they pass.
 
+### The CLI's Go gates
+
+The `cech` CLI is a Go module in `cli/` ([ADR 14](docs/adr/0014-the-cech-cli.md)).
+mise installs the pinned Go, golangci-lint and govulncheck, and `scripts/check-go` runs them in `cli/` with the pinned Go only:
+
+| Task | Runs |
+| --- | --- |
+| `lint:go` | `go vet`, golangci-lint with the linters in `cli/.golangci.yml`, and `go mod tidy -diff` |
+| `format:check:go` | the diff that gofumpt and goimports would apply; `format:fix:go` applies it |
+| `test:go` | `go test`, with the race detector where the platform has one, cgo is on (it needs a C compiler) and the race runtime builds |
+| `vuln` | govulncheck: known vulnerabilities in the CLI and its Go release; needs the network |
+
+Golden files in `cli/internal/app/testdata/` hold the exact output of each command.
+After an intended change to the output, rewrite them and review the diff:
+
+```sh
+mise -C cli exec -- go test ./internal/app -update
+```
+
+`check` leaves out `vuln`, since a new report in its database can fail a branch that has not changed.
+CI runs it on pull requests that touch the CLI or its tools, without blocking them, and daily on `main`, where a failure opens an issue.
+
+A new Go dependency needs an amendment to ADR 14 in the same pull request.
+
 ### Optional git hooks
 
 The hooks in `scripts/hooks/` run some of the gates before git records a commit:
@@ -76,7 +100,7 @@ The hooks in `scripts/hooks/` run some of the gates before git records a commit:
 git config core.hooksPath scripts/hooks
 ```
 
-`pre-commit` runs the term check, lint and format checks on what is staged, and `commit-msg` checks the message.
+`pre-commit` runs the term check, lint and format checks on what is staged, and `commit-msg` checks the message; neither runs the tests or the checks that need the network.
 They save a round trip to CI, but they are a convenience: CI is the authority, and no rule lives only in a hook.
 
 ## Writing
@@ -84,7 +108,8 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
 - Markdown has one sentence per line, never wrapped; shorten a long sentence rather than break it ([ADR 13](docs/adr/0013-markdown-source-format.md)).
   `mise run format:fix` reflows it.
 - Shell scripts are POSIX sh that runs under dash, macOS sh and Git Bash, and pass shellcheck and shfmt.
-  A change to a script comes with tests in `test/`.
+  A change to a script comes with a test in `test/` for each way it could let a gate pass when it should fail, where review would likely miss it, such as after a tool bump, on another platform or on the staged tree; a comment on each case names the way it guards ([ADR 10](docs/adr/0010-gates-and-ci.md) item 5).
+  Check any other way by hand, and say so in the pull request.
 - An accepted ADR is not rewritten, apart from typo and link fixes: a refinement goes in a dated amendment note, and a different choice in a new ADR that supersedes it ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
 
 ## Commits

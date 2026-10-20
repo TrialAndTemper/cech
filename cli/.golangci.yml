@@ -1,0 +1,100 @@
+# golangci-lint settings for the cech CLI (ADR 14), read through
+# scripts/check-go by `mise run lint`, `mise run format:check` and
+# `mise run format:fix`. Each linter beyond the standard set is listed
+# with what it catches.
+version: "2"
+
+run:
+  # Wait for another run to finish rather than fail: `mise run check`
+  # runs lint:go alongside the test suites, which run golangci-lint too.
+  allow-serial-runners: true
+
+linters:
+  # errcheck, govet, ineffassign, staticcheck and unused.
+  default: standard
+  enable:
+    # HTTP response bodies left open.
+    - bodyclose
+    # Functions that drop the context they were given.
+    - contextcheck
+    # Errors compared with == or type assertions instead of errors.Is
+    # and errors.As, which miss wrapped errors.
+    - errorlint
+    # A switch on an enum that misses one of its values.
+    - exhaustive
+    # Output that bypasses the writers ADR 14 routes it through.
+    - forbidigo
+    # Common bugs and simplifications beyond vet.
+    - gocritic
+    # Comments on declarations that do not end with a full stop.
+    - godot
+    # Unsafe file modes, paths and commands; the CLI edits user files.
+    - gosec
+    # Counting loops that could range over an integer.
+    - intrange
+    # Misspelt words and American spellings in comments.
+    - misspell
+    # Code that a newer Go release can write more simply.
+    - modernize
+    # Network calls made without a context, which cannot be cancelled.
+    - noctx
+    # nolint comments without a linter name or a reason.
+    - nolintlint
+    # Naming, doc comments and style beyond gofmt.
+    - revive
+    # Conversions to the type a value already has.
+    - unconvert
+    # Literals where the standard library has a constant.
+    - usestdlibvars
+  settings:
+    errcheck:
+      # An unchecked type assertion panics; make it explicit.
+      check-type-assertions: true
+    forbidigo:
+      forbid:
+        # Commands write to the stdout and stderr they are given, so
+        # tests can read them; only main touches the process's own.
+        - pattern: ^fmt\.Print(f|ln)?$
+        - pattern: ^print(ln)?$
+        - pattern: ^os\.(Stdout|Stderr|Exit)$
+      analyze-types: true
+    govet:
+      enable-all: true
+      disable:
+        # Reordering struct fields for size hurts reading order.
+        - fieldalignment
+    misspell:
+      locale: UK
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+  exclusions:
+    rules:
+      # Tests run the binaries and read the golden files they name
+      # themselves, which gosec flags as untrusted input.
+      - path: _test\.go$
+        linters:
+          - gosec
+      # main hands the process's stdout, stderr and exit to app.Run.
+      - path: ^cmd/cech/main\.go$
+        linters:
+          - forbidigo
+
+issues:
+  # Report every finding: by default golangci-lint shows only the first
+  # 50 per linter, 3 of each kind,
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  # and only one per line.
+  uniq-by-line: false
+
+formatters:
+  enable:
+    # gofmt with stricter rules.
+    - gofumpt
+    # Import grouping, with this module's packages in their own group.
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/TrialAndTemper/cech/cli
