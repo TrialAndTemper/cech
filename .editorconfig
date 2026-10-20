@@ -8,6 +8,10 @@ indent_size = 2
 insert_final_newline = true
 trim_trailing_whitespace = true
 
+# gofmt indents Go code and go.mod with tabs.
+[{*.go,go.mod}]
+indent_style = tab
+
 # shfmt reads these for the POSIX sh scripts: executables with no
 # extension and *.sh libraries.
 [scripts/**]

@@ -1,0 +1,99 @@
+# govulncheck (ADR 14 item 10), outside the merge gates: its database
+# changes without any change here, so a new report must not block every
+# pull request. It reports on pull requests that touch the CLI or its
+# tools, and runs on main daily and after each such push; a failure there
+# opens an issue, or comments on the open one (ADR 10 item 8).
+name: vuln
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - cli/**
+      - mise.toml
+      - mise.lock
+      - scripts/check-go
+      - scripts/lib/**
+      - .github/workflows/vuln.yml
+  push:
+    branches: [main]
+    paths:
+      - cli/**
+      - mise.toml
+      - mise.lock
+      - scripts/check-go
+      - scripts/lib/**
+      - .github/workflows/vuln.yml
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels its older run; runs on main never
+# cancel one another.
+concurrency:
+  group: vuln-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Install only the versions and checksums in mise.lock.
+  MISE_LOCKED: "1"
+
+jobs:
+  vuln:
+    name: vuln (${{ matrix.os }})
+    # govulncheck checks the code built for the OS it runs on, and a
+    # vulnerability can affect one OS only.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+        with:
+          version: 2026.10.3
+
+      - name: vuln
+        run: mise run vuln
+
+  # On main, a failure, whether a finding or a run that could not reach
+  # the database, becomes an issue for a maintainer to triage.
+  report:
+    name: report
+    needs: vuln
+    if: ${{ failure() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      issues: write # open the issue, or comment on it
+    steps:
+      - name: open or update the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          TITLE: "govulncheck: the vulnerability check fails on main"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          # The plain list, not --search, whose index can lag behind a
+          # just-opened issue.
+          number=$(gh issue list --repo "${REPO}" --state open --limit 500 \
+            --json number,title --jq 'map(select(.title == env.TITLE)) | .[0].number // empty')
+          body="The vulnerability check failed on main: ${RUN_URL}
+
+          Read the run: either govulncheck found a vulnerability, which usually needs a Go or module upgrade, or it could not reach its database."
+          if [ -n "${number}" ]; then
+            gh issue comment "${number}" --repo "${REPO}" --body "${body}"
+          else
+            gh issue create --repo "${REPO}" --title "${TITLE}" --body "${body}" --label triage --label bug
+          fi
