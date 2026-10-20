@@ -3,7 +3,7 @@
 ## Where am I?
 
 The root of CECH, a marketplace of agent skills for Claude Code and Codex that organisations extend rather than fork ([README](README.md)).
-It has no skills and no `cech` tool yet: the tree holds the decision records, the gates that check every change, and their tests.
+It has no skills yet: the tree holds the decision records, a first `cech` CLI that only prints its version, the gates that check every change, and their tests.
 This is the only `AGENTS.md`, so it answers for every path.
 
 ## What belongs to this layer?
@@ -30,6 +30,8 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | --- | --- | --- |
 | A new decision that is costly to reverse, also added to `docs/adr/README.md` | `docs/adr/` | [ADR 1](docs/adr/0001-record-architecture-decisions.md) |
 | A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 10](docs/adr/0010-gates-and-ci.md) |
+| A CLI command or package, with its Go tests | `cli/` | [ADR 14](docs/adr/0014-the-cech-cli.md) |
+| A Go dependency, in the same change as an ADR 14 amendment | `cli/go.mod` | [ADR 14](docs/adr/0014-the-cech-cli.md) item 8 |
 | A public term rule or an allowlisted email address | `checks/terms/` | [ADR 4](docs/adr/0004-vendor-neutrality.md) |
 | A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 10](docs/adr/0010-gates-and-ci.md) item 6 |
 | A CI step, kept in step with the tasks `check` depends on | `.github/workflows/ci.yml` | [ADR 10](docs/adr/0010-gates-and-ci.md) items 1 and 7 |
@@ -42,6 +44,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | `docs/` | Decision records; an accepted ADR changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
 | `scripts/` | Gate scripts in POSIX sh that run under dash, macOS sh and Git Bash; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks |
 | `checks/` | Public tiers of the term check; the private tier lives outside git |
+| `cli/` | The `cech` CLI, Go module `github.com/TrialAndTemper/cech/cli`: `cmd/cech` for `main`, `internal/` for the rest, golden files in `testdata/` |
 | `test/` | bats suites for the scripts and tasks; a script change comes with tests here |
 | `mise.toml` | Exact tool pins and every task; the single entry point for the gates |
 | `mise.lock` | Downloads and checksums for each pin and platform, written by `mise lock` |
