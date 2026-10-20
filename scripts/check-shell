@@ -35,8 +35,15 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 readonly ROOT
-
-TMP=''
+# A failed `.` exits 1 in some shells; 1 means findings, so check first.
+[ -r "${ROOT}/scripts/lib/common.sh" ] || {
+  printf 'shell: cannot read scripts/lib/common.sh\n' >&2
+  exit 2
+}
+# shellcheck source=lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+PROG=shell
+readonly PROG
 
 usage() {
   cat << 'EOF2'
@@ -49,21 +56,6 @@ Usage: mise run lint | format:check | format:fix
 
 Exit status: 0 clean, 1 findings, 2 the check could not run.
 EOF2
-}
-
-die() {
-  printf 'shell: %s\n' "$*" >&2
-  exit 2
-}
-
-cleanup() {
-  if [ -n "${TMP}" ]; then rm -rf -- "${TMP}"; fi
-}
-
-on_signal() {
-  cleanup
-  trap - "$1"
-  kill -s "$1" "$$"
 }
 
 # require_tool <tool>: stop unless the tool is on PATH.
@@ -104,10 +96,7 @@ main() {
   esac
   [ "$#" -le 1 ] || die "unexpected argument: $2"
 
-  trap cleanup EXIT
-  trap 'on_signal INT' INT
-  trap 'on_signal TERM' TERM
-  TMP=$(mktemp -d)
+  make_tmp
 
   # Run the tools from the repository root, where they read their
   # settings.

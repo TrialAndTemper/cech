@@ -39,11 +39,19 @@ set -eu
 
 ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 readonly ROOT
+# A failed `.` exits 1 in some shells; 1 means findings, so check first.
+[ -r "${ROOT}/scripts/lib/common.sh" ] || {
+  printf 'commits: cannot read scripts/lib/common.sh\n' >&2
+  exit 2
+}
+# shellcheck source=lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+PROG=commits
+readonly PROG
 readonly TYPES='feat fix docs refactor perf test build ci chore revert'
 
 MODE=default
 ARG=''
-TMP=''
 FOUND=0
 
 usage() {
@@ -60,21 +68,6 @@ carries the author's email. fixup!, squash! and amend! commits pass
 only in --message mode.
 Exit status: 0 clean, 1 findings, 2 the check could not run.
 EOF
-}
-
-die() {
-  printf 'commits: %s\n' "$*" >&2
-  exit 2
-}
-
-cleanup() {
-  if [ -n "${TMP}" ]; then rm -rf -- "${TMP}"; fi
-}
-
-on_signal() {
-  cleanup
-  trap - "$1"
-  kill -s "$1" "$$"
 }
 
 parse_args() {
@@ -274,10 +267,7 @@ main() {
   local email
   parse_args "$@"
 
-  trap cleanup EXIT
-  trap 'on_signal INT' INT
-  trap 'on_signal TERM' TERM
-  TMP=$(mktemp -d) || die "cannot create a temporary directory"
+  make_tmp
 
   case "${MODE}" in
     message)

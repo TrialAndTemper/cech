@@ -40,7 +40,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | Path | Responsibility |
 | --- | --- |
 | `docs/` | Decision records; an accepted ADR changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
-| `scripts/` | Gate scripts in POSIX sh that run under dash, macOS sh and Git Bash; `scripts/hooks/` holds the optional git hooks |
+| `scripts/` | Gate scripts in POSIX sh that run under dash, macOS sh and Git Bash; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks |
 | `checks/` | Public tiers of the term check; the private tier lives outside git |
 | `test/` | bats suites for the scripts and tasks; a script change comes with tests here |
 | `mise.toml` | Exact tool pins and every task; the single entry point for the gates |

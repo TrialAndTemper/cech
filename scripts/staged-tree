@@ -9,27 +9,23 @@
 #
 # Requires: git and mktemp.
 #
-# Exit status: the command's, or 2 if staged-tree cannot run (no command,
-# no repository, or no checkout).
+# Exit status: the command's, or 2 if staged-tree cannot run (no library,
+# no command, no repository, or no checkout).
 
 set -eu
 
-TMP=''
-
-die() {
-  printf 'staged-tree: %s\n' "$*" >&2
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+readonly ROOT
+# A failed `.` exits 1 in some shells, which would pass for the
+# command's status, so check first.
+[ -r "${ROOT}/scripts/lib/common.sh" ] || {
+  printf 'staged-tree: cannot read scripts/lib/common.sh\n' >&2
   exit 2
 }
-
-cleanup() {
-  if [ -n "${TMP}" ]; then rm -rf -- "${TMP}"; fi
-}
-
-on_signal() {
-  cleanup
-  trap - "$1"
-  kill -s "$1" "$$"
-}
+# shellcheck source=lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+PROG=staged-tree
+readonly PROG
 
 main() {
   local git_dir status
@@ -53,10 +49,7 @@ main() {
       export GIT_INDEX_FILE
       ;;
   esac
-  trap cleanup EXIT
-  trap 'on_signal INT' INT
-  trap 'on_signal TERM' TERM
-  TMP=$(mktemp -d)
+  make_tmp
   git checkout-index -a --ignore-skip-worktree-bits --prefix="${TMP}/tree/" || die "cannot check out the index"
 
   cd -- "${TMP}/tree"

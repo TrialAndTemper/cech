@@ -22,6 +22,7 @@ setup_file() {
   REPO=${TEMPLATE}
   mkdir -p "${REPO}/scripts"
   cp -- "${SRC}/scripts/check-terms" "${REPO}/scripts/"
+  cp -R -- "${SRC}/scripts/lib" "${REPO}/scripts/"
   cp -R -- "${SRC}/checks" "${REPO}/"
   printf 'Quuxly Cloud\nZorp++\n' >> "${REPO}/checks/terms/names.txt"
   commit_template

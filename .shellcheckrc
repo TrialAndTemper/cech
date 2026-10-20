@@ -7,6 +7,10 @@
 shell=sh
 severity=style
 external-sources=true
+# Resolve `# shellcheck source=` paths from the sourcing file, so
+# shellcheck finds scripts/lib/ from any directory, whether check-shell
+# or an editor in scripts/ runs it.
+source-path=SCRIPTDIR
 
 # A case without a default branch leaves inputs unhandled.
 enable=add-default-case
