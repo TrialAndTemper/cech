@@ -261,6 +261,21 @@ assert_task() {
   assert_output_has "missing-guide.md"
 }
 
+@test "docs:check task checks links in hidden directories" {
+  mkdir -p .github
+  printf '# Note\n\nSee [the guide](hidden-missing-guide.md).\n' > .github/note.md
+  g add .github/note.md
+  run mise run docs:check -- --offline
+  assert_status 2
+  assert_output_has "hidden-missing-guide.md"
+}
+
+@test "docs:check task skips the .git directory" {
+  printf '# Note\n\nSee [the guide](git-missing-guide.md).\n' > .git/note.md
+  run mise run docs:check -- --offline
+  assert_status 0
+}
+
 @test "format:fix task rewrites the shell code" {
   printf '#!/bin/sh\nif true; then\necho x\nfi\n' > scripts/flat
   g add --chmod=+x scripts/flat

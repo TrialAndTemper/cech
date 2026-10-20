@@ -54,6 +54,16 @@ This runs every gate, as CI does.
 
 `mise run format:fix` rewrites the files the format check would change.
 
+The link check also reads hidden directories such as `.github/`.
+GitHub rate-limits anonymous requests and hides private repositories from them, so links to github.com may fail without a token.
+lychee sends `GITHUB_TOKEN`, if set, only to GitHub:
+
+```sh
+GITHUB_TOKEN=$(gh auth token) mise run docs:check
+```
+
+With a token, lychee checks only that a GitHub repository exists, not the file or heading a link names.
+
 CI runs the same gates on every pull request and every push to `main`, on Linux, macOS and Windows; the link check runs on Linux only.
 A pull request merges only when they pass.
 

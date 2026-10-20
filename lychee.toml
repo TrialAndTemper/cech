@@ -9,6 +9,13 @@ max_cache_age = "1d"
 # A link to a heading must name one that exists.
 include_fragments = "anchor-only"
 
+# Check hidden paths too, such as .github/, which holds the pull request
+# template. lychee still skips git-ignored files, and does not read YAML,
+# so the issue forms go unchecked. With hidden on, lychee would walk into
+# .git/ as well, at any depth, so exclude_path keeps it out.
+hidden = true
+exclude_path = ['(^|/)\.git/']
+
 # Links to this machine cannot work for anyone else.
 exclude_loopback = true
 
