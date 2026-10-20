@@ -36,7 +36,7 @@ regexes = [
   '''(?i)^git@(?:github\.com|gitlab\.com|bitbucket\.org|codeberg\.org)$''',
 ]
 [[rules.allowlists]]
-description = "Authors, sign-offs, co-authors and credited people"
+description = "Authors, sign-offs, co-authors, credited people and contact addresses"
 regexTarget = "match"
 regexes = [
   '''(?i)^michal\.b\.bozek@gmail\.com$''',

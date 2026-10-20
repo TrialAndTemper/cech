@@ -1,6 +1,6 @@
 # 4. Vendor neutrality
 
-- Status: accepted
+- Status: accepted; Last amended: 2026-10-20
 - Date: 2026-10-16
 - Deciders: Michał Bożek
 
@@ -24,6 +24,11 @@ A leak in public git history is hard to undo.
 4. **A term check enforces this** in pre-commit, on commit messages and in CI, in three tiers:
    - **generic rules** (public): email addresses outside an allowlist, cloud resource ids, signed URLs, single-sign-on user formats, and tracker keys in commit messages.
      The allowlist holds example domains and the author, sign-off, co-author and credited addresses;
+
+     > **Amendment (2026-10-20).**
+     > The email allowlist of the generic rules also holds the contact addresses that CECH's own files publish, such as the email fallback for security reports.
+     > Evidence: the contact address in `SECURITY.md` and the `email` rule in `checks/terms/rules.toml`.
+
    - **vendor names** (public): a plain list of chosen product and brand names CECH does not cover, since such a name hints at whose private stack the content came from.
      Only listed names are flagged;
    - **private terms**: kept outside git and in a CI secret.
