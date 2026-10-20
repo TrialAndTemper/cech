@@ -7,4 +7,10 @@ This file lists the third-party material in the repository and its
 notices (ADR 2, docs/adr/0002-licence-and-contributions.md). Material
 listed here keeps its own licence.
 
-No third-party material is included yet.
+CODE_OF_CONDUCT.md
+  Adapted from the Contributor Covenant, version 3.0,
+  https://www.contributor-covenant.org/version/3/0/
+  Contributor Covenant is stewarded by the Organization for Ethical
+  Source and licensed under CC BY-SA 4.0,
+  https://creativecommons.org/licenses/by-sa/4.0/
+  The adaptation is licensed under CC BY-SA 4.0, not MIT.
