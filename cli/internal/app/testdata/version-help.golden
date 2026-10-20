@@ -1,0 +1,7 @@
+Usage: cech version [--json]
+
+Print the version of cech.
+
+Flags:
+  --json    print one JSON object with the version, the Go release
+            that built cech, and the OS and architecture it was built for
