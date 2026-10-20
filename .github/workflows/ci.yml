@@ -1,0 +1,120 @@
+# The gates of ADR 10, run with the tools pinned in mise.toml. Each step
+# runs one task that `mise run check` depends on, so a local check runs
+# what CI runs; test/tasks.bats checks that the two lists agree.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels its older run. Each push to main
+# gets its own group, since GitHub replaces a pending run in a group and
+# the replaced push would go unchecked.
+concurrency:
+  group: ci-${{ github.event_name == 'push' && github.sha || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  # Install only the versions and checksums in mise.lock.
+  MISE_LOCKED: "1"
+
+jobs:
+  check:
+    name: check (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        # bash on every runner; on Windows that is Git Bash, which also
+        # gives the tasks their sh.
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The term and commit gates read every commit in RANGE.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+        with:
+          version: 2026.10.3
+
+      # The commits under check: the pull request's own, or the push's.
+      # A push whose old tip is unknown, as on the first push or after a
+      # force push, checks every commit on main. Each gate after this
+      # step runs even if an earlier gate failed, so one run reports
+      # every failing gate.
+      - name: range
+        id: range
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "${EVENT}" = pull_request ]; then
+            range="${BASE_SHA}..${HEAD_SHA}"
+          elif git cat-file -e "${BEFORE}^{commit}" 2> /dev/null; then
+            range="${BEFORE}..${GITHUB_SHA}"
+          else
+            echo "::warning::old tip of main unknown; checking every commit"
+            range=${GITHUB_SHA}
+          fi
+          echo "RANGE=${range}" >> "${GITHUB_ENV}"
+
+      - name: commits
+        if: ${{ !cancelled() && steps.range.outcome == 'success' }}
+        run: mise run commits -- --range "${RANGE}"
+
+      # The private tier (ADR 4) runs, and must run, only where the
+      # secret reaches: pushes and pull requests from this repository's
+      # own branches, never forks.
+      - name: terms
+        if: ${{ !cancelled() && steps.range.outcome == 'success' }}
+        env:
+          TRUSTED: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+          PRIVATE_TERMS: >-
+            ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
+              && secrets.PRIVATE_TERMS || '' }}
+        run: |
+          if [ "${TRUSTED}" = true ]; then
+            if [ -z "${PRIVATE_TERMS}" ]; then
+              echo "::error::the PRIVATE_TERMS secret is empty or not set"
+              exit 2
+            fi
+            CECH_PRIVATE_TERMS="${RUNNER_TEMP}/private-terms.txt"
+            printf '%s\n' "${PRIVATE_TERMS}" > "${CECH_PRIVATE_TERMS}"
+            export CECH_PRIVATE_TERMS CECH_REQUIRE_PRIVATE_TERMS=1
+          fi
+          unset PRIVATE_TERMS
+          mise run terms -- --range "${RANGE}"
+
+      - name: lint
+        if: ${{ !cancelled() && steps.range.outcome == 'success' }}
+        run: mise run lint
+
+      - name: format:check
+        if: ${{ !cancelled() && steps.range.outcome == 'success' }}
+        run: mise run format:check
+
+      - name: test
+        if: ${{ !cancelled() && steps.range.outcome == 'success' }}
+        run: mise run test
+
+      # The link check asks hosts on the network once, from Linux. lychee
+      # sends the token only to GitHub, which rate-limits calls with a
+      # token less than anonymous calls from shared runners.
+      - name: docs:check
+        if: ${{ !cancelled() && steps.range.outcome == 'success' && runner.os == 'Linux' }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: mise run docs:check

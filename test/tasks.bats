@@ -93,6 +93,18 @@ assert_task() {
   assert_task check depends commits terms lint format:check docs:check test
 }
 
+@test "CI runs every gate that check runs" {
+  local want
+  run task_field check depends
+  assert_status 0
+  want=$(sort <<< "${output}")
+  # Take the task from each mise run command, skipping comments. Step
+  # conditions are not checked: only docs:check has one, for Linux.
+  run sh -c "sed -n 's/^ *\\(run: \\)\\{0,1\\}mise run \\([^ ]*\\).*/\\2/p' .github/workflows/ci.yml | sort"
+  assert_status 0
+  assert_output_is "${want}"
+}
+
 @test "the task list is exactly the gates and hooks" {
   run mise tasks ls --name-only --hidden
   assert_status 0
@@ -125,7 +137,10 @@ assert_task() {
 }
 
 @test "no task sets its own shell, environment or directory" {
-  local task
+  local task dir
+  # mise reports the path with symlinks resolved, as /private/var for
+  # the /var of a macOS temporary directory.
+  dir=$(pwd -P)
   for task in $(mise tasks ls --name-only --hidden); do
     assert_task "${task}" env
     case "${task}" in
@@ -133,7 +148,7 @@ assert_task() {
       *) assert_task "${task}" depends ;;
     esac
     run mise tasks info "${task}" --json
-    assert_output_has "\"dir\": \"${REPO}\","
+    assert_output_has "\"dir\": \"${dir}\","
     assert_output_has '"shell": "sh -o errexit -c",'
   done
 }

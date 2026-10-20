@@ -25,8 +25,8 @@ shfmt = "3.14.1"
 
 # Every task runs through sh, with errexit as in mise's default on
 # Unix, since on Windows mise would run it with cmd, which cannot start
-# a POSIX script. sh must be on PATH there, as it is in Git Bash; the
-# tasks have not yet run on Windows.
+# a POSIX script. sh must be on PATH there, as it is in Git Bash, which
+# the Windows CI job uses.
 [task_config]
 shell = "sh -o errexit -c"
 
