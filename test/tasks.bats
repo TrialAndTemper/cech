@@ -229,6 +229,33 @@ assert_task() {
   assert_output_has "planted.txt:1"
 }
 
+@test "a suite run from git keeps out of the calling repository" {
+  # A suite run as a hook or from rebase --exec gets git's repository
+  # and identity variables. This one writes config in a repository of
+  # its own and checks that git sees the cases' author there.
+  local caller="${BATS_TEST_TMPDIR}/caller" suite="${BATS_TEST_TMPDIR}/probe.bats"
+  git init -q "${caller}"
+  printf 'load %s\n' "${SRC}/test/helpers" > "${suite}"
+  cat >> "${suite}" << 'EOF'
+setup_file() { setup_suite_env; }
+@test "probe" {
+  REPO="${BATS_TEST_TMPDIR}/own"
+  git init -q "${REPO}"
+  g config probe.key set
+  case "$(g var GIT_AUTHOR_IDENT)" in
+    "Test <test@example.com> "*) ;;
+    *) return 1 ;;
+  esac
+}
+EOF
+  GIT_DIR="${caller}/.git" GIT_AUTHOR_NAME=Caller GIT_AUTHOR_EMAIL=caller@example.com \
+    run bats "${suite}"
+  assert_status 0
+  assert_output_has "ok 1 probe"
+  run git -C "${caller}" config --local probe.key
+  assert_status 1
+}
+
 @test "mise sets no CECH variables" {
   run mise env -s bash
   assert_status 0

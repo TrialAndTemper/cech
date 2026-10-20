@@ -14,8 +14,20 @@
 SRC=$(cd -- "${BATS_TEST_DIRNAME}/.." && pwd)
 
 # setup_suite_env: settings every suite needs, run from setup_file. Keep
-# the user's git configuration (signing, hooks) out of the tests.
+# the user's git configuration (signing, hooks) out of the tests. git
+# exports its repository variables (GIT_DIR, GIT_WORK_TREE,
+# GIT_INDEX_FILE, settings given with -c, and the rest that
+# `git rev-parse --local-env-vars` lists) to hooks and to
+# `git rebase --exec`; left set, they would point every git command of
+# a case at the calling repository. The author and committer variables,
+# which git also exports to hooks, would override the cases' identity.
 setup_suite_env() {
+  local v
+  for v in $(git rev-parse --local-env-vars) GIT_NAMESPACE \
+    GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE \
+    GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE; do
+    unset "${v}"
+  done
   export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 }
 
