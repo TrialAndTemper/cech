@@ -270,6 +270,16 @@ assert_task() {
   assert_output_has "hidden-missing-guide.md"
 }
 
+@test "docs:check task checks links in YAML files" {
+  mkdir -p .github/ISSUE_TEMPLATE
+  # lychee reads YAML as plain text, so only a full URL is found.
+  printf 'url: file:///yaml-missing-guide.md\n' > .github/ISSUE_TEMPLATE/form.yml
+  g add .github/ISSUE_TEMPLATE/form.yml
+  run mise run docs:check -- --offline
+  assert_status 2
+  assert_output_has "yaml-missing-guide.md"
+}
+
 @test "docs:check task skips the .git directory" {
   printf '# Note\n\nSee [the guide](git-missing-guide.md).\n' > .git/note.md
   run mise run docs:check -- --offline

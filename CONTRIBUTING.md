@@ -50,7 +50,7 @@ This runs every gate, as CI does.
 | `lint` | Markdown, shell scripts and workflows |
 | `format:check` | formatting of Markdown and shell scripts |
 | `test` | the tests of the gate scripts (not on Windows) |
-| `docs:check` | links in the Markdown files; needs the network |
+| `docs:check` | links in the Markdown, YAML and text files; needs the network |
 
 `mise run format:fix` rewrites the files the format check would change.
 
