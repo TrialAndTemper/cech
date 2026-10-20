@@ -1,0 +1,6 @@
+# Issue forms only; security reports go through SECURITY.md.
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/TrialAndTemper/cech/security/policy
+    about: Report it privately, as the security policy explains, not in an issue.

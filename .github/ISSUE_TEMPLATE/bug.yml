@@ -1,0 +1,30 @@
+name: Bug report
+description: Something in CECH does not work as documented.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Report security problems privately, as the [security policy](https://github.com/TrialAndTemper/cech/security/policy) explains.
+        Use invented data such as example.com and acme, not names or hosts from a private organisation.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: The commands or prompts, and their output.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: The CECH commit or version, your operating system, and the versions of mise, Claude Code or Codex if they matter.
+    validations:
+      required: true

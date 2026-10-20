@@ -1,0 +1,26 @@
+name: Proposal
+description: A new skill, a change to a contract, or another improvement.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A change to a contract needs a new ADR or an amendment to an accepted one; see docs/adr/ and CONTRIBUTING.md.
+        Use invented data such as example.com and acme, not names or hosts from a private organisation.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is missing or hard today, and who it affects.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What you would change. For a skill based on someone else's work, say whose; for unpublished work, say whether they agree (ADR 2).
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
