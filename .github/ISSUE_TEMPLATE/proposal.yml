@@ -1,5 +1,6 @@
 name: Proposal
 description: A new skill, a change to a contract, or another improvement.
+labels: [triage, proposal]
 body:
   - type: markdown
     attributes:

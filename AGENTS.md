@@ -69,7 +69,7 @@ mise is the task runner: use `mise run …` rather than the tools it pins, and r
 - **Markdown:** one sentence per line, never wrapped ([ADR 13](docs/adr/0013-markdown-source-format.md)).
 - **Commits:** follow [CONTRIBUTING.md](CONTRIBUTING.md#commits); `mise run commits` checks them.
   Sign off with `git commit -s`, credit yourself with a `Co-authored-by:` trailer, and fold review fixes in with `git commit -s --fixup=<commit>` and `git rebase --autosquash origin/main`.
-- **Issue tracker:** GitHub issues on `TrialAndTemper/cech`.
+- **Issue tracker:** GitHub issues on `TrialAndTemper/cech`, labelled as [CONTRIBUTING.md](CONTRIBUTING.md#issues) describes; questions go to Discussions.
 
 ## Self-update and layer growth
 

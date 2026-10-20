@@ -1,7 +1,7 @@
 # Contributing to CECH
 
 Thank you for helping.
-This guide covers set-up, the gates, writing, commits, pull requests and keeping CECH vendor-neutral.
+This guide covers set-up, the gates, writing, commits, issues, pull requests and keeping CECH vendor-neutral.
 Everyone taking part follows the [code of conduct](CODE_OF_CONDUCT.md).
 Report security problems privately, as [SECURITY.md](SECURITY.md) explains, not in an issue.
 
@@ -11,6 +11,7 @@ The [architecture decision records](docs/adr/README.md) (ADRs) hold the contract
 A change that fits an accepted ADR needs no new one.
 A change to a contract, or one that adds repo-wide machinery such as a command, a hook or a file format, needs a new ADR or an amendment to an accepted one ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
 For a larger change, open an issue first so we can agree on the approach.
+Ask questions in [Discussions](https://github.com/TrialAndTemper/cech/discussions); issues are for bugs and proposals.
 
 By contributing you agree that your work is licensed under the licence of the files it adds or changes: MIT unless a file or folder says otherwise ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
 Text copied or adapted from another project needs a compatible licence, an entry in [NOTICE](NOTICE) and, in a skill, a source note naming the upstream project and the commit it came from; rewrite it where you can.
@@ -116,6 +117,22 @@ git config user.email "<id>+<user>@users.noreply.github.com"
 
 or add each such address, in the same pull request, to the allowlist of authors and sign-offs under the `email` rule in `checks/terms/rules.toml`.
 Please use a personal address, not one from your employer.
+
+## Issues
+
+A new issue gets `triage` and its kind, `bug` or `proposal`, from its form.
+A maintainer then gives it one status label at a time, replacing the last:
+
+| Label | Meaning |
+| --- | --- |
+| `triage` | New; not looked at yet |
+| `backlog` | Accepted, but not ready to start |
+| `todo` | Ready: someone could start without more questions |
+| `in progress` | Someone owns it and is working on it |
+
+When an issue is finished, a maintainer removes its status label and closes it with GitHub's reason (completed, not planned or duplicate) and a comment saying what was done or which issue it duplicates.
+
+A maintainer may add more labels beside the status: `documentation` for the docs, ADRs or guides, `accessibility` for a barrier for people with disabilities, `good first issue` for an issue suited to a newcomer, and `help wanted` for one where outside help is welcome.
 
 ## Pull requests
 
