@@ -76,6 +76,14 @@ assert_status() {
   fi
 }
 
+# assert_failed: fail the case unless the last `run` exited non-zero.
+assert_failed() {
+  if [[ ${status} -eq 0 ]]; then
+    printf 'expected a failure, got exit 0; output:\n%s\n' "${output}"
+    return 1
+  fi
+}
+
 # assert_output_has <text>: fail the case unless the output holds text.
 assert_output_has() {
   if [[ ${output} != *"$1"* ]]; then

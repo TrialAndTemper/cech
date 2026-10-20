@@ -105,15 +105,23 @@ assert_task() {
   assert_output_is "${want}"
 }
 
+@test "workflows are named *.yml" {
+  run find .github/workflows -type f ! -name '*.yml'
+  assert_status 0
+  assert_output_is ""
+}
+
 @test "the task list is exactly the gates and hooks" {
   run mise tasks ls --name-only --hidden
   assert_status 0
-  assert_output_is "$(printf '%s\n' check commit-msg commits docs:check format:check format:check:markdown format:check:shell format:fix format:fix:markdown format:fix:shell lint lint:markdown lint:shell pre-commit terms test)"
+  assert_output_is "$(printf '%s\n' check commit-msg commits docs:check format:check format:check:markdown format:check:shell format:fix format:fix:markdown format:fix:shell lint lint:actions lint:markdown lint:shell pre-commit terms test)"
 }
 
 @test "each task runs its gate" {
   assert_task terms run "scripts/check-terms"
   assert_task commits run "scripts/check-commits"
+  assert_task lint:actions run "actionlint .github/workflows/*.yml" \
+    "zizmor --offline --pedantic --strict-collection ."
   assert_task lint:shell run "scripts/check-shell lint"
   assert_task lint:markdown run "rumdl check ."
   assert_task lint depends "lint:*"
@@ -129,6 +137,8 @@ assert_task() {
   assert_task pre-commit run "scripts/check-terms --staged" \
     "scripts/staged-tree scripts/check-shell lint" \
     "scripts/staged-tree scripts/check-shell format" \
+    "scripts/staged-tree sh -c 'actionlint .github/workflows/*.yml'" \
+    "scripts/staged-tree zizmor --offline --pedantic --strict-collection ." \
     "scripts/staged-tree rumdl check ." \
     "scripts/staged-tree rumdl fmt --check ."
   # shellcheck disable=SC2016 # mise expands usage_file, not this shell
@@ -202,6 +212,27 @@ assert_task() {
   run mise run format:check
   assert_status 1
   assert_output_has "scripts/flat"
+}
+
+@test "lint task lints the workflows" {
+  mkdir -p .github/workflows
+  printf 'on: push\njobs:\n  a:\n    steps: []\n' > .github/workflows/bad.yml
+  g add .github/workflows/bad.yml
+  run mise run lint
+  assert_status 1
+  assert_output_has '"runs-on" section is missing'
+}
+
+@test "lint task finds an unpinned action" {
+  mkdir -p .github/workflows
+  printf '%s\n' 'name: x' 'on: push' 'permissions: {}' 'jobs:' '  a:' \
+    '    name: a' '    runs-on: ubuntu-24.04' '    steps:' \
+    '      - uses: actions/checkout@v4' '        with:' \
+    '          persist-credentials: false' > .github/workflows/tag.yml
+  g add .github/workflows/tag.yml
+  run mise run lint:actions
+  assert_failed
+  assert_output_has "unpinned-uses"
 }
 
 @test "lint task lints the Markdown" {
@@ -379,6 +410,16 @@ EOF
   commit_with_hooks -m "chore: add script"
   assert_status 1
   assert_output_has "scripts/flat"
+}
+
+@test "pre-commit hook lints the staged workflows" {
+  mkdir -p .github/workflows
+  printf 'on: push\njobs:\n  a:\n    steps: []\n' > .github/workflows/bad.yml
+  g add .github/workflows/bad.yml
+  rm .github/workflows/bad.yml
+  commit_with_hooks -m "ci: add workflow"
+  assert_status 1
+  assert_output_has '"runs-on" section is missing'
 }
 
 @test "pre-commit hook lints the staged Markdown" {
