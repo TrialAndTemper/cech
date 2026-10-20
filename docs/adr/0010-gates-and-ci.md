@@ -1,6 +1,6 @@
 # 10. Gates and CI
 
-- Status: accepted
+- Status: accepted; Last amended: 2026-10-20
 - Date: 2026-10-19
 - Deciders: Michał Bożek
 
@@ -35,6 +35,11 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    `mise run check` runs every gate; `mise run <gate>` runs one.
    Each gate is a task in `mise.toml` that runs a pinned tool, CECH's CLI, or a POSIX shell script under `scripts/`, so contributors and CI run one implementation with the same pinned tools.
    On Windows a script task runs through Git Bash's `sh`, and bats, limited to Linux and macOS by `os`, does not run; this is guidance until a Windows CI job runs the gates.
+
+   > **Amendment (2026-10-20).**
+   > The CI workflow runs the gates on Windows, in Git Bash, so this is no longer guidance; bats still does not run there.
+   > Evidence: a run of the `windows-2025` job in `.github/workflows/ci.yml` passed on 2026-10-20 with mise 2026.10.3.
+
 2. **CI is the authority.**
    A GitHub Actions workflow runs the gates on every pull request and push to `main`.
    A ruleset on `main` requires them to pass before merge.
@@ -47,6 +52,11 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    A `pre-commit` hook (term check and lint on staged files) and a `commit-msg` hook (term check, sign-off, message format) are offered for local use.
    They call `mise run` with the gate's staged or message mode.
    No rule exists only in a hook.
+
+   > **Amendment (2026-10-20).**
+   > The `pre-commit` hook also runs the format checks and the workflow lint on the staged tree, and the `commit-msg` hook checks the sign-off against the author git will record, as CI does.
+   > Evidence: the hook tasks in `mise.toml` and their tests in `test/tasks.bats`.
+
 5. **The gates**, each added when the thing it checks first exists:
    - term check, all public tiers; private tier as in [ADR 4](0004-vendor-neutrality.md);
    - DCO sign-off on every commit in the pull request;

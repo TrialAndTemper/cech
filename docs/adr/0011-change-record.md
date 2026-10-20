@@ -1,6 +1,6 @@
 # 11. Change record
 
-- Status: accepted
+- Status: accepted; Last amended: 2026-10-20
 - Date: 2026-10-17
 - Deciders: Michał Bożek
 
@@ -43,6 +43,11 @@ Release notes (a later ADR on releases) need commits they can sort by kind.
 7. **The commit message gate** checks every commit in a pull request for the item 4 header and a `Signed-off-by:` trailer.
    It does not apply the header rule to `fixup!` and `squash!` commits, but fails while any remain, so the pull request cannot merge until they are folded in.
    `Co-authored-by:` and item 6 are for reviewers to check.
+
+   > **Amendment (2026-10-20).**
+   > The gate also requires a blank line after the header, and a `Signed-off-by:` trailer that carries the commit author's email, since the DCO is the author's statement.
+   > It treats `amend!` commits as it treats `fixup!` and `squash!`, and fails a merge commit, which item 1 keeps off `main`.
+   > Evidence: `scripts/check-commits` and `test/commits.bats`.
 
 ## Consequences
 
