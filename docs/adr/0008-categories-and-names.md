@@ -11,7 +11,7 @@ Categories and names are decided together because a category in the name would r
 
 Names clash and are hard to change (checked on 2026-10-16, versions as in [ADR 6](0006-claude-code-and-codex-from-one-source.md)):
 
-- Neither tool puts the marketplace in a skill's name.
+- Neither harness puts the marketplace in a skill's name.
   Given two enabled plugins named `issues`, Claude Code loads one without warning and Codex lists both under one name.
 - Projects commit enablement keys such as `issues@cech`, so a rename breaks them.
 
@@ -39,7 +39,7 @@ Names clash and are hard to change (checked on 2026-10-16, versions as in [ADR 6
    It is not part of the name.
 3. CECH plugin names are bare: `prose`, `docker`.
    They use `a-z`, `0-9` and `-`, start with a letter, do not end with `-`, contain no `--`, and have at most 64 characters.
-   Such names are valid in both tools and in Agent Skills.
+   Such names are valid in both harnesses and in Agent Skills.
 4. Each extension prefixes its plugins with its namespace (`acme-tracker`).
    The namespace is the extension's marketplace name.
    When chosen, it must not be a prefix of a CECH plugin name that ends before a `-` (CECH's `git-hooks` rules out `git`), so its plugin names cannot equal a CECH name.

@@ -28,7 +28,7 @@ Checked on 2026-10-17 (Claude Code 2.1.302):
    A plugin with no individual owner names the CECH maintainers, with the organisation's GitHub page as `url`.
 2. **Further maintainers** go in `SKILL.md` frontmatter as `metadata.maintainers`: GitHub user names separated by spaces.
    There is no `maintainer` field in `plugin.json`.
-   This works around the validator and is recorded in `data/tools.toml` ([ADR 5](0005-native-tool-features-first.md)); it ends if `claude plugin validate --strict` accepts a maintainers field.
+   This works around the validator and is recorded in `data/harnesses.toml` ([ADR 5](0005-native-tool-features-first.md)); it ends if `claude plugin validate --strict` accepts a maintainers field.
 3. **Credit for ideas** and earlier authors, as [ADR 2](0002-licence-and-contributions.md) allows, goes in `CREDITS.md` in the skill folder, next to any source notes for third-party text.
    It counts as an asset of the skill under [ADR 7](0007-one-plugin-one-skill.md).
    Credits are for people, not agents, so `SKILL.md` does not link to the file.

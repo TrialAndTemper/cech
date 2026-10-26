@@ -10,6 +10,7 @@ The same agent guidance (commits, `AGENTS.md`, testing, review) is useful in man
 Agent skills package it, and Claude Code and Codex both install skills from plugin marketplaces.
 A shared set helps only if each organisation can add its own skills.
 Forks of the set drift and miss fixes.
+These ADRs call Claude Code and Codex harnesses: the programs that run an agent, as opposed to the tools an agent calls.
 
 ## Decision
 
@@ -25,8 +26,8 @@ Forks of the set drift and miss fixes.
    `cech validate` wraps `claude plugin validate` and adds CECH rules.
    `cech eval` wraps `claude plugin eval` and adds runs on Codex, which has no eval command of its own (checked on 2026-10-16, Codex CLI 0.162.1).
    `cech check` checks a project across its enabled marketplaces.
-5. **CECH does not build** a package manager, a multi-agent installer, an eval runner where a tool has one, or an `AGENTS.md` sync tool.
-   CECH keeps to formats that existing tools read.
+5. **CECH does not build** a package manager, a multi-harness installer, an eval runner where a harness has one, or an `AGENTS.md` sync tool.
+   CECH keeps to formats that the harnesses and existing tools read.
 6. **CECH versions its layout and roles.**
    A later ADR on the extension contract defines layout and version ranges.
 
@@ -41,5 +42,5 @@ Forks of the set drift and miss fixes.
 - **One marketplace that takes company content:** breaks neutrality.
 - **Loose skill folders, no marketplace:** no versions, no per-project enablement, no shared tooling.
 - **Skills only, installed by skill installers** (`npx skills`, `gh skill`; checked on 2026-10-16): they pin and update skills, but put a copy of each skill in every repository or user directory, without plugin parts (reviewer agents, hooks, MCP servers) or dependencies.
-- **A cross-tool package manager** (`dotagents`, `apm`; checked on 2026-10-16): they pin per repository, but by copying files into each one, so every repository holds its own copy.
+- **A cross-harness package manager** (`dotagents`, `apm`; checked on 2026-10-16): they pin per repository, but by copying files into each one, so every repository holds its own copy.
   They can still install CECH plugins, since the format is shared.

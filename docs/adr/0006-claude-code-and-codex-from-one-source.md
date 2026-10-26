@@ -28,10 +28,10 @@ Checked on 2026-10-16 (Claude Code 2.1.301, Codex CLI 0.162.1):
    The validator warns on each such field.
 3. Codex extras are generated, and only where Codex needs them.
    The build writes reviewer agents as Codex TOML, and the `cech` CLI copies those of enabled plugins into the project's `.codex/agents/`.
-   Both steps are one tool-gap workaround under [ADR 5](0005-native-tool-features-first.md), not an installer.
+   Both steps are one harness-gap workaround under [ADR 5](0005-native-tool-features-first.md), not an installer.
    The copies are git-ignored, so the project still commits only what it enables ([ADR 3](0003-a-marketplace-you-extend-not-fork.md)).
    The workaround ends when a probe shows Codex loads plugin-bundled agents.
-4. A skill's claims hold on both tools, unless the skill names the one tool it is limited to.
+4. A skill's claims hold on both harnesses, unless the skill names the one harness it is limited to.
    Evals run on both (a later ADR on evals).
 5. The scheduled job ([ADR 5](0005-native-tool-features-first.md)) checks that the newest Codex still loads a Claude-shaped test plugin, and that it prints no deprecation warning for it.
    If either check fails, a new ADR chooses between a Codex generator and Agent Plugins as the source.
