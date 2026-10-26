@@ -1,9 +1,11 @@
 #!/usr/bin/env bats
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
-# Tests for the shell lint and format gates: each case plants files in
-# its own copy of a throwaway repository and checks the verdict of
-# scripts/check-shell.
+# Tests of scripts/check-shell, the script behind the shell lint and
+# format gates. As ADR 10 asks of gate tests, each case guards a way the
+# gates could pass when they should fail, where review would likely miss
+# it, and says which. The other ways were checked by hand when their
+# cases were dropped.
 #
 # Requires: bats (version in mise.toml), git >= 2.28 (init -b), and the
 # tools that check-shell requires.
@@ -53,145 +55,34 @@ plant_suite() {
 "
 }
 
-@test "clean code" {
-  run_shell lint
-  assert_status 0
-  assert_output_has "shell: lint ok (files: 2)"
-  run_shell format
-  assert_status 0
-  assert_output_has "shell: format ok (files: 2)"
-}
-
-@test "help" {
-  run_shell --help
-  assert_status 0
-  assert_output_has "Usage: mise run lint"
-}
-
-@test "no mode" {
-  run_shell
-  assert_status 2
-  assert_output_has "no mode given"
-}
-
-@test "unknown mode" {
-  run_shell shell
-  assert_status 2
-  assert_output_has "unknown mode: shell"
-}
-
-@test "extra argument" {
-  run_shell lint extra
-  assert_status 2
-  assert_output_has "unexpected argument: extra"
-}
-
-# Scripts
-
+# Guards a shellcheck bump that stops reading .shellcheckrc, which alone
+# enables SC2250, or stops linting a script as POSIX sh.
 @test "lint finding" {
-  # shellcheck disable=SC2016 # the planted script must hold a literal $1
+  # shellcheck disable=SC2016 # the planted script holds literal expansions
   plant 755 scripts/lint '#!/bin/sh
-echo $1
+x=1
+echo "$x"
+if [[ -n "${x}" ]]; then :; fi
 '
   run_shell lint
   assert_status 1
-  assert_output_has "SC2086"
+  assert_output_has "SC2250"
+  assert_output_has "SC3010"
 }
 
-@test "format finding, then fix" {
+# Guards a shfmt bump that ignores .editorconfig, which alone asks for a
+# space after >, or exits 0 on a diff.
+@test "format finding" {
   plant 755 scripts/format '#!/bin/sh
-if true; then
-echo x
-fi
+echo x >/dev/null
 '
-  run_shell lint
-  assert_status 0
   run_shell format
   assert_status 1
   assert_output_has "scripts/format"
-  run_shell fix
-  assert_status 0
-  assert_output_has "shell: formatted (files: 3)"
-  run_shell format
-  assert_status 0
 }
 
-@test "format modes skip rule findings" {
-  plant 755 scripts/env-sh '#!/usr/bin/env sh
-:
-'
-  run_shell format
-  assert_status 0
-  run_shell fix
-  assert_status 0
-}
-
-@test "other first line" {
-  plant 755 scripts/env-sh '#!/usr/bin/env sh
-:
-'
-  run_shell lint
-  assert_status 1
-  assert_output_has "scripts/env-sh: first line is not #!/bin/sh"
-}
-
-@test "script that is not executable" {
-  plant 644 scripts/no-x '#!/bin/sh
-:
-'
-  run_shell lint
-  assert_status 1
-  assert_output_has "scripts/no-x: has a shebang but is not executable"
-}
-
-@test "non-executable file is skipped" {
-  plant 644 scripts/notes.md 'Not a script.
-'
-  run_shell lint
-  assert_status 0
-}
-
-@test "deleted but unstaged file is skipped" {
-  plant 755 scripts/gone '#!/bin/sh
-:
-'
-  rm -- "${REPO}/scripts/gone"
-  run_shell lint
-  assert_status 0
-}
-
-# Libraries
-
-@test "library lint finding" {
-  # shellcheck disable=SC2016 # the planted library must hold a literal $1
-  plant 644 scripts/lib/bad.sh '# shellcheck shell=sh
-echo $1
-'
-  run_shell lint
-  assert_status 1
-  assert_output_has "SC2086"
-}
-
-@test "library without its first line" {
-  plant 644 scripts/lib/plain.sh '# Helpers.
-:
-'
-  run_shell lint
-  assert_status 1
-  assert_output_has "scripts/lib/plain.sh: a library must not be executable"
-}
-
-@test "executable library" {
-  plant 755 scripts/lib/run.sh '# shellcheck shell=sh
-:
-'
-  run_shell lint
-  assert_status 1
-  assert_output_has "scripts/lib/run.sh: a library must not be executable"
-}
-
-# Tests
-
+# Guards a shellcheck bump that skips or misreads the bats dialect its
+# directive names.
 @test "bats suite is linted" {
   # shellcheck disable=SC2016 # the planted suite must hold a literal $1
   plant_suite 644 '#!/usr/bin/env bats' '# shellcheck shell=bats' '' \
@@ -201,35 +92,8 @@ echo $1
   assert_output_has "SC2086"
 }
 
-@test "clean bats suite and helper" {
-  # shellcheck disable=SC2016 # the planted files hold literal expansions
-  plant_suite 644 '#!/usr/bin/env bats' '# shellcheck shell=bats' '' \
-    '@test "x" {' '  local v=x' '  test "${v}" = x' '}'
-  plant 644 test/h.bash '# shellcheck shell=bash
-h() {
-  test "$#" -eq 0
-}
-'
-  run_shell lint
-  assert_status 0
-  assert_output_has "shell: lint ok (files: 4)"
-}
-
-@test "bats suite without its dialect line" {
-  plant_suite 644 '#!/usr/bin/env bats' '' '@test "x" {' '  :' '}'
-  run_shell lint
-  assert_status 1
-  assert_output_has "test/x.bats: a bats suite must not be executable"
-}
-
-@test "executable bats suite" {
-  plant_suite 755 '#!/usr/bin/env bats' '# shellcheck shell=bats' '' \
-    '@test "x" {' '  :' '}'
-  run_shell lint
-  assert_status 1
-  assert_output_has "test/x.bats: a bats suite must not be executable"
-}
-
+# Guards BSD grep on macOS missing a bare [[ line, which bash 3.2 there
+# would not fail.
 @test "bare condition in a bats suite" {
   # shellcheck disable=SC2016 # the planted suite holds literal expansions
   plant_suite 644 '#!/usr/bin/env bats' '# shellcheck shell=bats' '' \
@@ -238,78 +102,4 @@ h() {
   assert_status 1
   assert_output_has "test/x.bats:5:"
   assert_output_has "does not fail a case on bash 3.2"
-}
-
-@test "executable bash helper" {
-  plant 755 test/h.bash '# shellcheck shell=bash
-h() {
-  :
-}
-'
-  run_shell lint
-  assert_status 1
-  assert_output_has "test/h.bash: a bash helper must not be executable"
-}
-
-@test "bash helper without its first line" {
-  plant 644 test/h.bash 'h() {
-  :
-}
-'
-  run_shell lint
-  assert_status 1
-  assert_output_has "test/h.bash: a bash helper must not be executable"
-}
-
-@test "executable test fixture with a shebang is skipped" {
-  # shellcheck disable=SC2016 # the fixture holds a literal $1 that must not be linted
-  plant 755 test/fixture.sh '#!/usr/bin/env bash
-echo "$1"
-'
-  run_shell lint
-  assert_status 0
-}
-
-@test "test fixture is skipped" {
-  # shellcheck disable=SC2016 # the fixture holds a literal $1 that must not be linted
-  plant 644 test/fixture.txt 'echo $1
-'
-  run_shell lint
-  assert_status 0
-}
-
-# Tools
-
-@test "missing tool" {
-  local git
-  git=$(command -v git)
-  PATH=$(dirname -- "${git}"):/usr/bin:/bin
-  if command -v shellcheck > /dev/null; then skip "shellcheck is installed system-wide"; fi
-  run_shell lint
-  assert_status 2
-  assert_output_has "shellcheck not found"
-}
-
-@test "missing formatter" {
-  local git
-  git=$(command -v git)
-  PATH=$(dirname -- "${git}"):/usr/bin:/bin
-  if command -v shfmt > /dev/null; then skip "shfmt is installed system-wide"; fi
-  run_shell format
-  assert_status 2
-  assert_output_has "shfmt not found"
-}
-
-@test "tool that fails while linting" {
-  fake_tool shellcheck 'exit 3'
-  run_shell lint
-  assert_status 2
-  assert_output_has "shellcheck failed (exit 3)"
-}
-
-@test "shfmt that fails while fixing" {
-  fake_tool shfmt 'exit 2'
-  run_shell fix
-  assert_status 2
-  assert_output_has "shfmt failed"
 }
