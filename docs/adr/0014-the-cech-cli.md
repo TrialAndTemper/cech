@@ -8,7 +8,7 @@
 
 Earlier ADRs promise a `cech` command: `cech build` and its `--check` ([ADR 9](0009-generated-files.md)), the validator ([ADR 6](0006-claude-code-and-codex-from-one-source.md)), and the gates that run them ([ADR 10](0010-gates-and-ci.md)).
 Later commands will edit the settings of Claude Code and Codex in people's repositories and home directories, where a careless edit loses someone's settings.
-This ADR calls Claude Code and Codex harnesses: the programs that run an agent, as opposed to the tools an agent calls.
+Claude Code and Codex are harnesses, as [ADR 3](0003-a-marketplace-you-extend-not-fork.md) defines them.
 Scripts and CI read a command's output and exit status, so both become a contract as soon as someone depends on them.
 
 Checked on 2026-10-20 with Go 1.27.2:
@@ -46,7 +46,7 @@ Checked on 2026-10-20 with Go 1.27.2:
    - A command never reports success for a check it could not run, and after a partial success it says what it skipped.
 6. **Harness quirks stay in one place.**
    Code that knows one harness's behaviour lives in `internal/harness/claude` or `internal/harness/codex`.
-   Each workaround names its entry in `data/tools.toml` ([ADR 5](0005-native-tool-features-first.md)), so it can be deleted when the harness closes the gap.
+   Each workaround names its entry in `data/harnesses.toml` ([ADR 5](0005-native-tool-features-first.md)), so it can be deleted when the harness closes the gap.
 7. **Works without mise.**
    A user needs neither mise nor Go to run the binary, and it never calls mise.
 8. **Dependency budget.**

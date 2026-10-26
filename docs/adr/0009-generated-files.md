@@ -29,7 +29,7 @@ Checked on 2026-10-17 (Claude Code 2.1.302): `claude plugin validate --strict` f
    - the catalogue page in `docs/`.
 3. One generator writes all of them: `cech build`.
    It works on any marketplace with CECH's layout, so extensions use it too ([ADR 3](0003-a-marketplace-you-extend-not-fork.md)).
-4. Generated files are committed, because both tools read the catalogue and manifests straight from git.
+4. Generated files are committed, because both harnesses read the catalogue and manifests straight from git.
    Where the format allows comments, a generated file starts with a line saying it is generated and by what.
 5. Output is deterministic: plugins sorted by category, then name; fixed formatting; LF line ends and a final newline on every OS.
    Running the build twice changes nothing.
@@ -47,5 +47,5 @@ Checked on 2026-10-17 (Claude Code 2.1.302): `claude plugin validate --strict` f
 ## Options considered
 
 - **Hand-write every file, plus a lint that compares them:** the lint finds drift but every copy still needs editing by hand.
-- **Generate at install or release time, commit nothing:** both tools read the catalogue from the repository, so it must be in git.
+- **Generate at install or release time, commit nothing:** both harnesses read the catalogue from the repository, so it must be in git.
 - **Generate `plugin.json` entirely from `SKILL.md`:** moves version, author and dependencies into skill frontmatter as fields outside the Agent Skills spec, against [ADR 6](0006-claude-code-and-codex-from-one-source.md).
