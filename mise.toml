@@ -79,11 +79,10 @@ depends = ["lint:*"]
 
 # actionlint gets the workflow files by name: with none, it looks for a
 # .git directory, which the pre-commit task's checkout lacks. The glob
-# takes *.yml only, so workflows must use that extension;
-# test/tasks.bats checks that they do.
+# takes both .yml and .yaml.
 [tasks."lint:actions"]
 description = "Lint the GitHub Actions workflows"
-run = ["actionlint .github/workflows/*.yml", "zizmor --offline --pedantic --strict-collection ."]
+run = ["actionlint .github/workflows/*.y*ml", "zizmor --offline --pedantic --strict-collection ."]
 
 [tasks."lint:go"]
 description = "go vet, golangci-lint and go mod tidy -diff on the CLI"
@@ -163,7 +162,7 @@ run = [
   "scripts/staged-tree scripts/check-shell format",
   "scripts/staged-tree scripts/check-go lint",
   "scripts/staged-tree scripts/check-go format",
-  "scripts/staged-tree sh -c 'actionlint .github/workflows/*.yml'",
+  "scripts/staged-tree sh -c 'actionlint .github/workflows/*.y*ml'",
   "scripts/staged-tree zizmor --offline --pedantic --strict-collection .",
   "scripts/staged-tree rumdl check .",
   "scripts/staged-tree rumdl fmt --check .",
