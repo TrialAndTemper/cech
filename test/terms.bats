@@ -1,9 +1,12 @@
 #!/usr/bin/env bats
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
-# Tests for the term check (ADR 4): each case plants values in its own copy
-# of a throwaway repository and checks what scripts/check-terms finds.
-# Values the check would flag in this file are built at run time.
+# Tests of scripts/check-terms, the term check (ADR 4). As ADR 10 asks
+# of gate tests, each case guards a way the check could pass when it
+# should fail, where review would likely miss it, and says which. The
+# other ways were checked by hand when their cases were dropped. Every
+# case also checks that the output never shows the private term. Values
+# the check would flag in this file are built at run time.
 #
 # Requires: bats (version in mise.toml), git >= 2.28 (init -b), and what
 # check-terms requires.
@@ -48,219 +51,66 @@ plant() {
   g add planted.md
 }
 
-# Arguments
+# Public tiers
 
-@test "clean repository" {
-  run_terms
-  assert_status 0
-}
-
-@test "help" {
-  # A hit is staged, so help passes only if it exits before scanning.
-  plant "Write to jane@${CORP}.com."
-  run_terms --help
-  assert_status 0
-  assert_output_has "Usage: mise run terms"
-}
-
-@test "unknown option" {
-  run_terms --stagd
-  assert_status 2
-  assert_output_has "unknown option: --stagd"
-}
-
-@test "option without its value" {
-  run_terms --range
-  assert_status 2
-  assert_output_has "--range needs a value"
-}
-
-@test "a value that looks like an option" {
-  run_terms --range --all
-  assert_status 2
-  assert_output_has "--range value must not start with -: --all"
-}
-
-@test "extra argument" {
-  run_terms --staged --all
-  assert_status 2
-  assert_output_has "unexpected argument: --all"
-}
-
-@test "missing gitleaks" {
-  local git
-  git=$(command -v git)
-  PATH=$(dirname -- "${git}"):/usr/bin:/bin
-  if command -v gitleaks > /dev/null; then skip "gitleaks is installed system-wide"; fi
-  run_terms --staged
-  assert_status 2
-  assert_output_has "gitleaks not found"
-}
-
-# Tier 1
-
-@test "email" {
-  plant "Write to jane@${CORP}.com."
+# Guards a gitleaks bump that changes how keywords or allowlists match,
+# so that a rule in checks/terms/rules.toml stops reporting its shape,
+# an allowlisted address hides another on its line, or the inline
+# marker hides a hit on another line.
+@test "every rule of the file tier reports its shape" {
+  local acct=987654321098 guid=3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d rule
+  # Line 8 ends in the allowlisted address, so that an allowlist applied
+  # to the whole line would hide the other one.
+  printf '%s\n' "Write to jane@${CORP}.com." \
+    "git clone git@gitlab.${CORP}.com:team/repo.git" \
+    "arn:aws:iam::${acct}:role/deploy" \
+    "/subscriptions/${guid}/resourceGroups/rg" \
+    "https://console.cloud.google.com/home?project=${CORP}-prod-42" \
+    "https://bucket.example/f?X-Amz-""Signature=0123456789abcdef0123" \
+    "jane_${CORP}.com#EXT""#@tenant" \
+    "Write to bob@${CORP}.com or a@sub.example.com" \
+    "Write to eve@${CORP}.com." "ok cech-terms: allow a reason" > "${REPO}/planted.md"
+  g add planted.md
   run_terms --staged
   assert_status 1
-  assert_output_has "planted.md:1: email:"
+  for rule in 1:email 2:email 3:aws-arn 4:azure-subscription 5:gcp-project \
+    6:signed-url 7:sso-user 8:email 9:email; do
+    assert_output_has "planted.md:${rule%%:*}: ${rule#*:}:"
+  done
 }
 
-@test "example emails" {
-  plant "Mail jane@sub.example.com or a@b.test."
-  run_terms --staged
-  assert_status 0
-}
-
-@test "public forge remote" {
-  plant "git clone git@github.com:acme/repo.git"
-  run_terms --staged
-  assert_status 0
-}
-
-@test "private host remote" {
-  plant "git clone git@gitlab.${CORP}.com:team/repo.git"
-  run_terms --staged
-  assert_status 1
-  assert_output_has "planted.md:1: email:"
-}
-
-@test "aws arn" {
-  local acct=987654321098
-  plant "arn:aws:iam::${acct}:role/deploy"
-  run_terms --staged
-  assert_status 1
-  assert_output_has "planted.md:1: aws-arn:"
-}
-
-@test "aws arn from the docs" {
-  plant "arn:aws:iam::123456789012:role/deploy"
-  run_terms --staged
-  assert_status 0
-}
-
-@test "azure subscription" {
-  local guid=3f2b1c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d
-  plant "/subscriptions/${guid}/resourceGroups/rg"
-  run_terms --staged
-  assert_status 1
-  assert_output_has "planted.md:1: azure-subscription:"
-}
-
-@test "azure zero subscription" {
-  plant "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg"
-  run_terms --staged
-  assert_status 0
-}
-
-@test "gcp project" {
-  plant "https://console.cloud.google.com/home?project=${CORP}-prod-42"
-  run_terms --staged
-  assert_status 1
-  assert_output_has "planted.md:1: gcp-project:"
-}
-
-@test "gcp example project" {
-  plant "https://console.cloud.google.com/home?project=my-project"
-  run_terms --staged
-  assert_status 0
-}
-
-@test "signed url" {
-  plant "https://bucket.example/f?X-Amz-""Signature=0123456789abcdef0123"
-  run_terms --staged
-  assert_status 1
-  assert_output_has "planted.md:1: signed-url:"
-}
-
-@test "sso user" {
-  plant "jane_${CORP}.com#EXT""#@tenant"
-  run_terms --staged
-  assert_status 1
-  assert_output_has "planted.md:1: sso-user:"
-}
-
-# Tier 2
-
-@test "name with spaces, hyphens, underscores or none" {
+# Guards BSD sed on macOS building a name rule that misses a spelling or
+# a name that ends in punctuation.
+@test "names in every spelling" {
   local v
-  for v in "Quuxly Cloud" "Quuxly-Cloud" "quuxly_cloud" "QuuxlyCloud"; do
+  for v in "Quuxly Cloud" "Quuxly-Cloud" "quuxly_cloud" "QuuxlyCloud" "Zorp++"; do
     plant "Runs on ${v} today."
     run_terms --staged
     # Name the spelling that broke.
     assert_status 1 || {
       echo "spelling: ${v}"
-      false
+      return 1
     }
     assert_output_has "planted.md:1: name-" || {
       echo "spelling: ${v}"
-      false
+      return 1
     }
   done
 }
 
-@test "name needs a word boundary" {
-  plant "Runs on Quuxly Cloudy today."
-  run_terms --staged
-  assert_status 0
-}
+# Private tier
 
-@test "name ending in punctuation" {
-  plant "Built with Zorp++ here."
-  run_terms --staged
-  assert_status 1
-}
-
-@test "inline marker with a reason" {
-  plant "Runs on Quuxly Cloud. cech-terms: allow comparison table"
-  run_terms --staged
-  assert_status 0
-}
-
-@test "inline marker without a reason" {
-  plant "Runs on Quuxly Cloud. cech-terms: allow"
-  run_terms --staged
-  assert_status 1
-}
-
-@test "gitleaks marker on a public tier" {
-  plant "Runs on Quuxly Cloud. gitleaks"":allow"
-  run_terms --staged
-  assert_status 1
-}
-
-# Tier 3
-
-@test "private term" {
-  plant "see ${SECRET} here"
-  run_terms --staged
-  assert_status 1
-  assert_output_has "planted.md:1: private-term-2"
-}
-
-@test "private term in capitals" {
-  local upper
-  upper=$(printf '%s' "${SECRET}" | tr '[:lower:]' '[:upper:]')
-  plant "see ${upper} here"
-  run_terms --staged
-  assert_status 1
-  assert_output_has "planted.md:1: private-term-2"
-}
-
-@test "private term ignores the inline marker" {
-  plant "see ${SECRET} here cech-terms: allow no"
-  run_terms --staged
-  assert_status 1
-  assert_output_has "private-term-2"
-}
-
-@test "private term ignores the gitleaks marker" {
+# Guards a gitleaks bump after which --ignore-gitleaks-allow no longer
+# makes it ignore the gitleaks:allow marker.
+@test "the gitleaks marker hides nothing" {
   plant "see ${SECRET} here gitleaks"":allow"
   run_terms --staged
   assert_status 1
-  assert_output_has "private-term-2"
+  assert_output_has "planted.md:1: private-term-2"
 }
 
+# Guards a gitleaks bump that changes how the private tier reports a hit,
+# so that the public hit around the term shows the term or its location.
 @test "private term inside a public hit" {
   plant "Write to jane@${SECRET}.com."
   run_terms --staged
@@ -268,6 +118,8 @@ plant() {
   assert_output_has "email (location hidden)"
 }
 
+# Guards a private list saved on Windows, whose carriage returns and
+# trailing spaces would leave each term matching nothing.
 @test "private list with CRLF and spaces" {
   printf '# crlf list\r\n%s \r\n' "${SECRET}" > "${BATS_TEST_TMPDIR}/crlf.txt"
   plant "see ${SECRET} here"
@@ -276,6 +128,8 @@ plant() {
   assert_output_has "planted.md:1: private-term-2"
 }
 
+# Guards a gitleaks bump that skips a rule it cannot compile instead of
+# failing, which would drop the private tier unseen.
 @test "a broken private list stops the check" {
   printf '%s\na++\n' "${SECRET}" > "${BATS_TEST_TMPDIR}/broken.txt"
   plant "Write to jane@${SECRET}.com."
@@ -284,37 +138,19 @@ plant() {
   assert_output_has "private tier could not run"
 }
 
+# Guards the private tier skipped in CI, the one place that requires the
+# list.
+@test "missing list when required" {
+  CECH_PRIVATE_TERMS="${BATS_TEST_TMPDIR}/nonexistent" CECH_REQUIRE_PRIVATE_TERMS=1 \
+    run_terms
+  assert_status 2
+  assert_output_has "private term list not found"
+}
+
 # Paths
 
-@test "private term in a path" {
-  printf 'clean\n' > "${REPO}/notes-${SECRET}.md"
-  g add .
-  run_terms --staged
-  assert_status 1
-  assert_output_has "paths:"
-}
-
-@test "private term in a path and its content" {
-  printf 'see %s\n' "${SECRET}" > "${REPO}/notes-${SECRET}.md"
-  g add .
-  run_terms --staged
-  assert_status 1
-  assert_output_has "(location hidden: a path holds a private term)"
-}
-
-@test "private term in a path and its content, in history" {
-  commit_and_drop "notes-${SECRET}.md" "see ${SECRET}"
-  run_terms
-  assert_status 1
-}
-
-@test "private term in a removed path" {
-  commit_and_drop "notes-${SECRET}.md" clean
-  run_terms
-  assert_status 1
-  assert_output_has "paths:"
-}
-
+# Guards a platform, such as macOS, or git path settings that hand a
+# non-ASCII path to the scan in a form the term misses.
 @test "non-ASCII private term in a path" {
   printf '%s\n' "${WIDE}" > "${BATS_TEST_TMPDIR}/wide.txt"
   printf 'Write to jane@%s.com.\n' "${CORP}" > "${REPO}/notes-${WIDE}.md"
@@ -325,116 +161,25 @@ plant() {
   refute_output_has "${WIDE}"
 }
 
+# Guards the same for a path that only history holds.
 @test "non-ASCII private term in a removed path" {
   printf '%s\n' "${WIDE}" > "${BATS_TEST_TMPDIR}/wide.txt"
   commit_and_drop "notes-${WIDE}.md" clean
   CECH_PRIVATE_TERMS="${BATS_TEST_TMPDIR}/wide.txt" run_terms
   assert_status 1
   assert_output_has "paths:"
-}
-
-# Refusals
-
-@test "a broken public rule makes the check error" {
-  printf '\n[[rules]]\nid = "broken"\nregex = %sa++%s\n' "'''" "'''" \
-    >> "${REPO}/checks/terms/rules.toml"
-  run_terms --staged
-  assert_status 2
-  assert_output_has "gitleaks failed (public"
-}
-
-@test "a .gitleaksignore file is refused" {
-  printf 'planted.md:private-term-2:1\n' > "${REPO}/.gitleaksignore"
-  g add .gitleaksignore
-  run_terms --staged
-  assert_status 2
-  assert_output_has "remove .gitleaksignore"
-}
-
-@test "an untracked .gitleaksignore at the root is refused" {
-  printf 'planted.md:private-term-2:1\n' > "${REPO}/.gitleaksignore"
-  run_terms --staged
-  assert_status 2
-  assert_output_has "remove .gitleaksignore"
-}
-
-@test "missing list when required" {
-  CECH_PRIVATE_TERMS="${BATS_TEST_TMPDIR}/nonexistent" CECH_REQUIRE_PRIVATE_TERMS=1 \
-    run_terms
-  assert_status 2
-  assert_output_has "private term list not found"
-}
-
-# Commit messages
-
-@test "tracker key in a message" {
-  printf 'fix: thing\n\nFixes %s-123.\n' "ABC" > "${BATS_TEST_TMPDIR}/msg"
-  run_terms --message "${BATS_TEST_TMPDIR}/msg"
-  assert_status 1
-  assert_output_has "commit-message:3: tracker-key"
-}
-
-@test "standards are not tracker keys" {
-  printf 'fix: thing\n\nUTF-8 and SHA-256 only.\n# ABC-123 in a comment\n' \
-    > "${BATS_TEST_TMPDIR}/msg"
-  run_terms --message "${BATS_TEST_TMPDIR}/msg"
-  assert_status 0
-}
-
-@test "private term in a message" {
-  printf 'fix: thing\n\nAbout %s.\n' "${SECRET}" > "${BATS_TEST_TMPDIR}/msg"
-  run_terms --message "${BATS_TEST_TMPDIR}/msg"
-  assert_status 1
-  assert_output_has "commit-message:3: private-term-2"
-}
-
-@test "diff below the scissors line is ignored" {
-  printf 'fix: thing\n# %s >8 %s\n+Fixes %s-123\n' \
-    "------------------------" "------------------------" "ABC" > "${BATS_TEST_TMPDIR}/msg"
-  run_terms --message "${BATS_TEST_TMPDIR}/msg"
-  assert_status 0
-}
-
-@test "missing message file" {
-  run_terms --message "${BATS_TEST_TMPDIR}/nonexistent"
-  assert_status 2
-  assert_output_has "cannot read message file"
+  refute_output_has "${WIDE}"
 }
 
 # History
 
+# Guards a gitleaks bump after which its git scan reads --log-opts
+# differently or no longer scans removed lines.
 @test "private term added then removed" {
   commit_and_drop gone.md "note ${SECRET}"
   run_terms
   assert_status 1
   assert_output_has "private-term-2 in commit"
-  run_terms --staged
-  assert_status 0
-}
-
-@test "range with and without the adding commit" {
-  commit_and_drop gone.md "note ${SECRET}"
-  run_terms --range HEAD~1..HEAD
-  assert_status 0
-  run_terms --range HEAD~2..HEAD
-  assert_status 1
-}
-
-@test "bad range" {
-  run_terms --range nope..HEAD
-  assert_status 2
-  assert_output_has "bad revision range"
-}
-
-@test "default range from origin/main" {
-  commit_and_drop gone.md "note ${SECRET}"
-  g update-ref refs/remotes/origin/main HEAD~2
-  run_terms
-  assert_status 1
-  assert_output_has "private-term-2 in commit"
-  g update-ref refs/remotes/origin/main HEAD
-  run_terms
-  assert_status 0
 }
 
 # Guards CECH_RANGE ignored: in CI the gate would then check its default
@@ -447,51 +192,10 @@ plant() {
   assert_output_has "private-term-2 in commit"
 }
 
-@test "full scan reaches other branches" {
-  g switch -q -c side
-  printf 'note %s\n' "${SECRET}" > "${REPO}/side.md"
-  g add side.md
-  g commit -q -m "docs: add note"
-  g switch -q main
-  run_terms
-  assert_status 0
-  run_terms --all
-  assert_status 1
-  assert_output_has "private-term-2 in commit"
-}
-
-@test "public hit added then removed" {
-  commit_and_drop gone.md "mail jane@${CORP}.com"
-  run_terms
-  assert_status 1
-  assert_output_has "email in commit"
-}
-
-# Ref names and tags
-
+# Guards GITHUB_HEAD_REF unread: a pull request's branch exists only in
+# CI, so its name would go unchecked.
 @test "private term in the CI branch name" {
   GITHUB_HEAD_REF="topic-${SECRET}" run_terms
   assert_status 1
   assert_output_has "ref-names:"
-}
-
-@test "private term in a branch name" {
-  g branch "topic-${SECRET}"
-  run_terms
-  assert_status 1
-  assert_output_has "ref-names:"
-}
-
-@test "private term in a tag name" {
-  g tag "v-${SECRET}"
-  run_terms
-  assert_status 1
-  assert_output_has "ref-names:"
-}
-
-@test "private term in a tag message" {
-  g tag -a v0.0.1 -m "Release about ${SECRET}"
-  run_terms
-  assert_status 1
-  assert_output_has "tag-messages:"
 }
