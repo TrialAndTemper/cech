@@ -108,6 +108,8 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
 
 - Markdown has one sentence per line, never wrapped; shorten a long sentence rather than break it ([ADR 13](docs/adr/0013-markdown-source-format.md)).
   `mise run format:fix` reflows it.
+- Refer to Claude Code and Codex as harnesses, the programs that run an agent ([ADR 3](docs/adr/0003-a-marketplace-you-extend-not-fork.md)).
+  "Tool" means something else: a tool pinned in `mise.toml`, the `tool` plugin category, a tool an agent calls, or a command-line program.
 - Shell scripts are POSIX sh that runs under dash, macOS sh and Git Bash, and pass shellcheck and shfmt.
   A change to a script comes with a test in `test/` for each way it could let a gate pass when it should fail, where review would likely miss it, such as after a tool bump, on another platform or on the staged tree; a comment on each case names the way it guards ([ADR 10](docs/adr/0010-gates-and-ci.md) item 5).
   Check any other way by hand, and say so in the pull request.

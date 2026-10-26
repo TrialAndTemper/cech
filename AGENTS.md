@@ -20,7 +20,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 - Keep files, commit messages, and branch and tag names vendor-neutral ([ADR 4](docs/adr/0004-vendor-neutrality.md)): nothing specific to a private organisation, and invented examples such as `example.com` and `acme`.
   Never copy text from git-ignored notes into the tree; rewrite it, run `mise run terms`, and let a person read it.
 - Text from another project needs a compatible licence, a `NOTICE` entry and, in a skill, a source note naming the upstream project and commit ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
-- ADR evidence cites tree files, dates and tool versions, never pull request or issue numbers, so each ADR stands alone.
+- ADR evidence cites tree files, dates and the versions of harnesses and tools, never pull request or issue numbers, so each ADR stands alone.
 - Commit messages and other published text link only to public, lasting pages, never to an agent session or a page that needs a login ([ADR 11](docs/adr/0011-change-record.md)).
 - Push, open a pull request or merge only when a person asks.
 

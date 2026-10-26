@@ -2,8 +2,8 @@
 
 [![CI](https://github.com/TrialAndTemper/cech/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/TrialAndTemper/cech/actions/workflows/ci.yml?query=branch%3Amain)
 
-CECH is a free, open-source marketplace of agent skills for Claude Code and Codex.
-Each plugin holds one skill, written once and loaded by both tools.
+CECH is a free, open-source marketplace of agent skills for Claude Code and Codex, the harnesses that run an agent.
+Each plugin holds one skill, written once and loaded by both harnesses.
 Organisations extend CECH with marketplaces in their own repositories instead of forking it, and each project turns on the plugins it wants from CECH and the extensions it uses.
 A small `cech` command-line tool will connect a project to CECH and its extensions and check the setup.
 
