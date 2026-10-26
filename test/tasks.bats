@@ -95,12 +95,6 @@ assert_task() {
   assert_task check depends commits terms lint format:check docs:check test
 }
 
-@test "workflows are named *.yml" {
-  run find .github/workflows -type f ! -name '*.yml'
-  assert_status 0
-  assert_output_is ""
-}
-
 @test "the task list is exactly the gates and hooks" {
   run mise tasks ls --name-only --hidden
   assert_status 0
@@ -110,7 +104,7 @@ assert_task() {
 @test "each task runs its gate" {
   assert_task terms run "scripts/check-terms"
   assert_task commits run "scripts/check-commits"
-  assert_task lint:actions run "actionlint .github/workflows/*.yml" \
+  assert_task lint:actions run "actionlint .github/workflows/*.y*ml" \
     "zizmor --offline --pedantic --strict-collection ."
   assert_task lint:shell run "scripts/check-shell lint"
   assert_task lint:markdown run "rumdl check ."
@@ -135,7 +129,7 @@ assert_task() {
     "scripts/staged-tree scripts/check-shell format" \
     "scripts/staged-tree scripts/check-go lint" \
     "scripts/staged-tree scripts/check-go format" \
-    "scripts/staged-tree sh -c 'actionlint .github/workflows/*.yml'" \
+    "scripts/staged-tree sh -c 'actionlint .github/workflows/*.y*ml'" \
     "scripts/staged-tree zizmor --offline --pedantic --strict-collection ." \
     "scripts/staged-tree rumdl check ." \
     "scripts/staged-tree rumdl fmt --check ."
