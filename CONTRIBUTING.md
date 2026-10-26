@@ -65,8 +65,9 @@ GITHUB_TOKEN=$(gh auth token) mise run docs:check
 
 With a token, lychee checks only that a GitHub repository exists, not the file or heading a link names.
 
-CI runs the same gates on every pull request and every push to `main`, on Linux, macOS and Windows; the link check runs on Linux only.
-A pull request merges only when they pass.
+CI runs `mise run check` on every pull request and every push to `main`, on Linux, macOS and Windows, and the private term tier where its secret reaches.
+A new gate goes into `check` in `mise.toml`; the workflow needs no change.
+A pull request merges only when CI passes.
 
 ### The CLI's Go gates
 

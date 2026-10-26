@@ -95,18 +95,6 @@ assert_task() {
   assert_task check depends commits terms lint format:check docs:check test
 }
 
-@test "CI runs every gate that check runs" {
-  local want
-  run task_field check depends
-  assert_status 0
-  want=$(sort <<< "${output}")
-  # Take the task from each mise run command, skipping comments. Step
-  # conditions are not checked: only docs:check has one, for Linux.
-  run sh -c "sed -n 's/^ *\\(run: \\)\\{0,1\\}mise run \\([^ ]*\\).*/\\2/p' .github/workflows/ci.yml | sort"
-  assert_status 0
-  assert_output_is "${want}"
-}
-
 @test "workflows are named *.yml" {
   run find .github/workflows -type f ! -name '*.yml'
   assert_status 0
@@ -141,7 +129,7 @@ assert_task() {
   assert_task test:bats run "bats test"
   assert_task test:go run "scripts/check-go test"
   assert_task vuln run "scripts/check-go vuln"
-  assert_task check run "echo check: every gate passed"
+  assert_task check run
   assert_task pre-commit run "scripts/check-terms --staged" \
     "scripts/staged-tree scripts/check-shell lint" \
     "scripts/staged-tree scripts/check-shell format" \

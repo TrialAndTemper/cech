@@ -34,7 +34,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | A Go dependency, in the same change as an ADR 14 amendment | `cli/go.mod` | [ADR 14](docs/adr/0014-the-cech-cli.md) item 8 |
 | A public term rule or an allowlisted email address | `checks/terms/` | [ADR 4](docs/adr/0004-vendor-neutrality.md) |
 | A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 10](docs/adr/0010-gates-and-ci.md) item 6 |
-| A CI step, kept in step with the tasks `check` depends on | `.github/workflows/ci.yml` | [ADR 10](docs/adr/0010-gates-and-ci.md) items 1 and 7 |
+| A CI step that is not a gate task, such as the private term tier; a new gate is a task in `check` | `.github/workflows/ci.yml` | [ADR 10](docs/adr/0010-gates-and-ci.md) items 1 and 7 |
 | A check that reports or runs on a schedule but never blocks a merge | `.github/workflows/` | [ADR 10](docs/adr/0010-gates-and-ci.md) items 7 and 8 |
 | A rule for contributors; route agents to it from here | `CONTRIBUTING.md` | [ADR 10](docs/adr/0010-gates-and-ci.md) item 2 |
 

@@ -43,7 +43,6 @@ shell = "sh -o errexit -c"
 [tasks.check]
 description = "Every gate"
 depends = ["commits", "terms", "lint", "format:check", "docs:check", "test"]
-run = "echo check: every gate passed"
 
 # Gates (ADR 10): one task per gate, with its subtasks.
 # lint, format:check and test run every task that matches their
