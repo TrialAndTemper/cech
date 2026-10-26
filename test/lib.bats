@@ -1,9 +1,11 @@
 #!/usr/bin/env bats
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
-# Tests for scripts/lib/common.sh: each case sources it into a POSIX sh
-# script and checks what the helpers print, how the script ends, and
-# that the temporary directory is removed.
+# Tests of scripts/lib/common.sh, which every gate script sources. As
+# ADR 10 asks of gate tests, each case guards a way a gate could pass
+# when it should fail, where review would likely miss it, and says
+# which. The other ways were checked by hand when their cases were
+# dropped.
 #
 # Requires: bats (version in mise.toml).
 
@@ -17,49 +19,18 @@ lib_run() {
     "${SRC}/scripts/lib/common.sh" "$1"
 }
 
-# assert_gone <path>: fail the case if the path still exists.
-assert_gone() {
-  if [[ -e $1 ]]; then
-    printf 'left behind: %s\n' "$1"
-    return 1
-  fi
+# Guards a shell, such as dash or macOS sh, whose EXIT trap replaces a
+# script's findings status with the cleanup's.
+@test "a script that exits 1 after make_tmp ends with 1" {
+  lib_run 'make_tmp; exit 1'
+  assert_status 1
 }
 
-@test "die names the script and exits 2" {
-  lib_run 'die "no luck"; echo after'
-  assert_status 2
-  assert_output_is "demo: no luck"
-}
-
-@test "make_tmp creates a directory and removes it on exit" {
-  # shellcheck disable=SC2016 # the inner shell expands ${TMP}
-  lib_run 'make_tmp; [ -d "${TMP}" ] && printf "%s\n" "${TMP}"'
-  assert_status 0
-  assert_gone "${output}"
-}
-
-@test "make_tmp removes the directory on TERM and ends by the signal" {
-  # shellcheck disable=SC2016 # the inner shell expands ${TMP} and $$
-  lib_run 'make_tmp; printf "%s\n" "${TMP}"; kill -s TERM $$; echo after'
+# Guards a shell, such as dash or macOS sh, in which a script stopped
+# by TERM ends as if it had passed.
+@test "a script stopped by TERM after make_tmp ends by the signal" {
+  # shellcheck disable=SC2016 # the inner shell expands $$
+  lib_run 'make_tmp; kill -s TERM $$; echo after'
   assert_status 143
   refute_output_has "after"
-  assert_gone "${output}"
-}
-
-@test "die after make_tmp removes the directory" {
-  # shellcheck disable=SC2016 # the inner shell expands ${TMP}
-  lib_run 'make_tmp; printf "%s\n" "${TMP}"; die x'
-  assert_status 2
-  assert_output_has "demo: x"
-  assert_gone "${output%%$'\n'*}"
-}
-
-@test "make_tmp stops with exit 2 if mktemp fails" {
-  mkdir -p -- "${BATS_TEST_TMPDIR}/bin"
-  printf '#!/bin/sh\nexit 1\n' > "${BATS_TEST_TMPDIR}/bin/mktemp"
-  chmod 755 "${BATS_TEST_TMPDIR}/bin/mktemp"
-  PATH="${BATS_TEST_TMPDIR}/bin:${PATH}"
-  lib_run 'make_tmp; echo after'
-  assert_status 2
-  assert_output_is "demo: cannot create a temporary directory"
 }
