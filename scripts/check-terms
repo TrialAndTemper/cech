@@ -5,12 +5,13 @@
 # Usage: mise run terms -- [--staged | --message FILE | --range RANGE | --all]
 #
 #   (none)         staged tree, ref names, tag messages, and the commits
+#                  in CECH_RANGE if it is set (CI), else the commits
 #                  missing from origin/main (every commit reachable from
 #                  HEAD if origin/main is absent)
 #   --staged       staged tree only (pre-commit hook)
 #   --message FILE one commit message (commit-msg hook)
 #   --range RANGE  staged tree, ref names, tag messages, and the diffs,
-#                  paths and messages of the commits in a revision range (CI)
+#                  paths and messages of the commits in a revision range
 #   --all          the same for every commit reachable from any ref
 #                  (before going public)
 #   -h, --help     show usage
@@ -60,7 +61,7 @@ usage() {
 Usage: mise run terms -- [--staged | --message FILE | --range RANGE | --all]
 
   (none)         staged tree, ref names, tag messages, and the commits
-                 missing from origin/main
+                 in CECH_RANGE if set, else those missing from origin/main
   --staged       staged tree only
   --message FILE one commit message
   --range RANGE  as (none), for the commits in a revision range
@@ -112,6 +113,15 @@ parse_args() {
   fi
   if [ "${MODE}" = message ] && [ ! -r "${ARG}" ]; then
     die "cannot read message file: ${ARG}"
+  fi
+  # CI sets the range once for every gate that `mise run check` runs.
+  if [ "${MODE}" = default ] && [ -n "${CECH_RANGE:-}" ]; then
+    case "${CECH_RANGE}" in
+      -*) die "CECH_RANGE must not start with -: ${CECH_RANGE}" ;;
+      *) ;;
+    esac
+    MODE=range
+    ARG=${CECH_RANGE}
   fi
 }
 

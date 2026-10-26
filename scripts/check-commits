@@ -5,10 +5,11 @@
 #
 # Usage: mise run commits -- [--message FILE | --range RANGE]
 #
-#   (none)         the commits missing from origin/main (every commit
+#   (none)         the commits in CECH_RANGE if it is set (CI), else
+#                  the commits missing from origin/main (every commit
 #                  reachable from HEAD if origin/main is absent)
 #   --message FILE one commit message (commit-msg hook)
-#   --range RANGE  the commits in a revision range (CI)
+#   --range RANGE  the commits in a revision range
 #   -h, --help     show usage
 #
 # Each message needs:
@@ -58,7 +59,8 @@ usage() {
   cat << 'EOF'
 Usage: mise run commits -- [--message FILE | --range RANGE]
 
-  (none)         the commits missing from origin/main
+  (none)         the commits in CECH_RANGE if set, else the commits
+                 missing from origin/main
   --message FILE one commit message
   --range RANGE  the commits in a revision range
 
@@ -102,6 +104,15 @@ parse_args() {
   fi
   if [ "${MODE}" = message ] && [ ! -r "${ARG}" ]; then
     die "cannot read message file: ${ARG}"
+  fi
+  # CI sets the range once for every gate that `mise run check` runs.
+  if [ "${MODE}" = default ] && [ -n "${CECH_RANGE:-}" ]; then
+    case "${CECH_RANGE}" in
+      -*) die "CECH_RANGE must not start with -: ${CECH_RANGE}" ;;
+      *) ;;
+    esac
+    MODE=range
+    ARG=${CECH_RANGE}
   fi
 }
 

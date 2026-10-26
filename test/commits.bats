@@ -370,6 +370,19 @@ commit() {
   refute_output_has "${old}"
 }
 
+# Guards CECH_RANGE ignored: in CI the gate would then check its default
+# range instead of the one the workflow sets, and could pass.
+@test "CECH_RANGE replaces the default range" {
+  commit "Old style" "" "${SIGNOFF}"
+  g update-ref refs/remotes/origin/main HEAD
+  commit "feat: add a thing" "" "${SIGNOFF}"
+  CECH_RANGE=HEAD~1..HEAD run_commits
+  assert_status 0
+  CECH_RANGE=HEAD~2..HEAD run_commits
+  assert_status 1
+  assert_output_has "header type"
+}
+
 @test "default range without origin/main checks every commit" {
   # The template's only commit has no sign-off.
   run_commits

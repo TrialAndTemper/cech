@@ -21,11 +21,13 @@ SRC=$(cd -- "${BATS_TEST_DIRNAME}/.." && pwd)
 # `git rebase --exec`; left set, they would point every git command of
 # a case at the calling repository. The author and committer variables,
 # which git also exports to hooks, would override the cases' identity.
+# CECH_RANGE, which CI sets for the gates, would change the gates' default
+# mode.
 setup_suite_env() {
   local v
   for v in $(git rev-parse --local-env-vars) GIT_NAMESPACE \
     GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_AUTHOR_DATE \
-    GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE; do
+    GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL GIT_COMMITTER_DATE CECH_RANGE; do
     unset "${v}"
   done
   export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1

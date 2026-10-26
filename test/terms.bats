@@ -437,6 +437,16 @@ plant() {
   assert_status 0
 }
 
+# Guards CECH_RANGE ignored: in CI the gate would then check its default
+# range instead of the one the workflow sets, and could pass.
+@test "CECH_RANGE replaces the default range" {
+  commit_and_drop gone.md "note ${SECRET}"
+  g update-ref refs/remotes/origin/main HEAD
+  CECH_RANGE=HEAD~2..HEAD run_terms
+  assert_status 1
+  assert_output_has "private-term-2 in commit"
+}
+
 @test "full scan reaches other branches" {
   g switch -q -c side
   printf 'note %s\n' "${SECRET}" > "${REPO}/side.md"

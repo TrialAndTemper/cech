@@ -45,6 +45,13 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    A ruleset on `main` requires them to pass before merge.
    Gates that need a secret, such as the private-term tier ([ADR 4](0004-vendor-neutrality.md)), cannot run on fork pull requests, so they are required only where they run and are skipped locally without the secret.
    A rule that CI cannot check is written as guidance in the contributing guide, not described as enforced.
+
+   > **Amendment (2026-10-26).**
+   > The workflow runs `mise run check`, the command a contributor runs, so it holds no second list of gates; each gate keeps running after another fails.
+   > Only the private term tier has a step of its own, so that its secret reaches no other gate.
+   > The gates, the link check included, run on Linux, macOS and Windows.
+   > Evidence: `.github/workflows/ci.yml`, and `CECH_RANGE` in `scripts/check-commits` and `scripts/check-terms`, with mise 2026.10.3.
+
 3. **Bypass.**
    Organisation owners may bypass the ruleset only to repair a broken `main` or a broken gate.
    Each bypass gets an issue saying what was done and why.
