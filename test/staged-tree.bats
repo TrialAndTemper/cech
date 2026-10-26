@@ -1,9 +1,12 @@
 #!/usr/bin/env bats
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
-# Tests for scripts/staged-tree: each case stages files in its own copy
-# of a throwaway repository and checks what a command run through it
-# sees.
+# Tests of scripts/staged-tree, through which the pre-commit hook runs
+# its lint and format checks. As ADR 10 asks of gate tests, each case
+# guards a way a check run through it could pass when it should fail,
+# where review would likely miss it, and says which: a check run this
+# way shows its effect only during a commit. The other ways were checked
+# by hand when their cases were dropped.
 #
 # Requires: bats (version in mise.toml) and git >= 2.28 (init -b).
 
@@ -30,6 +33,8 @@ staged_tree() {
   run "${REPO}/scripts/staged-tree" "$@"
 }
 
+# Guards a check that reads the files on disk instead of the staged
+# text, which only a commit would show.
 @test "the command sees the staged text" {
   printf 'staged\n' > note.txt
   g add note.txt
@@ -39,25 +44,9 @@ staged_tree() {
   assert_output_is "staged"
 }
 
-@test "the command sees staged files, not untracked ones" {
-  printf 'new\n' > new.txt
-  g add new.txt
-  printf 'stray\n' > stray.txt
-  staged_tree ls
-  assert_status 0
-  assert_output_has "new.txt"
-  refute_output_has "stray.txt"
-}
-
-@test "git in the command sees the index" {
-  printf 'new\n' > new.txt
-  g add new.txt
-  staged_tree git ls-files
-  assert_status 0
-  assert_output_has "new.txt"
-  assert_output_has "scripts/staged-tree"
-}
-
+# Guards the relative index path that git can pass during a commit:
+# git reads an index it cannot find as empty, so a check would see no
+# files.
 @test "a relative index path still works" {
   printf 'new\n' > new.txt
   g add new.txt
@@ -66,38 +55,9 @@ staged_tree() {
   assert_output_has "new.txt"
 }
 
+# Guards a shell, such as dash or macOS sh, whose EXIT trap replaces
+# the check's exit status with the cleanup's.
 @test "the command's exit status is kept" {
   staged_tree sh -c 'exit 3'
   assert_status 3
-}
-
-@test "the checkout is removed" {
-  # shellcheck disable=SC2016 # the inner shell expands $PWD
-  staged_tree sh -c 'printf "%s\n" "$PWD"'
-  assert_status 0
-  if [[ -e ${output} ]]; then
-    printf 'checkout left behind: %s\n' "${output}"
-    return 1
-  fi
-}
-
-@test "no command" {
-  staged_tree
-  assert_status 2
-  assert_output_has "no command given"
-}
-
-@test "missing library" {
-  rm -- "${REPO}/scripts/lib/common.sh"
-  staged_tree true
-  assert_status 2
-  assert_output_is "staged-tree: cannot read scripts/lib/common.sh"
-}
-
-@test "outside a repository" {
-  mkdir "${BATS_TEST_TMPDIR}/plain"
-  cd -- "${BATS_TEST_TMPDIR}/plain" || return
-  run env GIT_CEILING_DIRECTORIES="${BATS_TEST_TMPDIR}" "${REPO}/scripts/staged-tree" true
-  assert_status 2
-  assert_output_has "not in a git repository"
 }
