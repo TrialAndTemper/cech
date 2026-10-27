@@ -95,5 +95,5 @@ jobs:
           if [ -n "${number}" ]; then
             gh issue comment "${number}" --repo "${REPO}" --body "${body}"
           else
-            gh issue create --repo "${REPO}" --title "${TITLE}" --body "${body}" --label triage --label bug
+            gh issue create --repo "${REPO}" --title "${TITLE}" --body "${body}" --label triage --label bug --label security --label dependencies
           fi
