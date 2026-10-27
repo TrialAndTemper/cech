@@ -1,6 +1,6 @@
 # 10. Gates and CI
 
-- Status: accepted; Last amended: 2026-10-26
+- Status: accepted
 - Date: 2026-10-19
 - Deciders: Michał Bożek
 
@@ -34,36 +34,21 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    mise is the required task runner.
    `mise run check` runs every gate; `mise run <gate>` runs one.
    Each gate is a task in `mise.toml` that runs a pinned tool, CECH's CLI, or a POSIX shell script under `scripts/`, so contributors and CI run one implementation with the same pinned tools.
-   On Windows a script task runs through Git Bash's `sh`, and bats, limited to Linux and macOS by `os`, does not run; this is guidance until a Windows CI job runs the gates.
-
-   > **Amendment (2026-10-20).**
-   > The CI workflow runs the gates on Windows, in Git Bash, so this is no longer guidance; bats still does not run there.
-   > Evidence: a run of the `windows-2025` job in `.github/workflows/ci.yml` passed on 2026-10-20 with mise 2026.10.3.
-
+   On Windows a script task runs through Git Bash's `sh`, and bats, limited to Linux and macOS by `os`, does not run.
 2. **CI is the authority.**
-   A GitHub Actions workflow runs the gates on every pull request and push to `main`.
-   A ruleset on `main` requires them to pass before merge.
-   Gates that need a secret, such as the private-term tier ([ADR 4](0004-vendor-neutrality.md)), cannot run on fork pull requests, so they are required only where they run and are skipped locally without the secret.
+   A GitHub Actions workflow runs `mise run check`, the command a contributor runs, on every pull request and push to `main`, so it holds no second list of gates.
+   The gates, the link check included, run on Linux, macOS and Windows, apart from the bats tests on Windows, and each keeps running after another fails.
+   A ruleset on `main` requires the gates to pass before merge.
+   Gates that need a secret, such as the private term tier ([ADR 4](0004-vendor-neutrality.md)), cannot run on fork pull requests, so they are required only where they run and are skipped locally without the secret.
+   Only the private term tier has a step of its own, so that its secret reaches no other gate.
    A rule that CI cannot check is written as guidance in the contributing guide, not described as enforced.
-
-   > **Amendment (2026-10-26).**
-   > The workflow runs `mise run check`, the command a contributor runs, so it holds no second list of gates; each gate keeps running after another fails.
-   > Only the private term tier has a step of its own, so that its secret reaches no other gate.
-   > The gates, the link check included, run on Linux, macOS and Windows.
-   > Evidence: `.github/workflows/ci.yml`, and `CECH_RANGE` in `scripts/check-commits` and `scripts/check-terms`, with mise 2026.10.3.
-
 3. **Bypass.**
    Organisation owners may bypass the ruleset only to repair a broken `main` or a broken gate.
    Each bypass gets an issue saying what was done and why.
 4. **Hooks are a convenience.**
-   A `pre-commit` hook (term check and lint on staged files) and a `commit-msg` hook (term check, sign-off, message format) are offered for local use.
+   A `pre-commit` hook (term check, lint, format checks and workflow lint on the staged tree) and a `commit-msg` hook (term check, message format, and a sign-off checked against the author git will record, as CI does) are offered for local use.
    They call `mise run` with the gate's staged or message mode.
    No rule exists only in a hook.
-
-   > **Amendment (2026-10-20).**
-   > The `pre-commit` hook also runs the format checks and the workflow lint on the staged tree, and the `commit-msg` hook checks the sign-off against the author git will record, as CI does.
-   > Evidence: the hook tasks in `mise.toml` and their tests in `test/tasks.bats`.
-
 5. **The gates**, each added when the thing it checks first exists:
    - term check, all public tiers; private tier as in [ADR 4](0004-vendor-neutrality.md);
    - DCO sign-off on every commit in the pull request;
@@ -77,23 +62,16 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    - eval case lint and grader tests (a later ADR on evals);
    - CLI tests on Linux, macOS and Windows.
 
-   > **Amendment (2026-10-26).**
-   > A gate script has a test for each way the gate could pass when it should fail, where review would likely miss it, such as a finding it loses or a check it skips.
-   > Such a way mostly hides outside the diff: in a bumped tool pin, on a platform the reviewer does not run, or in a gate run indirectly, such as on the staged tree.
-   > Each case added from this amendment on says in a comment which way it guards.
-   > Any other way is checked by hand when the gate is added or changed, and the pull request records that check.
-   > A gate that fails when it should pass shows itself the first time it runs on that input, so that case needs no test.
-   > Evidence: the cases and comments in `test/go.bats` and `test/tasks.bats`; `CONTRIBUTING.md` restates the rule and `AGENTS.md` routes to it.
-
+   A gate script has a test for each way the gate could pass when it should fail, where review would likely miss it, such as a finding it loses or a check it skips.
+   Such a way mostly hides outside the diff: in a bumped tool pin, on a platform the reviewer does not run, or in a gate run indirectly, such as on the staged tree.
+   Each case added since 2026-10-26 says in a comment which way it guards.
+   Any other way is checked by hand when the gate is added or changed, and the pull request records that check.
+   A gate that fails when it should pass shows itself the first time it runs on that input, so that case needs no test.
 6. **Tool versions are pinned exactly** in the `[tools]` table of `mise.toml`, with downloads and checksums in `mise.lock`.
    CI installs an exact mise version, then the tools with `locked` set; `mise.toml` sets mise's `min_version`.
+   A tool that mise builds from source with its `go` backend, such as govulncheck, has no download to record: `mise.lock` holds only its version, and the Go checksum database checks the source that `go install` fetches.
    Pins are added and bumped by letting mise resolve them under a week's `minimum_release_age`; review checks the release date of a version given by hand.
    The table holds only tools that build or check CECH; `data/tools.toml` ([ADR 5](0005-native-tool-features-first.md)) records the agent tools CECH relies on.
-
-   > **Amendment (2026-10-20).**
-   > A tool that mise builds from source with its `go` backend, such as govulncheck, has no download to record: `mise.lock` holds only its version, and the Go checksum database checks the source that `go install` fetches.
-   > Evidence: `mise.toml` and `mise.lock`, with mise 2026.10.3 and Go 1.27.2.
-
 7. **Workflow safety.**
    Third-party actions are pinned by full commit SHA.
    Workflows default to `permissions: contents: read`, widened per job only where needed.
