@@ -48,7 +48,8 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
    ```
 
    Each key under `marketplaces` and `enable` is a namespace ([ADR 8](0008-categories-and-names.md) items 4 and 5).
-   `ref` is a release tag and `commit` the tag's commit at pinning; `cech` writes both.
+   `ref` is a release tag (`v` and then `X.Y.Z` in decimal with no leading zeros) and `commit` the tag's commit at pinning; `cech` writes both.
+   The config manages only CECH and extensions; other marketplaces go into the native files by hand, and `cech` leaves them as they are (items 2 and 4).
    A source never holds credentials; access uses the machine's git configuration.
 2. **Rendered native files.**
    `cech` renders both settings files' marketplace and plugin entries from the config, leaving every other byte as it was ([ADR 14](0014-the-cech-cli.md) item 3); the project commits them.
@@ -56,12 +57,12 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
    A project declares each marketplace under the `name` in its catalogue at the pinned commit.
    Each CECH release names its catalogue `cech-` plus its version, dots as hyphens: `cech-0-1-0` ([ADR 8](0008-categories-and-names.md) item 5).
    Keys use it, `cech-prose@cech-0-1-0`, so versions sit side by side.
-   Extensions may name their releases the same way; one that does not risks the mixed versions above.
+   Each extension release names its catalogue the same way, after its namespace: `acme-1-4-0`.
 4. **A complete map.**
    For each managed marketplace, the native files hold `true` for each enabled plugin and `false` for every other plugin in its catalogue at the pinned commit.
    Apart from item 6, `cech` writes no keys for other marketplaces.
 5. **Dependencies.**
-   `cech enable` also enables what an enabled plugin depends on, and fails when the config lists no marketplace for a dependency.
+   `cech enable` also enables what an enabled plugin depends on, and fails when no managed catalogue at its pinned commit carries the plugin under the marketplace name the dependency gives, or under the depending plugin's own when it gives none.
    `cech disable` refuses to turn off a plugin another enabled plugin needs, and names the plugins that need it.
 6. **Unversioned copies.**
    Outside a release tag, such as on a branch, a catalogue is named after its namespace ([ADR 8](0008-categories-and-names.md) items 4 and 5).
@@ -69,12 +70,12 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
    `cech` never writes to user settings.
 7. **Hand-written files.**
    A project may write the native files by hand, without the config, following items 3, 4 and 6, with each dependency enabled.
-   Item 8's rendering and pin checks then do not apply.
+   Item 8's rendering and pin checks, catalogue names included, then do not apply.
 8. **Commands.**
    - `cech init` writes the config with CECH pinned to its newest release unless told otherwise, renders the native files, and prints the steps each clone needs.
    - `cech enable` and `cech disable` change the plugin lists, apply item 5, and render again.
    - `cech upgrade` updates a pin, the marketplace's name and its keys together.
-   - `cech check` is read-only and fails when native files differ from the rendering, a tag no longer points at its recorded commit, two enabled plugins share a name ([ADR 8](0008-categories-and-names.md) item 7), a dependency is not enabled ([ADR 7](0007-one-plugin-one-skill.md) item 3), or a source holds credentials.
+   - `cech check` is read-only and fails when native files differ from the rendering, a `ref` is not a release tag or no longer points at its recorded commit, a pinned catalogue is not named after its namespace and the tag's version, two enabled plugins share a name ([ADR 8](0008-categories-and-names.md) item 7), a dependency is not enabled ([ADR 7](0007-one-plugin-one-skill.md) item 3), or a source holds credentials.
    - `cech setup` runs `codex plugin marketplace upgrade` ([ADR 14](0014-the-cech-cli.md) item 2) and syncs the enabled plugins' reviewer agents ([ADR 6](0006-claude-code-and-codex-from-one-source.md) item 3).
 
 ## Consequences

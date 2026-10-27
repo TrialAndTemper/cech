@@ -34,9 +34,10 @@ Checked on 2026-10-17 (Claude Code 2.1.302):
    Credits are for people, not agents, so `SKILL.md` does not link to the file.
 4. **Generated code owners.**
    `cech build` ([ADR 9](0009-generated-files.md)) writes `.github/CODEOWNERS`:
-   - first, a catch-all line for the marketplace's maintainer team; for CECH, `@TrialAndTemper/maintainers`;
+   - first, a catch-all line for the marketplace's maintainer team, the `team` in its `data/marketplace.toml` (for CECH, `@TrialAndTemper/maintainers`);
    - then, for each plugin, its folder (and its evals folder, once a later ADR on evals places it), owned by the owner and the maintainers.
 
+   A marketplace with no `team` gets no code owners file.
    The build reads the owner's user name from a `url` of the form `https://github.com/<user>`, without network access.
    It leaves the owner out when `<user>` is the organisation of the catch-all team, or when the `url` has another form or is missing.
    A plugin whose line would then name nobody gets no line, and the catch-all team owns it.

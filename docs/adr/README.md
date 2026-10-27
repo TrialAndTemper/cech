@@ -18,3 +18,4 @@
 14. [The cech CLI](0014-the-cech-cli.md)
 15. [Repository state under .cech/](0015-repository-state-under-cech.md)
 16. [Per-project plugin enablement](0016-per-project-plugin-enablement.md)
+17. [The extension model](0017-the-extension-model.md)
