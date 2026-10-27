@@ -10,6 +10,7 @@ A few CECH choices are costly to undo: formats, names, pins, CLI promises.
 Contributors need the reason behind each rule.
 A log full of small decisions hides the ones that matter, and parallel branches clash on numbers or leave gaps.
 On `main`, each ADR's status must say whether it is in force, and one index must list them all.
+Until the first plugin merges, nothing is built on the ADRs' exact wording, and the ADRs are still settling.
 
 ## Decision
 
@@ -22,7 +23,8 @@ On `main`, each ADR's status must say whether it is in force, and one index must
 4. ADR numbers on `main` run from 1 with no gaps.
    A pull request numbers its ADRs right after the highest on `main`, and renumbers if another merges first.
    CI checks the branch merged onto current `main` and rejects duplicate or missing numbers.
-5. An accepted ADR is not rewritten; typos and links may be fixed.
+5. Until the first plugin merges, an accepted ADR is edited in place, whatever the change; its number and file name stay, so links keep working, and the commit that makes the edit says why.
+   From then on, an accepted ADR is not rewritten; typos and links may be fixed.
    - A refinement (a parameter, an edge case, a rename, an added list entry) goes in a dated `> **Amendment (YYYY-MM-DD).**` note, with its evidence, under the paragraph it changes.
      The status gains `Last amended: <date>`.
    - A different option, one an earlier ADR rejected, or a removed or inverted rule needs a new ADR that supersedes the old one, with links both ways.
@@ -34,9 +36,11 @@ On `main`, each ADR's status must say whether it is in force, and one index must
 
 - Each ADR reads in one sitting.
 - A branch may have to renumber its ADR before merging.
+- Until the first plugin merges, an ADR shows only the current decision, and how it got there is in git history.
 
 ## Options considered
 
 - **Decisions in pull requests only:** reasons get lost in closed threads.
 - **An ADR for every notable change:** the contracts get buried.
+- **Amendment notes from the first ADR on:** the groundwork would reach the first plugin as a stack of notes that a reader must apply in their head, though nothing yet depended on the old text.
 - **Reserve a number when a branch starts:** needs a shared registry, and abandoned branches leave gaps.

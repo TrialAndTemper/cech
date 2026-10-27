@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        A change to a contract needs a new ADR or an amendment to an accepted one; see docs/adr/ and CONTRIBUTING.md.
+        A change to a contract needs a new ADR or a change to an accepted one; see docs/adr/ and CONTRIBUTING.md.
         Use invented data such as example.com and acme, not names or hosts from a private organisation.
   - type: textarea
     id: problem
