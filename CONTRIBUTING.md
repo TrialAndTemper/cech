@@ -161,7 +161,21 @@ A maintainer then gives it one status label at a time, replacing the last:
 
 When an issue is finished, a maintainer removes its status label and closes it with GitHub's reason (completed, not planned or duplicate) and a comment saying what was done or which issue it duplicates.
 
-A maintainer may add more labels beside the status: `documentation` for the docs, ADRs or guides, `accessibility` for a barrier for people with disabilities, `good first issue` for an issue suited to a newcomer, and `help wanted` for one where outside help is welcome.
+A maintainer may add area labels beside the status, one for each part of the repository the issue touches:
+
+| Label | Area |
+| --- | --- |
+| `documentation` | The docs, ADRs or guides |
+| `cli` | The `cech` CLI in `cli/` |
+| `gates` | Gate scripts in `scripts/`, mise tasks and the term check in `checks/` |
+| `tests` | Work on the tests themselves, such as gaps, flaky cases or the bats helpers in `test/`; a test for a change in another area takes that area's label |
+| `ci` | CI and scheduled workflows in `.github/workflows/` |
+| `dependencies` | Tool pins in `mise.toml` and Go modules in `cli/go.mod` |
+| `portability` | Behaviour that differs by operating system, shell or harness |
+| `skills` | Skills and plugins in the marketplace |
+
+A maintainer may also add `security` for a public security finding, such as a vulnerable dependency, `accessibility` for a barrier for people with disabilities, `good first issue` for an issue suited to a newcomer, and `help wanted` for one where outside help is welcome.
+A vulnerability report itself goes through [SECURITY.md](SECURITY.md), not an issue.
 
 ## Pull requests
 
