@@ -1,6 +1,6 @@
 # 11. Change record
 
-- Status: accepted; Last amended: 2026-10-20
+- Status: accepted
 - Date: 2026-10-17
 - Deciders: Michał Bożek
 
@@ -40,14 +40,10 @@ Release notes (a later ADR on releases) need commits they can sort by kind.
    No other content limits beyond [ADR 4](0004-vendor-neutrality.md).
 6. **Messages stand alone.**
    A link in a commit message points only to a public, durable page: a CECH issue or pull request, a spec, an upstream commit.
-7. **The commit message gate** checks every commit in a pull request for the item 4 header and a `Signed-off-by:` trailer.
-   It does not apply the header rule to `fixup!` and `squash!` commits, but fails while any remain, so the pull request cannot merge until they are folded in.
+7. **The commit message gate** checks every commit in a pull request for the item 4 header, a blank line after it, and a `Signed-off-by:` trailer that carries the commit author's email, since the DCO is the author's statement.
+   It does not apply the header rule to `fixup!`, `squash!` and `amend!` commits, but fails while any remain, so the pull request cannot merge until they are folded in.
+   It fails a merge commit, which item 1 keeps off `main`.
    `Co-authored-by:` and item 6 are for reviewers to check.
-
-   > **Amendment (2026-10-20).**
-   > The gate also requires a blank line after the header, and a `Signed-off-by:` trailer that carries the commit author's email, since the DCO is the author's statement.
-   > It treats `amend!` commits as it treats `fixup!` and `squash!`, and fails a merge commit, which item 1 keeps off `main`.
-   > Evidence: `scripts/check-commits` and `test/commits.bats`.
 
 ## Consequences
 
