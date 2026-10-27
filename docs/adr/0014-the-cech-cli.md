@@ -11,7 +11,7 @@ Later commands will edit the settings of Claude Code and Codex in people's repos
 Claude Code and Codex are harnesses, as [ADR 3](0003-a-marketplace-you-extend-not-fork.md) defines them.
 Scripts and CI read a command's output and exit status, so both become a contract as soon as someone depends on them.
 
-Checked on 2026-10-20 with Go 1.27.2:
+Checked on 2026-10-27 with Go 1.27.3:
 
 - Go builds a static binary for each of Linux, macOS and Windows, so users install no runtime.
 - A module in a subdirectory takes its versions from tags prefixed with that directory: the module in `cli/` is versioned by `cli/vX.Y.Z` tags, and `go install` of a version records it in the binary's build information.

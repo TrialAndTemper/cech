@@ -19,7 +19,7 @@ actionlint = "1.7.12"
 # archive's sha256 there for each platform.
 bats = { version = "1.14.0", os = ["linux", "macos"] }
 gitleaks = "8.30.1"
-go = "1.27.2"
+go = "1.27.3"
 # mise builds govulncheck from source with the pinned go, which checks
 # the module against the Go checksum database; mise.lock records the
 # version only, with no download or checksum.
