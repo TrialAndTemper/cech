@@ -70,8 +70,9 @@ commit_with_hooks() {
   refute_output_has "${SECRET}"
 }
 
-# Guards a mise bump after which a pattern in depends, such as lint:*,
-# matches fewer tasks, so that check skips a gate.
+# Guards a gate dropped from check's depends, and a mise bump after
+# which a pattern in depends, such as lint:*, matches fewer tasks, so
+# that check skips a gate.
 @test "check runs every gate task" {
   local tasks task
   tasks=$(mise tasks ls --name-only --hidden) || return
@@ -82,7 +83,7 @@ commit_with_hooks() {
   assert_status 0
   for task in ${tasks}; do
     case "${task}" in
-      commits | terms | docs:check | lint:* | format:check:* | test:*)
+      commits | terms | docs:check | build:check | lint:* | format:check:* | test:*)
         assert_output_has "[${task}] \$"
         ;;
       *) ;;

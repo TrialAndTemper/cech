@@ -1,11 +1,12 @@
 #!/bin/sh
-# Go gates for the cech CLI in cli/ (ADR 16): lint, format check, tests
-# and the vulnerability check of ADR 16 item 3, run as `mise run lint`,
-# `mise run format:check`, `mise run format:fix`, `mise run test` and
-# `mise run vuln`.
+# Go gates for the cech CLI in cli/ (ADR 16): lint, format check, tests,
+# the vulnerability check of ADR 16 item 3 and the check of the
+# generated files of ADR 18, run as `mise run lint`,
+# `mise run format:check`, `mise run format:fix`, `mise run test`,
+# `mise run vuln`, `mise run build:check` and `mise run build:fix`.
 # POSIX sh (ADR 4): it must run under dash, macOS sh and Git Bash.
 #
-# Usage: scripts/check-go lint | format | fix | test | vuln
+# Usage: scripts/check-go lint | format | fix | test | vuln | build | build-fix
 #
 #   lint    go vet, golangci-lint (cli/.golangci.yml), and go mod tidy
 #           -diff, which fails if go.mod or go.sum is not tidy
@@ -15,6 +16,12 @@
 #   test    go test, with the race detector where cgo is on, the
 #           platform has one and it builds
 #   vuln    govulncheck; needs the network for the vulnerability database
+#   build   cech build --check on the repository, with the cech built
+#           from this checkout, never one on PATH, so the verdict does
+#           not depend on the machine
+#   build-fix
+#           cech build on the repository, with the same cech, to rewrite
+#           the generated files
 #
 # The tools run in cli/ with GOTOOLCHAIN=local, so only the Go that mise
 # pins runs and go never downloads another toolchain, and with
@@ -45,8 +52,8 @@ STATUS=0
 
 usage() {
   cat << 'EOF'
-Usage: mise run lint | format:check | format:fix | test | vuln
-       (scripts/check-go lint | format | fix | test | vuln)
+Usage: mise run lint | format:check | format:fix | test | vuln | build:check | build:fix
+       (scripts/check-go lint | format | fix | test | vuln | build | build-fix)
 
   lint     go vet, golangci-lint and go mod tidy -diff
   format   show what the Go formatters would change
@@ -54,6 +61,10 @@ Usage: mise run lint | format:check | format:fix | test | vuln
   test     go test, with -race where the platform has a race
            detector, cgo is on and it builds
   vuln     govulncheck; needs the network
+  build    cech build --check on the repository, with the cech built
+           from this checkout
+  build-fix
+           cech build on the repository, with the same cech
 
 Exit status: 0 clean, 1 findings, 2 the check could not run.
 EOF
@@ -82,10 +93,10 @@ step() {
 }
 
 main() {
-  local mode race cgo goos goarch probe
+  local mode race cgo goos goarch probe cech
 
   case "${1:-}" in
-    lint | format | fix | test | vuln) mode=$1 ;;
+    lint | format | fix | test | vuln | build | build-fix) mode=$1 ;;
     -h | --help)
       usage
       exit 0
@@ -163,6 +174,25 @@ main() {
       step 1 go test ${race:+"${race}"} ./...
       ;;
     vuln) step 3 govulncheck ./... ;;
+    build | build-fix)
+      make_scratch
+      cech="${SCRATCH}/cech$(go env GOEXE)" || die "go env failed"
+      # -buildvcs=false: go build fails where it finds a repository that
+      # git cannot read, such as one git refuses as unsafe, and this
+      # build needs no stamp. Like go test, it exits 1 for code that does
+      # not build, a finding.
+      step 1 go build -buildvcs=false -o "${cech}" ./cmd/cech
+      # cech exits 1 for files that differ, for sources it cannot build
+      # from and for a write that failed, all findings; 2 and 3 mean it
+      # could not decide.
+      if [ "${STATUS}" = 0 ] && [ "${mode}" = build ]; then
+        step 1 "${cech}" build --check -C "${ROOT}"
+        [ "${STATUS}" = 0 ] ||
+          printf 'go: once the sources are right, mise run build:fix rewrites the generated files\n' >&2
+      elif [ "${STATUS}" = 0 ]; then
+        step 1 "${cech}" build -C "${ROOT}"
+      fi
+      ;;
     *) die "unknown mode: ${mode}" ;;
   esac
 

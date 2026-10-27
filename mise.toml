@@ -42,12 +42,18 @@ shell = "sh -o errexit -c"
 
 [tasks.check]
 description = "Every gate"
-depends = ["commits", "terms", "lint", "format:check", "docs:check", "test"]
+depends = ["commits", "terms", "lint", "format:check", "docs:check", "test", "build:check"]
 
 # Gates (ADR 4): one task per gate, with its subtasks.
 # lint, format:check and test run every task that matches their
 # pattern, hidden ones too, so a task named like lint:x joins lint, and
 # through it check; the pre-commit task lists its checks by hand.
+
+# cech build --check (ADR 18 item 7) on data/marketplace.toml and the
+# plugins, with the CLI built from the checkout.
+[tasks."build:check"]
+description = "Fail if a file that cech build generates differs from its sources"
+run = "scripts/check-go build"
 
 [tasks.commits]
 description = "Commit message gate (ADR 6); mise run commits -- --help lists its modes"
@@ -135,6 +141,12 @@ run = "scripts/check-go vuln"
 
 # Fixers: they rewrite files, so check does not run them. format:fix
 # runs every task that matches format:fix:*.
+
+# cech build, with the CLI built from the checkout, as build:check runs
+# it.
+[tasks."build:fix"]
+description = "Rewrite the files that cech build generates from their sources"
+run = "scripts/check-go build-fix"
 
 [tasks."format:fix"]
 description = "Every formatter, rewriting the files"

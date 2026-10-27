@@ -35,10 +35,12 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 4](docs/adr/0004-gates-and-ci.md) |
 | A harness probe that runs unattended, with `unattended = true` on its entry in the harness data file | `scripts/probes/<entry name>` | [ADR 9](docs/adr/0009-native-harness-features-first.md) items 4 and 5 |
 | A CLI command or package, with its Go tests | `cli/` | [ADR 15](docs/adr/0015-the-cech-cli.md); [ADR 18](docs/adr/0018-generated-files.md) for what `cech build` reads and writes |
+| The catalogue's namespace, description, owner or code owners team, then `mise run build:fix` | `data/marketplace.toml` | [ADR 17](docs/adr/0017-repository-data-and-state.md) item 7 |
+| Adding, removing or merging one of CECH's categories, as ADR 12 item 1 sets, then `mise run build:fix` | `cli/internal/marketplace/categories.toml` | [ADR 12](docs/adr/0012-categories-and-names.md) item 1 |
 | A Go dependency, in the same change that lists it in ADR 16 | `cli/go.mod` | [ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1 |
 | A public term rule or an allowlisted email address | `checks/terms/` | [ADR 3](docs/adr/0003-vendor-neutrality.md) |
 | A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 5](docs/adr/0005-tool-pins.md) for a pin, [ADR 4](docs/adr/0004-gates-and-ci.md) item 1 for a task |
-| A CI step that is not a gate task, such as the private term tier; a new gate is a task in `check` | `.github/workflows/ci.yml` | [ADR 4](docs/adr/0004-gates-and-ci.md) items 1 and 6 |
+| A CI step that is not a gate task, such as the private term tier; a new gate is a task in `check` once what it checks exists | `.github/workflows/ci.yml` | [ADR 4](docs/adr/0004-gates-and-ci.md) items 1, 5 and 6 |
 | A check that reports or runs on a schedule but never blocks a merge | `.github/workflows/` | [ADR 4](docs/adr/0004-gates-and-ci.md) items 6 and 7 |
 | A rule for contributors; route agents to it from here | `CONTRIBUTING.md` | [ADR 4](docs/adr/0004-gates-and-ci.md) item 2 |
 
@@ -46,15 +48,17 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 
 | Path | Responsibility |
 | --- | --- |
-| `docs/` | Documents for people: decision records in `adr/`; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
+| `docs/` | Documents for people: decision records in `adr/`, and the catalogue page `catalogue.md` that `cech build` generates; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
 | `.ai/` | Working material written mostly by and for agents, one folder per change in `changes/`, finished ones in `changes/done/` |
 | `scripts/` | Gate and harness probe scripts in POSIX sh that run under dash, macOS sh and Git Bash, the harness probes on Linux and macOS only; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks, `scripts/probes/` the harness probes that `run-probes` runs |
+| `data/` | Hand-written data on the marketplace: `marketplace.toml`, its namespace, description, owner and code owners team ([ADR 17](docs/adr/0017-repository-data-and-state.md) item 7) |
+| `.claude-plugin/` | The marketplace catalogue `marketplace.json`, which `cech build` generates |
 | `checks/` | Public tiers of the term check; the private tier lives outside git |
 | `cli/` | The `cech` CLI, Go module `github.com/TrialAndTemper/cech/cli`: `cmd/cech` for `main`, `internal/` for the rest, golden files and fixture marketplaces in `testdata/`, linter settings in `.golangci.yml` |
 | `test/` | bats suites for the scripts and tasks; a script change adds the cases, and the hand checks in the pull request, that [CONTRIBUTING.md](CONTRIBUTING.md#writing) and [ADR 4](docs/adr/0004-gates-and-ci.md) item 5 ask for |
 | `mise.toml` | Exact tool pins and every task; the single entry point for the gates |
 | `mise.lock` | Downloads and checksums for each pin and platform, or only the version of a pin built from source, written by `mise lock` |
-| `.github/` | The CI workflow, the vulnerability check and harness probe workflows, issue forms and pull request template |
+| `.github/` | The CI workflow, the vulnerability check and harness probe workflows, issue forms, pull request template, and the code owners file that `cech build` generates |
 | `.rumdl.toml` | Markdown lint and format settings: sentence per line, no line limit |
 | `lychee.toml` | Link check settings |
 | `.shellcheckrc` | shellcheck settings for every shell file |
@@ -76,6 +80,7 @@ mise is the task runner: use `mise run …` rather than the tools it pins, and r
 - **Trust:** after any change to `mise.toml`, run `mise trust`; with mise's `paranoid` setting the change revokes trust, and every mise tool then fails.
 - **Per-commit checks:** check the commits out one by one in a separate `git worktree` and run `mise run check` there; under `git rebase --exec` the suites run inside a git process whose environment can point them at the real repository.
 - **Go:** the Go gates run in `cli/` through `scripts/check-go`; use `mise run lint:go`, `format:check:go` or `test:go`, and `mise -C cli exec -- go test ./internal/app -update` to rewrite golden files and the fixtures' `out/` trees after an intended output change.
+  After a change to `data/marketplace.toml` or a plugin, `mise run build:fix` rewrites the generated files; never edit them by hand.
 - **Markdown:** one sentence per line, never wrapped ([ADR 7](docs/adr/0007-markdown-source-format.md)).
 - **Commits:** follow [CONTRIBUTING.md](CONTRIBUTING.md#commits); `mise run commits` checks them.
   Sign off with `git commit -s`, credit yourself with a `Co-authored-by:` trailer, and fold review fixes in with `git commit -s --fixup=<commit>` and `git rebase --autosquash origin/main`.

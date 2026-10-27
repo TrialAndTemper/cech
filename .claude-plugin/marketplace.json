@@ -1,0 +1,8 @@
+{
+  "name": "cech",
+  "description": "Agent skills that organisations extend rather than fork",
+  "owner": {
+    "name": "CECH maintainers"
+  },
+  "plugins": []
+}
