@@ -18,8 +18,9 @@ Names clash and are hard to change (checked on 2026-10-16, versions as in [ADR 6
 ## Decision
 
 1. CECH's categories are a closed list.
-   Adding one is a dated amendment ([ADR 1](0001-record-architecture-decisions.md)) directly under the table; removing or merging one needs a new ADR.
-   CI checks that `data/categories.toml` matches the table plus those amendments.
+   Adding one refines this ADR, with an amendment note directly under the table; removing or merging one needs a superseding ADR.
+   Until the first plugin merges, either is an edit in place instead ([ADR 1](0001-record-architecture-decisions.md) item 5).
+   CI checks that `data/categories.toml` matches the table, together with any amendment notes under it.
 
    | Category | Holds |
    |---|---|

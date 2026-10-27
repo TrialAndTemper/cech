@@ -52,7 +52,7 @@ Checked on 2026-10-20 with Go 1.27.2:
 8. **Dependency budget.**
    The standard library comes first.
    A third-party module is added only for a feature the standard library lacks, when writing it would cost more than depending on it.
-   Each module in `go.mod` is listed here with its reason, and adding one is an amendment to this ADR.
+   Each module in `go.mod` is listed here with its reason, and adding one changes this ADR in the form [ADR 1](0001-record-architecture-decisions.md) item 5 sets.
    Today the list is empty.
    Tools that only build or check the CLI are pinned in `mise.toml`, not in `go.mod`.
 9. **Versions.**

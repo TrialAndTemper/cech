@@ -16,7 +16,7 @@ People and agents follow the same rules: [CONTRIBUTING.md](CONTRIBUTING.md) and 
 A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths and never weakens one from this file.
 
 - The ADRs in `docs/adr/` are the contracts.
-  Read the ones a change touches before designing it; changing a contract needs a new ADR or an amendment note ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
+  Read the ones a change touches before designing it; changing a contract needs a new ADR or a change to an accepted one, in the form [ADR 1](docs/adr/0001-record-architecture-decisions.md) item 5 sets.
 - Keep files, commit messages, and branch and tag names vendor-neutral ([ADR 4](docs/adr/0004-vendor-neutrality.md)): nothing specific to a private organisation, and invented examples such as `example.com` and `acme`.
   Never copy text from git-ignored notes into the tree; rewrite it, run `mise run terms`, and let a person read it.
 - Text from another project needs a compatible licence, a `NOTICE` entry and, in a skill, a source note naming the upstream project and commit ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
@@ -31,7 +31,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | A new decision that is costly to reverse, also added to `docs/adr/README.md` | `docs/adr/` | [ADR 1](docs/adr/0001-record-architecture-decisions.md) |
 | A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 10](docs/adr/0010-gates-and-ci.md) |
 | A CLI command or package, with its Go tests | `cli/` | [ADR 14](docs/adr/0014-the-cech-cli.md) |
-| A Go dependency, in the same change as an ADR 14 amendment | `cli/go.mod` | [ADR 14](docs/adr/0014-the-cech-cli.md) item 8 |
+| A Go dependency, in the same change that lists it in ADR 14 | `cli/go.mod` | [ADR 14](docs/adr/0014-the-cech-cli.md) item 8 |
 | A public term rule or an allowlisted email address | `checks/terms/` | [ADR 4](docs/adr/0004-vendor-neutrality.md) |
 | A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 10](docs/adr/0010-gates-and-ci.md) item 6 |
 | A CI step that is not a gate task, such as the private term tier; a new gate is a task in `check` | `.github/workflows/ci.yml` | [ADR 10](docs/adr/0010-gates-and-ci.md) items 1 and 7 |
@@ -42,7 +42,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 
 | Path | Responsibility |
 | --- | --- |
-| `docs/` | Decision records; an accepted ADR changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
+| `docs/` | Decision records; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
 | `scripts/` | Gate scripts in POSIX sh that run under dash, macOS sh and Git Bash; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks |
 | `checks/` | Public tiers of the term check; the private tier lives outside git |
 | `cli/` | The `cech` CLI, Go module `github.com/TrialAndTemper/cech/cli`: `cmd/cech` for `main`, `internal/` for the rest, golden files in `testdata/`, linter settings in `.golangci.yml` |

@@ -8,5 +8,5 @@
 
 - [ ] Each commit is one logical change with a Conventional Commits header and a `Signed-off-by:` trailer (see Commits in [CONTRIBUTING](https://github.com/TrialAndTemper/cech/blob/main/CONTRIBUTING.md)).
 - [ ] `mise run check` passes.
-- [ ] A change to a contract comes with an ADR or an amendment.
+- [ ] A change to a contract comes with a new or changed ADR.
 - [ ] Nothing specific to a private organisation, and examples use invented data.
