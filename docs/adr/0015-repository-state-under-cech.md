@@ -15,7 +15,7 @@ Earlier ADRs place repository-wide data in `data/`: `data/harnesses.toml` ([ADR 
 Other files have formats set by their harnesses, tools or specs: `SKILL.md` frontmatter is YAML, plugin manifests and Claude Code settings are JSON, Codex settings are TOML, and GitHub workflows are YAML.
 YAML reads some unquoted values as other types: `no` can become false and `1.10` a number.
 JSON has no comments, which hand-edited files need.
-The `cech` CLI is written in Go ([ADR 14](0014-the-cech-cli.md)), whose standard library has no TOML package (checked on 2026-10-21 with Go 1.27.2).
+The `cech` CLI is written in Go ([ADR 14](0014-the-cech-cli.md)), whose standard library has no TOML package (checked on 2026-10-27 with Go 1.27.3).
 
 ## Decision
 

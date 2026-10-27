@@ -42,7 +42,7 @@ func Current() Info {
 // or a pseudo-version such as v0.0.0-20261020120000-0123456789ab for a
 // commit. go build in a checkout of cli/ records "(devel)", even at a
 // cli/vX.Y.Z tag: Go stamps a version from git only for a module at the
-// repository root (checked with Go 1.27.2), so releases need the stamp.
+// repository root (checked with Go 1.27.3), so releases need the stamp.
 func resolve(stamp string, build *debug.BuildInfo, goVersion, goos, goarch string) Info {
 	v := stamp
 	if v == "" && build != nil && build.Main.Version != "(devel)" {
