@@ -1,0 +1,18 @@
+Usage: cech build [--check | --dry-run] [--json] [-C dir]
+
+Write the files generated from the hand-written sources of a
+marketplace with CECH's layout: the catalogue
+.claude-plugin/marketplace.json, Codex TOML for each reviewer agent,
+.github/CODEOWNERS and docs/catalogue.md. In each plugin.json it sets
+the description and, in an extension, each CECH dependency's
+marketplace. It prints each file it creates, updates or removes.
+
+Flags:
+  --check     write nothing; list each file that differs from what
+              the build would write, and fail if there is one
+  --dry-run   write nothing, and list the files the build would change
+  --json      print one JSON object with the mode, whether it passed,
+              the files, any changes a failed build did not make, and
+              any errors
+  -C dir      run in dir, the marketplace's root, instead of the
+              current directory

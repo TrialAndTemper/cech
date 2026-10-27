@@ -1,0 +1,21 @@
+{
+  "name": "acme-prose",
+  "version": "1.2.0",
+  "author": {
+    "name": "Alice Example",
+    "url": "https://github.com/alice-dev"
+  },
+  "license": "MIT",
+  "dependencies": [
+    "acme-git",
+    {
+      "name": "cech-prose"
+    },
+    { "name": "cech-git", "marketplace": "cech" },
+    "cech-docker",
+    { "name": "acme-docker" }
+  ],
+  "metadata": {
+    "maintainers": ["bob-dev", "carol", "Alice-Dev"]
+  }
+}

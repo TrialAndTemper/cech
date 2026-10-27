@@ -1,0 +1,34 @@
+{
+  "name": "acme",
+  "description": "Acme's agent skills, built on CECH",
+  "owner": {
+    "name": "Acme skill maintainers",
+    "email": "skills@acme.example"
+  },
+  "plugins": [
+    {
+      "name": "acme-docker",
+      "source": "./plugins/tool/acme-docker",
+      "description": "Builds container images with Docker.\nUse it for Dockerfiles.",
+      "category": "tool"
+    },
+    {
+      "name": "acme-git",
+      "source": "./plugins/tool/acme-git",
+      "description": "Runs git the acme way: small commits & clear messages.",
+      "category": "tool"
+    },
+    {
+      "name": "acme-release",
+      "source": "./plugins/workflow/acme-release",
+      "description": "Cuts a release when <version> & notes are \"ready\".",
+      "category": "workflow"
+    },
+    {
+      "name": "acme-prose",
+      "source": "./plugins/writing/acme-prose",
+      "description": "Checks prose against the house style. Use it when writing docs | changelogs \\| notes.",
+      "category": "writing"
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+# The acme marketplace, an invented extension used as a test fixture.
+namespace = "acme"
+description = "Acme's agent skills, built on CECH"
+cech = "0.1.0"
+team = "@acme/skill-maintainers"
+
+[owner]
+name = "Acme skill maintainers"
+email = "skills@acme.example"
+
+[[categories]]
+name = "brand"
+holds = "Brand voice and visual identity"
+
+[terms]
+rules = ["checks/terms/rules.toml"]
+names = ["checks/terms/names.txt"]

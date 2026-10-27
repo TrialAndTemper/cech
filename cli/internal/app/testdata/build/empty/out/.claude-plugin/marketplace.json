@@ -1,0 +1,8 @@
+{
+  "name": "cech",
+  "description": "Agent skills for Claude Code and Codex",
+  "owner": {
+    "name": "CECH maintainers"
+  },
+  "plugins": []
+}

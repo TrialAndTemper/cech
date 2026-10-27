@@ -1,0 +1,10 @@
+updated .claude-plugin/marketplace.json
+created .github/CODEOWNERS
+created docs/catalogue.md
+updated plugins/tool/acme-docker/.claude-plugin/plugin.json
+updated plugins/tool/acme-git/.claude-plugin/plugin.json
+updated plugins/tool/acme-git/agents/acme-git-reviewer.toml
+removed plugins/tool/acme-git/agents/old-reviewer.toml
+updated plugins/workflow/acme-release/.claude-plugin/plugin.json
+updated plugins/writing/acme-prose/.claude-plugin/plugin.json
+created plugins/writing/acme-prose/agents/acme-prose-reviewer.toml

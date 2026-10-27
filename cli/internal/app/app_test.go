@@ -37,6 +37,8 @@ func TestRun(t *testing.T) {
 		{"one-dash long help flag", []string{"-help"}, ExitOK, "help.golden", ""},
 		{"help with a help flag", []string{"help", "-h"}, ExitOK, "help.golden", ""},
 		{"help for a command", []string{"help", "version"}, ExitOK, "version-help.golden", ""},
+		{"build help", []string{"build", "-h"}, ExitOK, "build-help.golden", ""},
+		{"help for build", []string{"help", "build"}, ExitOK, "build-help.golden", ""},
 		{"help for help", []string{"help", "help"}, ExitOK, "help.golden", ""},
 		{"version as text, by flag", []string{"version", "--json=false"}, ExitOK, "version.golden", ""},
 		{"no command", nil, ExitUsage, "", "cech: no command given\n"},
@@ -49,6 +51,8 @@ func TestRun(t *testing.T) {
 		// The flag package names a flag with one dash, however it was typed.
 		{"version with an unknown flag", []string{"version", "--short"}, ExitUsage, "", "flag provided but not defined: -short"},
 		{"version with a bad flag value", []string{"version", "--json=maybe"}, ExitUsage, "", `invalid boolean value "maybe" for -json`},
+		{"build with --check and --dry-run", []string{"build", "--check", "--dry-run"}, ExitUsage, "", "build takes --check or --dry-run, not both"},
+		{"build with an argument", []string{"build", "extra"}, ExitUsage, "", `build takes no arguments, got "extra"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -1,0 +1,6 @@
+# CECH's own marketplace before its first plugin, with no team.
+namespace = "cech"
+description = "Agent skills for Claude Code and Codex"
+
+[owner]
+name = "CECH maintainers"

@@ -1,0 +1,23 @@
+{
+  "name": "acme-prose",
+  "description": "Checks prose against the house style. Use it when writing docs | changelogs \\| notes.",
+  "version": "1.2.0",
+  "author": {
+    "name": "Alice Example",
+    "url": "https://github.com/alice-dev"
+  },
+  "license": "MIT",
+  "dependencies": [
+    "acme-git",
+    {
+      "name": "cech-prose",
+      "marketplace": "cech-0-1-0"
+    },
+    { "name": "cech-git", "marketplace": "cech-0-1-0" },
+    "cech-docker",
+    { "name": "acme-docker" }
+  ],
+  "metadata": {
+    "maintainers": ["bob-dev", "carol", "Alice-Dev"]
+  }
+}

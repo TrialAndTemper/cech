@@ -1,0 +1,1 @@
+{"name":"acme-git","description":"Runs git the acme way: small commits & clear messages.","version":"2.0.0","author":{"name":"Acme team","url":"https://acme.example/team"},"dependencies":[{"name":"cech-git","marketplace":"cech-0-1-0"}],"metadata":{"maintainers":["dave"]}}
