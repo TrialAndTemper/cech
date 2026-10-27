@@ -87,8 +87,8 @@ mise installs the pinned Go, golangci-lint and govulncheck, and `scripts/check-g
 | `test:go` | `go test`, with the race detector where the platform has one, cgo is on (it needs a C compiler) and the race runtime builds |
 | `vuln` | govulncheck: known vulnerabilities in the CLI and its Go release; needs the network |
 
-Golden files in `cli/internal/app/testdata/` hold the exact output of each command.
-After an intended change to the output, rewrite them and review the diff:
+Golden files in `cli/internal/app/testdata/` hold the exact output of each command, and the `out/` tree of each fixture marketplace under `testdata/build/` holds what `cech build` writes.
+After an intended change to the output, rewrite both and review the diff:
 
 ```sh
 mise -C cli exec -- go test ./internal/app -update

@@ -1,0 +1,6 @@
+{
+	"version" : "0.3.0",
+	"description" : "Old text." ,
+	"name" : "acme-docker",
+	"author" : { "name" : "Acme", "url" : "https://github.com/acme" }
+}

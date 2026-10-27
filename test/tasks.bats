@@ -32,6 +32,8 @@ setup_file() {
   unset CLICOLOR_FORCE
   export NO_COLOR=1
 
+  download_go_modules
+
   export TEMPLATE="${BATS_FILE_TMPDIR}/template"
   REPO=${TEMPLATE}
   mkdir -p "${REPO}"

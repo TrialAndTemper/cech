@@ -14,6 +14,7 @@ load helpers
 
 setup_file() {
   setup_suite_env
+  download_go_modules
   export TEMPLATE="${BATS_FILE_TMPDIR}/template"
   local f
   mkdir -p "${TEMPLATE}/scripts"

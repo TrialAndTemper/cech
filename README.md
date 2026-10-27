@@ -9,7 +9,7 @@ A small `cech` command-line tool will connect a project to CECH and its extensio
 
 ## Status
 
-Early work: the repository holds the design decisions, the gates that check every change, and the start of the `cech` tool, which so far only prints its version.
+Early work: the repository holds the design decisions, the gates that check every change, and the start of the `cech` tool, which so far prints its version and generates a marketplace's files.
 It has no skills yet, so there is nothing to install.
 
 ## Learn more

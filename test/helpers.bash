@@ -33,6 +33,17 @@ setup_suite_env() {
   export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
 }
 
+# download_go_modules: from setup_file, fill the module cache with the
+# CLI's modules before the cases turn the network off with GOPROXY=off;
+# on a fresh CI runner nothing else has filled it. It runs go as
+# check-go does.
+download_go_modules() {
+  (cd -- "${SRC}/cli" && GOTOOLCHAIN=local GOWORK=off go mod download) || {
+    printf 'go mod download failed\n' >&2
+    return 1
+  }
+}
+
 # g <git args...>: git in the case's repository, without the user's
 # identity, signing or hooks.
 g() {

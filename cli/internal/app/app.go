@@ -34,6 +34,7 @@ type command struct {
 
 // commands lists every command but help, sorted by name.
 var commands = []command{
+	{"build", "write the files generated from a marketplace's sources", buildHelp, runBuild},
 	{"version", "print the version of cech", versionHelp, runVersion},
 }
 

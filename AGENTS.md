@@ -3,7 +3,7 @@
 ## Where am I?
 
 The root of CECH, a marketplace of agent skills for Claude Code and Codex that organisations extend rather than fork ([README](README.md)).
-It has no skills yet: the tree holds the decision records, a first `cech` CLI that only prints its version, the gates that check every change, and their tests.
+It has no skills yet: the tree holds the decision records, a first `cech` CLI that prints its version and generates a marketplace's files, the gates that check every change, and their tests.
 This is the only `AGENTS.md`, so it answers for every path.
 
 ## What belongs to this layer?
@@ -34,7 +34,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | A change's spec, brief, research or spike results, before or with its code; moved to `done/` once tests cover each rule | `.ai/changes/YYYY-MM-DD-short-title/` | [.ai/README.md](.ai/README.md) |
 | A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 4](docs/adr/0004-gates-and-ci.md) |
 | A harness probe that runs unattended, with `unattended = true` on its entry in the harness data file | `scripts/probes/<entry name>` | [ADR 9](docs/adr/0009-native-harness-features-first.md) items 4 and 5 |
-| A CLI command or package, with its Go tests | `cli/` | [ADR 15](docs/adr/0015-the-cech-cli.md) |
+| A CLI command or package, with its Go tests | `cli/` | [ADR 15](docs/adr/0015-the-cech-cli.md); [ADR 18](docs/adr/0018-generated-files.md) for what `cech build` reads and writes |
 | A Go dependency, in the same change that lists it in ADR 16 | `cli/go.mod` | [ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1 |
 | A public term rule or an allowlisted email address | `checks/terms/` | [ADR 3](docs/adr/0003-vendor-neutrality.md) |
 | A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 5](docs/adr/0005-tool-pins.md) for a pin, [ADR 4](docs/adr/0004-gates-and-ci.md) item 1 for a task |
@@ -50,7 +50,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | `.ai/` | Working material written mostly by and for agents, one folder per change in `changes/`, finished ones in `changes/done/` |
 | `scripts/` | Gate and harness probe scripts in POSIX sh that run under dash, macOS sh and Git Bash, the harness probes on Linux and macOS only; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks, `scripts/probes/` the harness probes that `run-probes` runs |
 | `checks/` | Public tiers of the term check; the private tier lives outside git |
-| `cli/` | The `cech` CLI, Go module `github.com/TrialAndTemper/cech/cli`: `cmd/cech` for `main`, `internal/` for the rest, golden files in `testdata/`, linter settings in `.golangci.yml` |
+| `cli/` | The `cech` CLI, Go module `github.com/TrialAndTemper/cech/cli`: `cmd/cech` for `main`, `internal/` for the rest, golden files and fixture marketplaces in `testdata/`, linter settings in `.golangci.yml` |
 | `test/` | bats suites for the scripts and tasks; a script change adds the cases, and the hand checks in the pull request, that [CONTRIBUTING.md](CONTRIBUTING.md#writing) and [ADR 4](docs/adr/0004-gates-and-ci.md) item 5 ask for |
 | `mise.toml` | Exact tool pins and every task; the single entry point for the gates |
 | `mise.lock` | Downloads and checksums for each pin and platform, or only the version of a pin built from source, written by `mise lock` |
@@ -75,7 +75,7 @@ mise is the task runner: use `mise run …` rather than the tools it pins, and r
 - **Verification:** `mise run check` runs every gate, as CI does; `mise run <gate>` runs one, and `mise run format:fix` rewrites files into their checked format.
 - **Trust:** after any change to `mise.toml`, run `mise trust`; with mise's `paranoid` setting the change revokes trust, and every mise tool then fails.
 - **Per-commit checks:** check the commits out one by one in a separate `git worktree` and run `mise run check` there; under `git rebase --exec` the suites run inside a git process whose environment can point them at the real repository.
-- **Go:** the Go gates run in `cli/` through `scripts/check-go`; use `mise run lint:go`, `format:check:go` or `test:go`, and `mise -C cli exec -- go test ./internal/app -update` to rewrite golden files after an intended output change.
+- **Go:** the Go gates run in `cli/` through `scripts/check-go`; use `mise run lint:go`, `format:check:go` or `test:go`, and `mise -C cli exec -- go test ./internal/app -update` to rewrite golden files and the fixtures' `out/` trees after an intended output change.
 - **Markdown:** one sentence per line, never wrapped ([ADR 7](docs/adr/0007-markdown-source-format.md)).
 - **Commits:** follow [CONTRIBUTING.md](CONTRIBUTING.md#commits); `mise run commits` checks them.
   Sign off with `git commit -s`, credit yourself with a `Co-authored-by:` trailer, and fold review fixes in with `git commit -s --fixup=<commit>` and `git rebase --autosquash origin/main`.

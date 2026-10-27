@@ -1,5 +1,5 @@
 // Command cech is the CECH command-line tool (ADR 15); so far it prints
-// its version.
+// its version and generates a marketplace's files.
 package main
 
 import (

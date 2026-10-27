@@ -1,6 +1,7 @@
 Usage: cech <command> [flags]
 
 Commands:
+  build     write the files generated from a marketplace's sources
   version   print the version of cech
 
 Run cech help <command>, or cech <command> -h, for the flags of a command.
