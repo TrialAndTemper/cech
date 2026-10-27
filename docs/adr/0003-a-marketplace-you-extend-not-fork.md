@@ -28,13 +28,13 @@ These ADRs call Claude Code and Codex harnesses: the programs that run an agent,
    `cech check` checks a project across its enabled marketplaces.
 5. **CECH does not build** a package manager, a multi-harness installer, an eval runner where a harness has one, or an `AGENTS.md` sync tool.
    CECH keeps to formats that the harnesses and existing tools read.
-6. **CECH versions its layout and roles.**
-   A later ADR on the extension contract defines layout and version ranges.
+6. **CECH versions its plugins and roles by marketplace release, and its layout rules by CLI release.**
+   Each extension release names the one CECH release it builds on.
 
 ## Consequences
 
 - Fixes reach extension users through a normal upgrade.
-- A breaking change in CECH forces every extension to update before it can take the new version.
+- Each CECH release needs a release of every extension that builds on CECH plugins before projects using that extension can take it.
 
 ## Options considered
 

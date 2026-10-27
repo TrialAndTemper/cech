@@ -15,7 +15,7 @@ Checked on 2026-10-17 (Claude Code 2.1.302): `claude plugin validate --strict` f
 
 1. Per plugin, two files hold hand-written metadata:
    - `SKILL.md`: name, description, `metadata`, and the skill itself;
-   - `.claude-plugin/plugin.json`: every field except `description` (name, version, author, licence, dependencies).
+   - `.claude-plugin/plugin.json`: every field (name, version, author, licence, dependencies) except `description` and, in an extension, the `marketplace` of a dependency on a CECH plugin.
 
    The name appears in both files and as the skill and plugin folder names.
    The validator checks that all of them match, extending the same-name rule of [ADR 7](0007-one-plugin-one-skill.md).
@@ -23,6 +23,7 @@ Checked on 2026-10-17 (Claude Code 2.1.302): `claude plugin validate --strict` f
    Repo-wide data in `data/` is hand-written too; it describes the catalogue, not one plugin.
 2. Everything else derived from them is generated:
    - the `description` field in each `plugin.json`, copied from `SKILL.md`;
+   - in an extension, the `marketplace` of each dependency on a CECH plugin, the versioned name of the CECH release the extension builds on;
    - the marketplace catalogue `.claude-plugin/marketplace.json`, with each plugin's category taken from its folder ([ADR 8](0008-categories-and-names.md));
    - Codex TOML for reviewer agents ([ADR 6](0006-claude-code-and-codex-from-one-source.md));
    - the code owners file;
@@ -33,7 +34,7 @@ Checked on 2026-10-17 (Claude Code 2.1.302): `claude plugin validate --strict` f
    Where the format allows comments, a generated file starts with a line saying it is generated and by what.
 5. Output is deterministic: plugins sorted by category, then name; fixed formatting; LF line ends and a final newline on every OS.
    Running the build twice changes nothing.
-6. Where the build writes a field inside a hand-written file (`plugin.json` `description`), it changes only that field and leaves the rest of the file byte for byte as it was.
+6. Where the build writes a field inside a hand-written file (`plugin.json` `description`, or a dependency's `marketplace`), it changes only that field and leaves the rest of the file byte for byte as it was.
 7. `cech build --check` regenerates in memory and fails on any difference from the committed files.
    It is part of the merge gate.
    A wrong generated file is fixed by changing its source, never by editing the output.
