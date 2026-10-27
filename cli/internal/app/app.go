@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"runtime/debug"
+	"strings"
 
 	"github.com/TrialAndTemper/cech/cli/internal/version"
 )
@@ -22,13 +23,40 @@ const (
 	ExitUnreachable = 3 // it could not reach what it needs
 )
 
-const usage = `Usage: cech <command> [flags]
+// command is one cech command. The table of them drives dispatch, the
+// usage list and cech help <command>.
+type command struct {
+	name    string
+	summary string // one line for the usage list
+	help    string // the text of cech help <command> and cech <command> -h
+	run     func(args []string, stdout, stderr io.Writer, info version.Info) int
+}
 
-Commands:
-  version   print the version of cech
+// commands lists every command but help, sorted by name.
+var commands = []command{
+	{"version", "print the version of cech", versionHelp, runVersion},
+}
 
-Run cech help <command>, or cech <command> -h, for the flags of a command.
-`
+// lookup returns the command named name.
+func lookup(name string) (command, bool) {
+	for _, c := range commands {
+		if c.name == name {
+			return c, true
+		}
+	}
+	return command{}, false
+}
+
+// usage returns the usage text, with a line for each command.
+func usage() string {
+	var b strings.Builder
+	b.WriteString("Usage: cech <command> [flags]\n\nCommands:\n")
+	for _, c := range commands {
+		fmt.Fprintf(&b, "  %-9s %s\n", c.name, c.summary)
+	}
+	b.WriteString("\nRun cech help <command>, or cech <command> -h, for the flags of a command.\n")
+	return b.String()
+}
 
 const versionHelp = `Usage: cech version [--json]
 
@@ -38,11 +66,6 @@ Flags:
   --json    print one JSON object with the version, the Go release
             that built cech, and the OS and architecture it was built for
 `
-
-// helps holds the help text of each command, for cech help <command>.
-var helps = map[string]string{
-	"version": versionHelp,
-}
 
 // Run runs the command line args, without the program name, and returns
 // the exit code.
@@ -64,29 +87,29 @@ func run(args []string, stdout, stderr io.Writer, info version.Info) (code int) 
 	if len(args) == 0 {
 		return usageError(stderr, "no command given")
 	}
-	switch args[0] {
-	case "help", "-h", "-help", "--help":
+	if args[0] == "help" || isHelpFlag(args[0]) {
 		return runHelp(args[1:], stdout, stderr)
-	case "version":
-		return runVersion(args[1:], stdout, stderr, info)
-	default:
+	}
+	c, ok := lookup(args[0])
+	if !ok {
 		return usageError(stderr, fmt.Sprintf("unknown command %q", args[0]))
 	}
+	return c.run(args[1:], stdout, stderr, info)
 }
 
 // runHelp prints the usage, or with a command name that command's help.
 func runHelp(args []string, stdout, stderr io.Writer) int {
 	switch {
 	case len(args) == 0, len(args) == 1 && (isHelpFlag(args[0]) || args[0] == "help"):
-		return write(stdout, stderr, usage)
+		return write(stdout, stderr, usage())
 	case len(args) > 1:
 		return usageError(stderr, "help takes at most one command")
 	}
-	text, ok := helps[args[0]]
+	c, ok := lookup(args[0])
 	if !ok {
 		return usageError(stderr, fmt.Sprintf("no help for %q: unknown command", args[0]))
 	}
-	return write(stdout, stderr, text)
+	return write(stdout, stderr, c.help)
 }
 
 func isHelpFlag(arg string) bool {
