@@ -55,6 +55,7 @@ This runs every gate, as CI does.
 | `format:check` | formatting of Markdown, shell scripts and Go code |
 | `test` | the tests of the CLI, and of the gate scripts (not on Windows) |
 | `docs:check` | links in the Markdown, YAML and text files; needs the network |
+| `build:check` | the files `cech build` generates match their sources |
 
 `mise run format:fix` rewrites the files the format check would change.
 
@@ -95,7 +96,11 @@ mise -C cli exec -- go test ./internal/app -update
 ```
 
 `check` leaves out `vuln`, since a new report in its database can fail a branch that has not changed.
-CI runs it on pull requests that touch the CLI or its tools, without blocking them, and daily on `main`, where a failure opens an issue.
+CI runs `vuln` on pull requests that touch the CLI or its tools, without blocking them, and daily on `main`, where a failure opens an issue.
+
+`mise run build:check`, part of `check`, builds `cech` from the checkout and runs `cech build --check` on the repository ([ADR 18](docs/adr/0018-generated-files.md) item 7).
+It fails when a generated file differs from its sources: `data/marketplace.toml` ([ADR 17](docs/adr/0017-repository-data-and-state.md) item 7), CECH's categories in `cli/internal/marketplace/categories.toml`, and each plugin's `plugin.json`, `SKILL.md` and reviewer agents.
+Change the source, then let `mise run build:fix` rewrite the generated files with the same `cech`.
 
 A new Go dependency needs a change to [ADR 16](docs/adr/0016-building-the-cech-cli.md) in the same pull request.
 

@@ -116,6 +116,25 @@ func TestFails(t *testing.T) { t.Fatal("planted failure") }
   assert_output_has "GOTOOLCHAIN=local"
 }
 
+# Generated files
+
+# Guards the gate running a cech found on PATH, such as an older release
+# a contributor installed, instead of the one built from the checkout:
+# the verdict would then depend on the machine, and a stale cech could
+# pass where the checkout's build fails.
+@test "build runs the cech built from the checkout, not one on PATH" {
+  mkdir -p -- "${BATS_TEST_TMPDIR}/bin"
+  printf '#!/bin/sh\nexit 0\n' > "${BATS_TEST_TMPDIR}/bin/cech"
+  chmod 755 "${BATS_TEST_TMPDIR}/bin/cech"
+  PATH="${BATS_TEST_TMPDIR}/bin:${PATH}"
+  cp -R -- "${REPO}/cli/internal/app/testdata/build/acme/in/." "${REPO}/"
+  run_go build
+  assert_status 1
+  assert_output_has "update .claude-plugin/marketplace.json"
+  assert_output_has "go: build findings"
+  assert_output_has "mise run build:fix"
+}
+
 # fake_go: a fake go on linux/amd64 with cgo on, whose race runtime
 # builds; it prints the arguments of any other command.
 fake_go() {

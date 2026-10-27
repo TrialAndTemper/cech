@@ -1,0 +1,9 @@
+# CECH's own marketplace (ADR 17 item 7). cech build generates the
+# catalogue, the code owners file and the catalogue page from it; run
+# mise run build:fix after a change.
+namespace = "cech"
+description = "Agent skills that organisations extend rather than fork"
+team = "@TrialAndTemper/maintainers"
+
+[owner]
+name = "CECH maintainers"
