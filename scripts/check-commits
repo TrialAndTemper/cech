@@ -139,8 +139,8 @@ clean_message() {
     { line = $0; sub(/\r$/, "", line) }
     line == cc " ------------------------ >8 ------------------------" { exit }
     { print }
-  ' "$1" > "${TMP}/raw"
-  git -C "${ROOT}" stripspace --strip-comments < "${TMP}/raw" ||
+  ' "$1" > "${SCRATCH}/raw"
+  git -C "${ROOT}" stripspace --strip-comments < "${SCRATCH}/raw" ||
     die "git stripspace failed"
 }
 
@@ -224,10 +224,10 @@ check_message() {
     finding "${where}" "line 2 is not blank"
   fi
 
-  git -C "${ROOT}" interpret-trailers --parse < "${file}" > "${TMP}/trailers" ||
+  git -C "${ROOT}" interpret-trailers --parse < "${file}" > "${SCRATCH}/trailers" ||
     die "git interpret-trailers failed"
   # git accepts the key in any case.
-  signoffs=$(sed -n 's/^[Ss][Ii][Gg][Nn][Ee][Dd]-[Oo][Ff][Ff]-[Bb][Yy]: *//p' "${TMP}/trailers")
+  signoffs=$(sed -n 's/^[Ss][Ii][Gg][Nn][Ee][Dd]-[Oo][Ff][Ff]-[Bb][Yy]: *//p' "${SCRATCH}/trailers")
   if [ -z "${signoffs}" ]; then
     finding "${where}" "no Signed-off-by: trailer (git commit -s)"
   elif [ -n "${email}" ] &&
@@ -241,9 +241,9 @@ check_message() {
 # prints each commit with its parents, so a merge has two or more.
 check_range() {
   local c parents where email
-  git -C "${ROOT}" rev-list --reverse --parents "$1" > "${TMP}/revs" 2> /dev/null ||
+  git -C "${ROOT}" rev-list --reverse --parents "$1" > "${SCRATCH}/revs" 2> /dev/null ||
     die "bad revision range: $1"
-  if [ ! -s "${TMP}/revs" ]; then
+  if [ ! -s "${SCRATCH}/revs" ]; then
     echo "commits: no commits to check"
     return
   fi
@@ -256,12 +256,12 @@ check_range() {
         ;;
       *) ;;
     esac
-    git -C "${ROOT}" log -1 --format='%ae%n%B' "${c}" > "${TMP}/commit" ||
+    git -C "${ROOT}" log -1 --format='%ae%n%B' "${c}" > "${SCRATCH}/commit" ||
       die "cannot read commit ${c}"
-    email=$(sed -n 1p "${TMP}/commit")
-    sed 1d "${TMP}/commit" > "${TMP}/message"
-    check_message "${where}" "${TMP}/message" "${email}"
-  done < "${TMP}/revs"
+    email=$(sed -n 1p "${SCRATCH}/commit")
+    sed 1d "${SCRATCH}/commit" > "${SCRATCH}/message"
+    check_message "${where}" "${SCRATCH}/message" "${email}"
+  done < "${SCRATCH}/revs"
 }
 
 # author_email: the email git will record as the author of the commit
@@ -278,13 +278,13 @@ main() {
   local email
   parse_args "$@"
 
-  make_tmp
+  make_scratch
 
   case "${MODE}" in
     message)
-      clean_message "${ARG}" > "${TMP}/message"
+      clean_message "${ARG}" > "${SCRATCH}/message"
       email=$(author_email)
-      check_message message "${TMP}/message" "${email}"
+      check_message message "${SCRATCH}/message" "${email}"
       ;;
     range) check_range "${ARG}" ;;
     default)

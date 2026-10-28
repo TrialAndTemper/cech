@@ -210,29 +210,29 @@ write_templates() {
   where='{{ .File }}:{{ .StartLine }}: {{ .RuleID }}{{ if .Commit }} in commit {{ trunc 12 .Commit }}{{ end }}'
   # shellcheck disable=SC3050 # %q is for the Go template, not this printf
   printf '{{ range . }}%s: {{ printf "%%q" .Match }}\n{{ end }}' "${where}" \
-    > "${TMP}/public.tmpl"
-  printf '{{ range . }}%s\n{{ end }}' "${where}" > "${TMP}/private.tmpl"
+    > "${SCRATCH}/public.tmpl"
+  printf '{{ range . }}%s\n{{ end }}' "${where}" > "${SCRATCH}/private.tmpl"
   printf '{{ range . }}{{ .RuleID }} (location hidden)\n{{ end }}' \
-    > "${TMP}/hidden.tmpl"
+    > "${SCRATCH}/hidden.tmpl"
   printf '{{ range . }}{{ .RuleID }}{{ if .Commit }} in commit {{ trunc 12 .Commit }}{{ end }} (location hidden: a path holds a private term)\n{{ end }}' \
-    > "${TMP}/private-hidden.tmpl"
+    > "${SCRATCH}/private-hidden.tmpl"
 }
 
 # scan <template> <config> <tree | paths | meta | git>: run one gitleaks
-# scan over that directory under TMP, or over history, and print its
+# scan over that directory under SCRATCH, or over history, and print its
 # hits. Private runs hide gitleaks' own messages, which could quote a
 # term.
 scan() {
   local template config target out status
   template=$1 config=$2 target=$3
   set -- -c "${config}" --no-banner --exit-code 3 --ignore-gitleaks-allow \
-    -i "${TMP}/empty" -f template --report-template "${TMP}/${template}.tmpl" -r -
+    -i "${SCRATCH}/empty" -f template --report-template "${SCRATCH}/${template}.tmpl" -r -
   if [ "${target}" = git ]; then
     set -- git "$@" --log-opts="${REVS}" .
     target=${ROOT}
   else
     set -- dir "$@" .
-    target=${TMP}/${target}
+    target=${SCRATCH}/${target}
   fi
   status=0
   case "${template}" in
@@ -254,15 +254,15 @@ scan() {
   esac
 }
 
-# Write what the mode scans under TMP: the staged tree and its paths;
-# for --message, the cleaned message; for history modes, the commit
-# messages, paths, ref names and tag messages. Path lists use -z, so git
-# does not quote unusual names.
+# Write what the mode scans under SCRATCH: the staged tree and its
+# paths; for --message, the cleaned message; for history modes, the
+# commit messages, paths, ref names and tag messages. Path lists use -z,
+# so git does not quote unusual names.
 collect() {
   local cc c
-  git -C "${ROOT}" checkout-index -a --ignore-skip-worktree-bits --prefix="${TMP}/tree/"
-  git -C "${ROOT}" ls-files -z > "${TMP}/paths.z"
-  tr '\0' '\n' < "${TMP}/paths.z" > "${TMP}/paths/paths"
+  git -C "${ROOT}" checkout-index -a --ignore-skip-worktree-bits --prefix="${SCRATCH}/tree/"
+  git -C "${ROOT}" ls-files -z > "${SCRATCH}/paths.z"
+  tr '\0' '\n' < "${SCRATCH}/paths.z" > "${SCRATCH}/paths/paths"
 
   case "${MODE}" in
     message)
@@ -277,7 +277,7 @@ collect() {
       awk -v cc="${cc}" '
         $0 == cc " ------------------------ >8 ------------------------" { exit }
         index($0, cc) != 1
-      ' "${ARG}" > "${TMP}/meta/commit-message"
+      ' "${ARG}" > "${SCRATCH}/meta/commit-message"
       return
       ;;
     staged) return ;;
@@ -294,22 +294,22 @@ collect() {
   esac
 
   if [ -n "${REVS}" ]; then
-    git -C "${ROOT}" rev-list "${REVS}" > "${TMP}/revs" 2> /dev/null ||
+    git -C "${ROOT}" rev-list "${REVS}" > "${SCRATCH}/revs" 2> /dev/null ||
       die "bad revision range: ${REVS}"
     while IFS= read -r c; do
-      git -C "${ROOT}" log -1 --format=%B "${c}" > "${TMP}/meta/commit-${c}"
-      git -C "${ROOT}" log -1 -m -z --format= --name-only "${c}" > "${TMP}/paths.z"
-      tr '\0' '\n' < "${TMP}/paths.z" >> "${TMP}/paths/paths"
-    done < "${TMP}/revs"
-    if [ ! -s "${TMP}/revs" ]; then REVS=''; fi
+      git -C "${ROOT}" log -1 --format=%B "${c}" > "${SCRATCH}/meta/commit-${c}"
+      git -C "${ROOT}" log -1 -m -z --format= --name-only "${c}" > "${SCRATCH}/paths.z"
+      tr '\0' '\n' < "${SCRATCH}/paths.z" >> "${SCRATCH}/paths/paths"
+    done < "${SCRATCH}/revs"
+    if [ ! -s "${SCRATCH}/revs" ]; then REVS=''; fi
   fi
   git -C "${ROOT}" for-each-ref --format='%(refname:short)' \
-    refs/heads refs/tags refs/remotes > "${TMP}/meta/ref-names"
+    refs/heads refs/tags refs/remotes > "${SCRATCH}/meta/ref-names"
   if [ -n "${HEAD_REF}" ]; then
-    printf '%s\n' "${HEAD_REF}" >> "${TMP}/meta/ref-names"
+    printf '%s\n' "${HEAD_REF}" >> "${SCRATCH}/meta/ref-names"
   fi
   git -C "${ROOT}" for-each-ref --format='%(contents)' refs/tags \
-    > "${TMP}/meta/tag-messages"
+    > "${SCRATCH}/meta/tag-messages"
 }
 
 main() {
@@ -320,12 +320,12 @@ main() {
   read_env
   refuse_ignore_file
 
-  make_tmp
-  mkdir "${TMP}/tree" "${TMP}/meta" "${TMP}/paths" "${TMP}/empty"
+  make_scratch
+  mkdir "${SCRATCH}/tree" "${SCRATCH}/meta" "${SCRATCH}/paths" "${SCRATCH}/empty"
 
-  write_public_config > "${TMP}/public.toml"
-  cat "${TMP}/public.toml" "${TERMS_DIR}/messages.toml" > "${TMP}/meta.toml"
-  if [ -n "${PRIVATE}" ]; then write_private_config > "${TMP}/private.toml"; fi
+  write_public_config > "${SCRATCH}/public.toml"
+  cat "${SCRATCH}/public.toml" "${TERMS_DIR}/messages.toml" > "${SCRATCH}/meta.toml"
+  if [ -n "${PRIVATE}" ]; then write_private_config > "${SCRATCH}/private.toml"; fi
   write_templates
   collect
 
@@ -342,7 +342,7 @@ main() {
   if [ -n "${PRIVATE}" ]; then
     template=private
     for t in ${targets}; do
-      scan "${template}" "${TMP}/private.toml" "${t#*:}"
+      scan "${template}" "${SCRATCH}/private.toml" "${t#*:}"
       if [ "${t#*:}" = paths ] && [ "${HITS}" != 0 ]; then
         template=private-hidden
       fi
@@ -354,7 +354,7 @@ main() {
   template=public
   if [ "${private_hits}" != 0 ]; then template=hidden; fi
   for t in ${targets}; do
-    scan "${template}" "${TMP}/${t%%:*}.toml" "${t#*:}"
+    scan "${template}" "${SCRATCH}/${t%%:*}.toml" "${t#*:}"
   done
 
   if [ -z "${PRIVATE}" ]; then

@@ -96,7 +96,7 @@ main() {
   esac
   [ "$#" -le 1 ] || die "unexpected argument: $2"
 
-  make_tmp
+  make_scratch
 
   # Run the tools from the repository root, where they read their
   # settings.
@@ -109,8 +109,8 @@ main() {
   # Check the tracked files under scripts/ and test/ against the rules in
   # the header, and collect the shell code. A file deleted but not yet
   # staged has nothing to check.
-  git ls-files -s -z -- scripts test > "${TMP}/files.z"
-  tr '\0' '\n' < "${TMP}/files.z" > "${TMP}/files"
+  git ls-files -s -z -- scripts test > "${SCRATCH}/files.z"
+  tr '\0' '\n' < "${SCRATCH}/files.z" > "${SCRATCH}/files"
   tab=$(printf '\t')
   STATUS=0
   set --
@@ -124,9 +124,9 @@ main() {
           '100644:#!/usr/bin/env bats:# shellcheck shell=bats')
             set -- "$@" "${f}"
             if [ "${MODE}" = lint ] &&
-              grep -n -E '^[[:space:]]*(\[\[|\(\()' "${f}" > "${TMP}/bare"; then
+              grep -n -E '^[[:space:]]*(\[\[|\(\()' "${f}" > "${SCRATCH}/bare"; then
               sed "s|^|shell: ${f}:|; s|\$| (a bare [[ or (( does not fail a case on bash 3.2; use the assert_* helpers)|" \
-                "${TMP}/bare" >&2
+                "${SCRATCH}/bare" >&2
               STATUS=1
             fi
             ;;
@@ -169,7 +169,7 @@ main() {
         ;;
       *) ;;
     esac
-  done < "${TMP}/files"
+  done < "${SCRATCH}/files"
   [ "$#" -gt 0 ] || die "no shell code found under scripts/ or test/"
 
   case "${MODE}" in
