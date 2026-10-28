@@ -52,9 +52,9 @@ The [docs on private marketplaces](https://code.claude.com/docs/en/plugins/host-
 
    | Key | Required | Meaning and rules |
    | --- | --- | --- |
-   | `namespace` | yes | The catalogue's base name, to which a release adds the version ([ADR 16](0016-per-project-plugin-enablement.md) items 3 and 6), and the prefix of every plugin name; follows [ADR 8](0008-categories-and-names.md) item 3's name rules and does not end in a version such as `-1-4-0` |
+   | `namespace` | yes | The catalogue's base name, to which a release adds the version ([ADR 16](0016-per-project-plugin-enablement.md) items 3 and 6), and the prefix of every plugin name; follows [ADR 8](0008-categories-and-names.md) item 3's name rules and does not end in a version such as `-1-4-0` or `-1-4-0-rc-2` |
    | `description` | yes | The catalogue's description; not empty |
-   | `cech` | in an extension | The one CECH release the extension builds on, as `X.Y.Z`: its tag without the `v` ([ADR 16](0016-per-project-plugin-enablement.md) item 1) |
+   | `cech` | in an extension | The one CECH release the extension builds on, as `X.Y.Z` or `X.Y.Z-rc.N`: its tag without the `v` ([ADR 16](0016-per-project-plugin-enablement.md) item 1) |
    | `owner` | yes | The catalogue's owner: a `name`, not empty, and optionally an `email` |
    | `team` | no | The catch-all code owners team, `@<org>/<team>` ([ADR 12](0012-attribution.md) item 4); with none, no code owners file is built |
    | `categories` | no; extensions only | Categories added to CECH's ([ADR 8](0008-categories-and-names.md) item 6): each a unique `name` that follows the plugin name rules and is not one of CECH's, and a `holds` text, not empty |
@@ -93,7 +93,7 @@ The [docs on private marketplaces](https://code.claude.com/docs/en/plugins/host-
 - To move to a new CECH release, an extension changes one value and releases; projects then move their CECH and extension pins together.
 - A project can move to a new CECH release only after every extension it uses with CECH dependencies has a release built on it ([ADR 3](0003-a-marketplace-you-extend-not-fork.md)).
 - `cech build` reads the catalogue's name, description, owner and code owners team from `data/marketplace.toml`, so CECH adds that file when the build code lands.
-  It names the catalogue after the namespace; how a release gets its versioned name is left to a later ADR on releases.
+  It names the catalogue after the namespace, and a release build adds the version.
 - If CECH adds a category that an extension also adds, the extension's `cech validate` fails until it renames its own.
 - The probed behaviour goes into `data/harnesses.toml` when code relies on it ([ADR 5](0005-native-tool-features-first.md) item 3).
 

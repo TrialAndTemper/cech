@@ -48,14 +48,14 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
    ```
 
    Each key under `marketplaces` and `enable` is a namespace ([ADR 8](0008-categories-and-names.md) items 4 and 5).
-   `ref` is a release tag (`v` and then `X.Y.Z` in decimal with no leading zeros) and `commit` the tag's commit at pinning; `cech` writes both.
+   `ref` is a release tag (`v`, then `X.Y.Z` in decimal with no leading zeros, and optionally `-rc.N` for a pre-release, with `N` from 1) and `commit` the tag's commit at pinning; `cech` writes both.
    The config manages only CECH and extensions; other marketplaces go into the native files by hand, and `cech` leaves them as they are (items 2 and 4).
    A source never holds credentials; access uses the machine's git configuration.
 2. **Rendered native files.**
    `cech` renders both settings files' marketplace and plugin entries from the config, leaving every other byte as it was ([ADR 14](0014-the-cech-cli.md) item 3); the project commits them.
 3. **Exact pins.**
    A project declares each marketplace under the `name` in its catalogue at the pinned commit.
-   Each CECH release names its catalogue `cech-` plus its version, dots as hyphens: `cech-0-1-0` ([ADR 8](0008-categories-and-names.md) item 5).
+   Each CECH release names its catalogue `cech-` plus its version, dots as hyphens: `cech-0-1-0`, or `cech-0-2-0-rc-1` for `v0.2.0-rc.1` ([ADR 8](0008-categories-and-names.md) item 5).
    Keys use it, `cech-prose@cech-0-1-0`, so versions sit side by side.
    Each extension release names its catalogue the same way, after its namespace: `acme-1-4-0`.
 4. **A complete map.**
@@ -72,9 +72,10 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
    A project may write the native files by hand, without the config, following items 3, 4 and 6, with each dependency enabled.
    Item 8's rendering and pin checks, catalogue names included, then do not apply.
 8. **Commands.**
-   - `cech init` writes the config with CECH pinned to its newest release unless told otherwise, renders the native files, and prints the steps each clone needs.
+   - `cech init` writes the config with CECH pinned to its newest final release (one without `-rc.N`) unless told otherwise, renders the native files, and prints the steps each clone needs.
    - `cech enable` and `cech disable` change the plugin lists, apply item 5, and render again.
    - `cech upgrade` updates a pin, the marketplace's name and its keys together.
+     Unless told a version, it moves the pin to the newest final release, and leaves a pin already at or above that release unchanged.
    - `cech check` is read-only and fails when native files differ from the rendering, a `ref` is not a release tag or no longer points at its recorded commit, a pinned catalogue is not named after its namespace and the tag's version, two enabled plugins share a name ([ADR 8](0008-categories-and-names.md) item 7), a dependency is not enabled ([ADR 7](0007-one-plugin-one-skill.md) item 3), or a source holds credentials.
    - `cech setup` runs `codex plugin marketplace upgrade` ([ADR 14](0014-the-cech-cli.md) item 2) and syncs the enabled plugins' reviewer agents ([ADR 6](0006-claude-code-and-codex-from-one-source.md) item 3).
 

@@ -7,7 +7,7 @@
 ## Context
 
 Projects enable whole plugins, not single skills: neither harness offers a practical per-project switch for one skill inside a plugin (checked on 2026-10-16, versions as in [ADR 6](0006-claude-code-and-codex-from-one-source.md)).
-A plugin with several skills forces all of them on a project that wants one: more context, more false triggers, and blurred versions, evals and ownership.
+A plugin with several skills forces all of them on a project that wants one: more context, more false triggers, and blurred evals and ownership.
 
 ## Decision
 
@@ -24,11 +24,11 @@ A plugin with several skills forces all of them on a project that wants one: mor
 
 ## Consequences
 
-- Each skill has its own version and evals.
+- Each skill has its own evals.
 - More plugins, so naming and categories matter.
 - A project enables more keys.
 
 ## Options considered
 
-- **Themed bundles of skills, or one plugin per topic:** all-or-nothing enablement, mixed versions.
+- **Themed bundles of skills, or one plugin per topic:** all-or-nothing enablement.
 - **Several skills with a size limit:** the problem is enablement, not size.
