@@ -21,16 +21,31 @@ lib_run() {
 
 # Guards a shell, such as dash or macOS sh, whose EXIT trap replaces a
 # script's findings status with the cleanup's.
-@test "a script that exits 1 after make_tmp ends with 1" {
-  lib_run 'make_tmp; exit 1'
+@test "a script that exits 1 after make_scratch ends with 1" {
+  lib_run 'make_scratch; exit 1'
   assert_status 1
 }
 
 # Guards a shell, such as dash or macOS sh, in which a script stopped
 # by TERM ends as if it had passed.
-@test "a script stopped by TERM after make_tmp ends by the signal" {
+@test "a script stopped by TERM after make_scratch ends by the signal" {
   # shellcheck disable=SC2016 # the inner shell expands $$
-  lib_run 'make_tmp; kill -s TERM $$; echo after'
+  lib_run 'make_scratch; kill -s TERM $$; echo after'
   assert_status 143
   refute_output_has "after"
+}
+
+# Guards a library that sets TMP, TEMP or TMPDIR, which every tool a
+# gate runs inherits. Under Git Bash an empty TMP left MinGW gcc
+# without a usable temporary directory, so it could not build the race
+# runtime, and the Go tests ran without -race with only a warning.
+@test "the tools a script runs get the TMP, TEMP and TMPDIR it was given" {
+  # TMPDIR must exist: make_scratch creates its directory there.
+  # shellcheck disable=SC2016 # the inner shells expand the variables
+  TMP=/kept-tmp TEMP=/kept-temp TMPDIR=${BATS_TEST_TMPDIR} \
+    lib_run 'show() { sh -c '\''echo "${TMP} ${TEMP} ${TMPDIR}"'\''; }
+      show; make_scratch; show'
+  assert_status 0
+  assert_output_is "/kept-tmp /kept-temp ${BATS_TEST_TMPDIR}
+/kept-tmp /kept-temp ${BATS_TEST_TMPDIR}"
 }

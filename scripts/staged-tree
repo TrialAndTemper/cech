@@ -49,12 +49,12 @@ main() {
       export GIT_INDEX_FILE
       ;;
   esac
-  make_tmp
-  git checkout-index -a --ignore-skip-worktree-bits --prefix="${TMP}/tree/" || die "cannot check out the index"
+  make_scratch
+  git checkout-index -a --ignore-skip-worktree-bits --prefix="${SCRATCH}/tree/" || die "cannot check out the index"
 
-  cd -- "${TMP}/tree"
+  cd -- "${SCRATCH}/tree"
   status=0
-  GIT_DIR=${git_dir} GIT_WORK_TREE=${TMP}/tree "$@" || status=$?
+  GIT_DIR=${git_dir} GIT_WORK_TREE=${SCRATCH}/tree "$@" || status=$?
   return "${status}"
 }
 
