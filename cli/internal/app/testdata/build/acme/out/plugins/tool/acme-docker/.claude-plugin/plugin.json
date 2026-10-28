@@ -1,5 +1,5 @@
 {
-	"version" : "0.3.0",
+	"version" : "0.0.0-dev",
 	"description" : "Builds container images with Docker.\nUse it for Dockerfiles." ,
 	"name" : "acme-docker",
 	"author" : { "name" : "Acme", "url" : "https://github.com/acme" }

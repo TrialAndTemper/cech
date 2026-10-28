@@ -53,6 +53,12 @@ func TestRun(t *testing.T) {
 		{"version with a bad flag value", []string{"version", "--json=maybe"}, ExitUsage, "", `invalid boolean value "maybe" for -json`},
 		{"build with --check and --dry-run", []string{"build", "--check", "--dry-run"}, ExitUsage, "", "build takes --check or --dry-run, not both"},
 		{"build with an argument", []string{"build", "extra"}, ExitUsage, "", `build takes no arguments, got "extra"`},
+		{"build --release with a v", []string{"build", "--release", "v0.1.0"}, ExitUsage, "", `build --release takes X.Y.Z or X.Y.Z-rc.N, got "v0.1.0"`},
+		{"build --release with two numbers", []string{"build", "--release", "0.1"}, ExitUsage, "", `build --release takes X.Y.Z or X.Y.Z-rc.N, got "0.1"`},
+		{"build --release with a leading zero", []string{"build", "--release", "0.01.0"}, ExitUsage, "", `build --release takes X.Y.Z or X.Y.Z-rc.N, got "0.01.0"`},
+		{"build --release with rc.0", []string{"build", "--release", "0.1.0-rc.0"}, ExitUsage, "", `build --release takes X.Y.Z or X.Y.Z-rc.N, got "0.1.0-rc.0"`},
+		{"build --release with another pre-release", []string{"build", "--release", "0.1.0-beta.1"}, ExitUsage, "", `build --release takes X.Y.Z or X.Y.Z-rc.N, got "0.1.0-beta.1"`},
+		{"build --release empty", []string{"build", "--release", ""}, ExitUsage, "", `build --release takes X.Y.Z or X.Y.Z-rc.N, got ""`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

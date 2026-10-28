@@ -1,12 +1,13 @@
 // Package build generates the files of a marketplace with CECH's layout
-// from their hand-written sources (ADR 18): the description in each
-// plugin.json, the catalogue, Codex TOML for reviewer agents, the code
-// owners file and the catalogue page. Each output has its own file
-// here, so a later change to one leaves the others alone.
+// from their hand-written sources (ADR 18): the description and version
+// in each plugin.json, the catalogue, Codex TOML for reviewer agents,
+// the code owners file and the catalogue page. Each output has its own
+// file here, so a later change to one leaves the others alone.
 package build
 
 import (
 	"errors"
+	"fmt"
 	"path"
 	"slices"
 	"strings"
@@ -28,11 +29,24 @@ type Output struct {
 	Mark []byte
 }
 
-// Outputs returns every generated file of m, sorted by path. Its error
-// names each file it could not generate.
-func Outputs(m *marketplace.Marketplace) ([]Output, error) {
+// DevVersion is every plugin's version outside a release build (ADR 14
+// item 3).
+const DevVersion = "0.0.0-dev"
+
+// Outputs returns every generated file of m, sorted by path: for
+// release, a version as X.Y.Z or X.Y.Z-rc.N, or for no release when it
+// is "". Its error names each file it could not generate.
+func Outputs(m *marketplace.Marketplace, release string) ([]Output, error) {
+	name, version := m.Data.Namespace, DevVersion
+	if release != "" {
+		if !marketplace.IsPreRelease(release) && marketplace.IsPreRelease(m.Data.CECH) {
+			return nil, fmt.Errorf("%s: cech is %q, a pre-release, but final release %s must build on a final CECH release (ADR 14 item 5)",
+				marketplace.DataFile, m.Data.CECH, release)
+		}
+		name, version = marketplace.CatalogueName(m.Data.Namespace, release), release
+	}
 	outs := []Output{
-		{Path: CataloguePath, Content: Catalogue(m)},
+		{Path: CataloguePath, Content: Catalogue(m, name)},
 		{Path: PagePath, Content: Page(m)},
 	}
 	// With no team there is no code owners file (ADR 13 item 4): the
@@ -44,7 +58,7 @@ func Outputs(m *marketplace.Marketplace) ([]Output, error) {
 	}
 	var errs []error
 	for _, p := range m.Plugins {
-		manifest, err := Manifest(p, m.Data.CECHCatalogue())
+		manifest, err := Manifest(p, version, m.Data.CECHCatalogue())
 		if err != nil {
 			errs = append(errs, err)
 			continue

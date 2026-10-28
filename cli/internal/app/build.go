@@ -15,19 +15,23 @@ import (
 	"github.com/TrialAndTemper/cech/cli/internal/version"
 )
 
-const buildHelp = `Usage: cech build [--check | --dry-run] [--json] [-C dir]
+const buildHelp = `Usage: cech build [--check | --dry-run] [--release V] [--json] [-C dir]
 
 Write the files generated from the hand-written sources of a
 marketplace with CECH's layout: the catalogue
 .claude-plugin/marketplace.json, Codex TOML for each reviewer agent,
 .github/CODEOWNERS and docs/catalogue.md. In each plugin.json it sets
-the description and, in an extension, each CECH dependency's
-marketplace. It prints each file it creates, updates or removes.
+the description, the version and, in an extension, each CECH
+dependency's marketplace. It prints each file it creates, updates or
+removes.
 
 Flags:
   --check     write nothing; list each file that differs from what
               the build would write, and fail if there is one
   --dry-run   write nothing, and list the files the build would change
+  --release V build release V, as X.Y.Z or X.Y.Z-rc.N: the catalogue
+              is named after the namespace and V, and every plugin's
+              version is V; without it, the version is 0.0.0-dev
   --json      print one JSON object with the mode, whether it passed,
               the files, any changes a failed build did not make, and
               any errors
@@ -58,6 +62,7 @@ func runBuild(args []string, stdout, stderr io.Writer, _ version.Info) int {
 	flags.SetOutput(io.Discard)
 	check := flags.Bool("check", false, "")
 	dryRun := flags.Bool("dry-run", false, "")
+	release := flags.String("release", "", "")
 	asJSON := flags.Bool("json", false, "")
 	dir := flags.String("C", ".", "")
 	if err := flags.Parse(args); err != nil {
@@ -68,6 +73,12 @@ func runBuild(args []string, stdout, stderr io.Writer, _ version.Info) int {
 	}
 	if flags.NArg() > 0 {
 		return usageError(stderr, fmt.Sprintf("build takes no arguments, got %q", flags.Arg(0)))
+	}
+	// Visit sees only the flags given, so --release "" is refused too.
+	given := false
+	flags.Visit(func(f *flag.Flag) { given = given || f.Name == "release" })
+	if given && !marketplace.IsRelease(*release) {
+		return usageError(stderr, fmt.Sprintf("build --release takes X.Y.Z or X.Y.Z-rc.N, got %q", *release))
 	}
 	mode := modeBuild
 	switch {
@@ -80,7 +91,7 @@ func runBuild(args []string, stdout, stderr io.Writer, _ version.Info) int {
 	}
 
 	res := buildResult{Mode: mode, Files: []build.Diff{}, Skipped: []build.Diff{}, Errors: []string{}}
-	files, skipped, err := buildIn(*dir, mode)
+	files, skipped, err := buildIn(*dir, mode, *release)
 	if files != nil {
 		res.Files = files
 	}
@@ -144,10 +155,11 @@ func runBuild(args []string, stdout, stderr io.Writer, _ version.Info) int {
 	return code
 }
 
-// buildIn runs the build in mode on the marketplace rooted at dir, and
-// returns the files it changed or, without writing, would change. When
-// writing fails partway, it also returns the changes it did not make.
-func buildIn(dir, mode string) (files, skipped []build.Diff, err error) {
+// buildIn runs the build in mode on the marketplace rooted at dir, for
+// release or for none when it is "", and returns the files it changed
+// or, without writing, would change. When writing fails partway, it
+// also returns the changes it did not make.
+func buildIn(dir, mode, release string) (files, skipped []build.Diff, err error) {
 	root, err := os.OpenRoot(dir)
 	if err != nil {
 		return nil, nil, marketplace.Unreadable(err)
@@ -157,7 +169,7 @@ func buildIn(dir, mode string) (files, skipped []build.Diff, err error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	outs, err := build.Outputs(m)
+	outs, err := build.Outputs(m, release)
 	if err != nil {
 		return nil, nil, err
 	}
