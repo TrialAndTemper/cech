@@ -1,5 +1,5 @@
 {
   "name": "acme-release",
   "description": "Cuts a release when <version> & notes are \"ready\".",
-  "version": "0.1.0"
+  "version": "0.0.0-dev"
 }

@@ -1,1 +1,1 @@
-{"name":"acme-git","version":"2.0.0","author":{"name":"Acme team","url":"https://acme.example/team"},"dependencies":[{"name":"cech-git"}],"metadata":{"maintainers":["dave"]}}
+{"name":"acme-git","author":{"name":"Acme team","url":"https://acme.example/team"},"dependencies":[{"name":"cech-git"}],"metadata":{"maintainers":["dave"]}}

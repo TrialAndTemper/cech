@@ -1,7 +1,7 @@
 {
   "name": "acme-prose",
   "description": "Checks prose against the house style. Use it when writing docs | changelogs \\| notes.",
-  "version": "1.2.0",
+  "version": "0.0.0-dev",
   "author": {
     "name": "Alice Example",
     "url": "https://github.com/alice-dev"

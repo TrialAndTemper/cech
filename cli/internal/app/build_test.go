@@ -99,6 +99,88 @@ func TestBuildInCurrentFolder(t *testing.T) {
 	}
 }
 
+// TestBuildRelease builds a release of the built acme fixture: the
+// catalogue gets the release's name and every plugin its version, and
+// --check passes only with the same --release (ADR 14 item 3).
+func TestBuildRelease(t *testing.T) {
+	want := "update .claude-plugin/marketplace.json\n" +
+		"update plugins/tool/acme-docker/.claude-plugin/plugin.json\n" +
+		"update plugins/tool/acme-git/.claude-plugin/plugin.json\n" +
+		"update plugins/workflow/acme-release/.claude-plugin/plugin.json\n" +
+		"update plugins/writing/acme-prose/.claude-plugin/plugin.json\n"
+	dir := t.TempDir()
+	copyTree(t, filepath.Join("testdata", "build", "acme", "out"), dir, nil)
+	if code, stdout, _ := runIn(t, "build", "--check", "--release", "0.2.0-rc.1", "-C", dir); code != ExitFailure || stdout != want {
+		t.Errorf("--check --release before: exit code %d, stdout:\n%s\nwant %d and:\n%s", code, stdout, ExitFailure, want)
+	}
+	if code, _, stderr := runIn(t, "build", "--release", "0.2.0-rc.1", "-C", dir); code != ExitOK {
+		t.Fatalf("build --release: exit code %d; stderr:\n%s", code, stderr)
+	}
+	var catalogue struct{ Name string }
+	readJSON(t, filepath.Join(dir, ".claude-plugin", "marketplace.json"), &catalogue)
+	if catalogue.Name != "acme-0-2-0-rc-1" {
+		t.Errorf("catalogue name %q, want acme-0-2-0-rc-1", catalogue.Name)
+	}
+	for _, p := range strings.Split(strings.TrimSpace(want), "\n")[1:] {
+		var manifest struct{ Version string }
+		readJSON(t, filepath.Join(dir, filepath.FromSlash(strings.TrimPrefix(p, "update "))), &manifest)
+		if manifest.Version != "0.2.0-rc.1" {
+			t.Errorf("%s: version %q, want 0.2.0-rc.1", p, manifest.Version)
+		}
+	}
+	if code, stdout, _ := runIn(t, "build", "--check", "--release", "0.2.0-rc.1", "-C", dir); code != ExitOK || stdout != "" {
+		t.Errorf("--check --release after: exit code %d, stdout %q; want 0 and nothing", code, stdout)
+	}
+	if code, stdout, _ := runIn(t, "build", "--check", "-C", dir); code != ExitFailure || stdout != want {
+		t.Errorf("--check without --release: exit code %d, stdout:\n%s\nwant %d and:\n%s", code, stdout, ExitFailure, want)
+	}
+}
+
+// TestBuildReleaseOnPreRelease checks that only a pre-release builds on
+// a CECH pre-release (ADR 14 item 5), and that a dependency on a CECH
+// plugin then names that pre-release's catalogue.
+func TestBuildReleaseOnPreRelease(t *testing.T) {
+	for _, tt := range []struct {
+		release string
+		code    int
+		stderr  string
+	}{
+		{"0.2.0", ExitFailure, `cech: data/marketplace.toml: cech is "0.2.0-rc.1", a pre-release, but final release 0.2.0 must build on a final CECH release (ADR 14 item 5)` + "\n"},
+		{"0.2.0-rc.1", ExitOK, ""},
+	} {
+		t.Run(tt.release, func(t *testing.T) {
+			dir := t.TempDir()
+			copyTree(t, filepath.Join("testdata", "build", "acme", "in"), dir, nil)
+			replaceIn("data/marketplace.toml", `cech = "0.1.0"`, `cech = "0.2.0-rc.1"`)(t, dir)
+			before := readTree(t, dir)
+			code, _, stderr := runIn(t, "build", "--release", tt.release, "-C", dir)
+			if code != tt.code || stderr != tt.stderr {
+				t.Errorf("exit code %d, stderr %q; want %d and %q", code, stderr, tt.code, tt.stderr)
+			}
+			after := readTree(t, dir)
+			if tt.code != ExitOK && !maps.Equal(before, after) {
+				t.Error("a refused release build changed the tree")
+			}
+			dep := `{ "name": "cech-git", "marketplace": "cech-0-2-0-rc-1" }`
+			if manifest := after["plugins/writing/acme-prose/.claude-plugin/plugin.json"]; tt.code == ExitOK && !strings.Contains(manifest, dep) {
+				t.Errorf("acme-prose's plugin.json does not hold %s:\n%s", dep, manifest)
+			}
+		})
+	}
+}
+
+// readJSON decodes the JSON file name into v.
+func readJSON(t *testing.T, name string, v any) {
+	t.Helper()
+	data, err := os.ReadFile(name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(data, v); err != nil {
+		t.Fatalf("%s: %v", name, err)
+	}
+}
+
 // TestBuildCRLF builds the acme fixture with CRLF line ends in every
 // hand-written file. A plugin.json keeps them, the inserted description
 // member included; every generated file has LF.
@@ -219,6 +301,14 @@ func TestBuildCheckFindsDrift(t *testing.T) {
 			"update " + git + ".claude-plugin/plugin.json\nupdate " + prose + ".claude-plugin/plugin.json\n",
 		},
 		{
+			"CECH pre-release", replaceIn("data/marketplace.toml", `cech = "0.1.0"`, `cech = "0.2.0-rc.1"`),
+			"update " + git + ".claude-plugin/plugin.json\nupdate " + prose + ".claude-plugin/plugin.json\n",
+		},
+		{
+			"version edited by hand", replaceIn(prose+".claude-plugin/plugin.json", `"version": "0.0.0-dev"`, `"version": "1.2.0"`),
+			"update " + prose + ".claude-plugin/plugin.json\n",
+		},
+		{
 			"dependency marketplace edited by hand", replaceIn(prose+".claude-plugin/plugin.json",
 				`"cech-git", "marketplace": "cech-0-1-0"`, `"cech-git", "marketplace": "cech"`),
 			"update " + prose + ".claude-plugin/plugin.json\n",
@@ -314,6 +404,10 @@ func TestBuildErrors(t *testing.T) {
 			[]string{`data/marketplace.toml: namespace "acme-1-4-0" ends in a version, which a release adds (ADR 17 item 7)`},
 		},
 		{
+			"namespace ending in a pre-release", replaceIn(data, `namespace = "acme"`, `namespace = "acme-1-4-0-rc-2"`),
+			[]string{`data/marketplace.toml: namespace "acme-1-4-0-rc-2" ends in a version, which a release adds (ADR 17 item 7)`},
+		},
+		{
 			"extension namespace reserved for CECH", replaceIn(data, `namespace = "acme"`, `namespace = "cech-acme"`),
 			[]string{`data/marketplace.toml: namespace "cech-acme" is reserved for CECH (ADR 12 item 5)`},
 		},
@@ -327,11 +421,15 @@ func TestBuildErrors(t *testing.T) {
 		},
 		{
 			"cech not a release", replaceIn(data, `cech = "0.1.0"`, `cech = "v0.1.0"`),
-			[]string{`data/marketplace.toml: cech is "v0.1.0", not a CECH release as X.Y.Z`},
+			[]string{`data/marketplace.toml: cech is "v0.1.0", not a CECH release as X.Y.Z or X.Y.Z-rc.N`},
 		},
 		{
 			"cech with a leading zero", replaceIn(data, `cech = "0.1.0"`, `cech = "0.01.0"`),
-			[]string{`data/marketplace.toml: cech is "0.01.0", not a CECH release as X.Y.Z`},
+			[]string{`data/marketplace.toml: cech is "0.01.0", not a CECH release as X.Y.Z or X.Y.Z-rc.N`},
+		},
+		{
+			"cech with rc.0", replaceIn(data, `cech = "0.1.0"`, `cech = "0.1.0-rc.0"`),
+			[]string{`data/marketplace.toml: cech is "0.1.0-rc.0", not a CECH release as X.Y.Z or X.Y.Z-rc.N`},
 		},
 		{
 			"no cech key and another namespace", replaceIn(data, `cech = "0.1.0"`+"\n", ""),

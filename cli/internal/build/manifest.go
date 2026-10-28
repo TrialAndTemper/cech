@@ -9,13 +9,17 @@ import (
 	"github.com/TrialAndTemper/cech/cli/internal/marketplace"
 )
 
-// Manifest returns p's plugin.json with its description copied from
-// SKILL.md and, when catalogue is not "", the marketplace of each
-// dependency on a CECH plugin set to it (ADR 20 item 3). Only those
-// fields change; every other byte stays as written (ADR 18 item 6). A new
-// field goes right after name.
-func Manifest(p marketplace.Plugin, catalogue string) ([]byte, error) {
-	out, err := jsonedit.SetString(p.Manifest, "description", p.Description, "name")
+// Manifest returns p's plugin.json with its version set to version
+// (ADR 14 item 3), its description copied from SKILL.md and, when
+// catalogue is not "", the marketplace of each dependency on a CECH
+// plugin set to it (ADR 20 item 3). Only those fields change; every
+// other byte stays as written (ADR 18 item 6). A new field goes right
+// after name, so the description comes before the version.
+func Manifest(p marketplace.Plugin, version, catalogue string) ([]byte, error) {
+	out, err := jsonedit.SetString(p.Manifest, "version", version, "name")
+	if err == nil {
+		out, err = jsonedit.SetString(out, "description", p.Description, "name")
+	}
 	if err == nil && catalogue != "" {
 		out, err = setCECHMarketplace(out, catalogue)
 	}

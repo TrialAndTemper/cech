@@ -30,8 +30,8 @@ type Data struct {
 	// prefix of every plugin name (ADR 12 items 4 and 5).
 	Namespace   string `toml:"namespace"`
 	Description string `toml:"description"`
-	// CECH is the CECH release an extension builds on, as X.Y.Z; it is
-	// "" in CECH's own file.
+	// CECH is the CECH release an extension builds on, as X.Y.Z or
+	// X.Y.Z-rc.N; it is "" in CECH's own file.
 	CECH string `toml:"cech"`
 	// Team owns every path without a plugin line in the code owners
 	// file, as @org/team (ADR 13 item 4); with none, there is no file.
@@ -76,7 +76,25 @@ func (d Data) CECHCatalogue() string {
 	if d.CECH == "" {
 		return ""
 	}
-	return "cech-" + strings.ReplaceAll(d.CECH, ".", "-")
+	return CatalogueName("cech", d.CECH)
+}
+
+// CatalogueName returns the catalogue name of release v of namespace,
+// with each . in v turned into -: acme-1-4-0, cech-0-2-0-rc-1 (ADR 14
+// item 3).
+func CatalogueName(namespace, v string) string {
+	return namespace + "-" + strings.ReplaceAll(v, ".", "-")
+}
+
+// IsRelease reports whether v is a release version: X.Y.Z, or X.Y.Z-rc.N
+// for a pre-release.
+func IsRelease(v string) bool {
+	return release.MatchString(v)
+}
+
+// IsPreRelease reports whether the release version v is a pre-release.
+func IsPreRelease(v string) bool {
+	return strings.Contains(v, "-rc.")
 }
 
 // Marketplace is the sources of one marketplace.
@@ -142,13 +160,13 @@ func IsGitHubUser(s string) bool {
 // team matches a GitHub team, as @org/team.
 var team = regexp.MustCompile(`^@[A-Za-z0-9]+(-[A-Za-z0-9]+)*/[A-Za-z0-9_.-]+$`)
 
-// release matches a CECH release as X.Y.Z, in decimal with no leading
-// zeros (ADR 14 item 2).
-var release = regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`)
+// release matches a release version as X.Y.Z or X.Y.Z-rc.N, in decimal
+// with no leading zeros and N from 1 (ADR 14 item 2).
+var release = regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-rc\.[1-9][0-9]*)?$`)
 
 // versionEnd matches a name that ends in a version, as a release's
-// catalogue name does.
-var versionEnd = regexp.MustCompile(`(-[0-9]+){3}$`)
+// catalogue name does: -1-4-0 or -1-4-0-rc-2.
+var versionEnd = regexp.MustCompile(`(-[0-9]+){3}(-rc-[0-9]+)?$`)
 
 //go:embed categories.toml
 var categoriesFile string
@@ -320,7 +338,7 @@ func (d Data) check(meta toml.MetaData) error {
 	}
 	switch {
 	case !release.MatchString(d.CECH):
-		return fmt.Errorf("cech is %q, not a CECH release as X.Y.Z", d.CECH)
+		return fmt.Errorf("cech is %q, not a CECH release as X.Y.Z or X.Y.Z-rc.N", d.CECH)
 	case d.Namespace == "cech" || strings.HasPrefix(d.Namespace, "cech-"):
 		return fmt.Errorf("namespace %q is reserved for CECH (ADR 12 item 5)", d.Namespace)
 	}
