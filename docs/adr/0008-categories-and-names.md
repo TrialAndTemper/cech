@@ -48,9 +48,9 @@ Plugins also come from marketplaces that follow no CECH rule, and a skill instal
    It is not `cech` and does not start with `cech-` (item 5), so its plugin names cannot equal a CECH name.
    CECH keeps no registry of namespaces, so clashes between extensions fall to item 7.
 5. CECH's namespace is `cech`, and marketplace names `cech` and `cech-*` are reserved for CECH.
-   Each pinned release gets its own name, carrying its version, so several can be installed side by side (a later ADR on pinning).
+   Each pinned release gets its own name, carrying its version, so several can be installed side by side.
    Item 7 still forbids enabling one plugin from two of them at once.
-6. Extensions may add categories (e.g. `brand`) to their own catalogue, listed in their `data/marketplace.toml` (a later ADR on extensions).
+6. Extensions may add categories (e.g. `brand`) to their own catalogue, listed in their `data/marketplace.toml`.
 7. `cech check` fails when two enabled plugins share a name.
 
 ## Consequences

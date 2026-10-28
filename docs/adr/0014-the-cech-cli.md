@@ -56,10 +56,10 @@ Checked on 2026-10-27 with Go 1.27.3:
    Today the list is empty.
    Tools that only build or check the CLI are pinned in `mise.toml`, not in `go.mod`.
 9. **Versions.**
-   The CLI has its own SemVer versions, tagged `cli/vX.Y.Z`, apart from any tags of the catalogue, which a later ADR on releases sets.
+   The CLI has its own SemVer versions, tagged `cli/vX.Y.Z` or `cli/vX.Y.Z-rc.N`, apart from the catalogue's `v` tags.
    `cech version` prints `cech` and the version, and with `--json` also the Go release that built it and the OS and architecture it was built for.
    The version is the one a release build stamps with `-ldflags -X`, else the module version in the build information, else `0.0.0-dev`; a leading `v` is dropped.
-   Builds of `cli/` get no version number from git tags, so a release build needs the stamp; releases are left to that later ADR.
+   Builds of `cli/` get no version number from git tags, so a release build needs the stamp; the CLI's release pipeline is left to a later ADR.
 10. **Gates.**
     The CLI's gates are tasks of [ADR 10](0010-gates-and-ci.md): `go vet`, golangci-lint with a linter set that includes errcheck, the gofumpt and goimports format check, a tidy `go.mod`, and `go test` with the race detector where the platform and cgo allow.
     CI runs them on Linux, macOS and Windows.
