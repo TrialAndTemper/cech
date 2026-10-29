@@ -95,7 +95,7 @@ The [docs on private marketplaces](https://code.claude.com/docs/en/plugins/host-
 - `cech build` reads the catalogue's name, description, owner and code owners team from `data/marketplace.toml`, so CECH adds that file when the build code lands.
   It names the catalogue after the namespace, and a release build adds the version.
 - If CECH adds a category that an extension also adds, the extension's `cech validate` fails until it renames its own.
-- The probed behaviour goes into `data/harnesses.toml` when code relies on it ([ADR 5](0005-native-tool-features-first.md) item 3).
+- The probed behaviour goes into the harness data file when code relies on it ([ADR 5](0005-native-tool-features-first.md) item 3).
 
 ## Options considered
 

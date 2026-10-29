@@ -46,7 +46,8 @@ Checked on 2026-10-27 with Go 1.27.3:
    - A command never reports success for a check it could not run, and after a partial success it says what it skipped.
 6. **Harness quirks stay in one place.**
    Code that knows one harness's behaviour lives in `internal/harness/claude` or `internal/harness/codex`.
-   Each workaround names its entry in `data/harnesses.toml` ([ADR 5](0005-native-tool-features-first.md)), so it can be deleted when the harness closes the gap.
+   Each workaround names its entry in the harness data file ([ADR 5](0005-native-tool-features-first.md)), so it can be deleted when the harness closes the gap.
+   That file, at `internal/harnessdata/harnesses.toml`, and the code that reads it live apart from both packages, since they belong to no one harness.
 7. **Works without mise.**
    A user needs neither mise nor Go to run the binary, and it never calls mise.
 8. **Dependency budget.**
