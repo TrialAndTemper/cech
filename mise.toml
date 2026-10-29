@@ -116,7 +116,7 @@ run = "scripts/check-go test"
 # govulncheck asks the Go vulnerability database, so it needs the
 # network, and a new report can fail a branch that has not changed. So
 # check leaves it out, and .github/workflows/vuln.yml runs it instead,
-# without blocking a merge (ADR 14 item 10).
+# without blocking a merge (ADR 22 item 3).
 [tasks.vuln]
 description = "Known vulnerabilities in the CLI and the Go it is built with"
 run = "scripts/check-go vuln"

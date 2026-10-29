@@ -34,11 +34,11 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | A change's spec, brief, research or spike results, before or with its code; moved to `done/` once tests cover each rule | `.ai/changes/YYYY-MM-DD-short-title/` | [.ai/README.md](.ai/README.md) |
 | A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 10](docs/adr/0010-gates-and-ci.md) |
 | A CLI command or package, with its Go tests | `cli/` | [ADR 14](docs/adr/0014-the-cech-cli.md) |
-| A Go dependency, in the same change that lists it in ADR 14 | `cli/go.mod` | [ADR 14](docs/adr/0014-the-cech-cli.md) item 8 |
+| A Go dependency, in the same change that lists it in ADR 22 | `cli/go.mod` | [ADR 22](docs/adr/0022-building-the-cech-cli.md) item 1 |
 | A public term rule or an allowlisted email address | `checks/terms/` | [ADR 4](docs/adr/0004-vendor-neutrality.md) |
-| A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 10](docs/adr/0010-gates-and-ci.md) item 6 |
-| A CI step that is not a gate task, such as the private term tier; a new gate is a task in `check` | `.github/workflows/ci.yml` | [ADR 10](docs/adr/0010-gates-and-ci.md) items 1 and 7 |
-| A check that reports or runs on a schedule but never blocks a merge | `.github/workflows/` | [ADR 10](docs/adr/0010-gates-and-ci.md) items 7 and 8 |
+| A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 21](docs/adr/0021-tool-pins.md) for a pin, [ADR 10](docs/adr/0010-gates-and-ci.md) item 1 for a task |
+| A CI step that is not a gate task, such as the private term tier; a new gate is a task in `check` | `.github/workflows/ci.yml` | [ADR 10](docs/adr/0010-gates-and-ci.md) items 1 and 6 |
+| A check that reports or runs on a schedule but never blocks a merge | `.github/workflows/` | [ADR 10](docs/adr/0010-gates-and-ci.md) items 6 and 7 |
 | A rule for contributors; route agents to it from here | `CONTRIBUTING.md` | [ADR 10](docs/adr/0010-gates-and-ci.md) item 2 |
 
 ## Direct ownership

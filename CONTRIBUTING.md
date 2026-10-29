@@ -96,7 +96,7 @@ mise -C cli exec -- go test ./internal/app -update
 `check` leaves out `vuln`, since a new report in its database can fail a branch that has not changed.
 CI runs it on pull requests that touch the CLI or its tools, without blocking them, and daily on `main`, where a failure opens an issue.
 
-A new Go dependency needs a change to ADR 14 in the same pull request.
+A new Go dependency needs a change to [ADR 22](docs/adr/0022-building-the-cech-cli.md) in the same pull request.
 
 ### Optional git hooks
 

@@ -1,4 +1,4 @@
-# golangci-lint settings for the cech CLI (ADR 14), read through
+# golangci-lint settings for the cech CLI (ADR 22), read through
 # scripts/check-go by `mise run lint`, `mise run format:check` and
 # `mise run format:fix`. Each linter beyond the standard set is listed
 # with what it catches.

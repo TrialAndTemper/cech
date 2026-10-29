@@ -14,11 +14,8 @@ Scripts and CI read a command's output and exit status, so both become a contrac
 Checked on 2026-10-27 with Go 1.27.3:
 
 - Go builds a static binary for each of Linux, macOS and Windows, so users install no runtime.
-- A module in a subdirectory takes its versions from tags prefixed with that directory: the module in `cli/` is versioned by `cli/vX.Y.Z` tags, and `go install` of a version records it in the binary's build information.
 - `go build` stamps a version from git tags only for a module at the repository root, so a build of `cli/` records `(devel)`.
 - A module at the repository root takes in every Go file below it, including any that a plugin ships, and `go vet ./...` and `go test ./...` would build them.
-
-Checked on 2026-10-29: `github.com/BurntSushi/toml` v1.6.0 (MIT) requires no other module.
 
 ## Decision
 
@@ -52,38 +49,15 @@ Checked on 2026-10-29: `github.com/BurntSushi/toml` v1.6.0 (MIT) requires no oth
    That file, at `internal/harnessdata/harnesses.toml`, and the code that reads it live apart from both packages, since they belong to no one harness.
 7. **Works without mise.**
    A user needs neither mise nor Go to run the binary, and it never calls mise.
-8. **Dependency budget.**
-   The standard library comes first.
-   A third-party module is added only for a feature the standard library lacks, when writing it would cost more than depending on it.
-   Each module in `go.mod` is listed here with its reason, and adding one changes this ADR in the form [ADR 1](0001-record-architecture-decisions.md) item 5 sets.
-   Today the list holds one module, `github.com/BurntSushi/toml`, because the harness data file is TOML ([ADR 5](0005-native-tool-features-first.md) item 5) and the standard library reads no TOML.
-   Tools that only build or check the CLI are pinned in `mise.toml`, not in `go.mod`.
-9. **Versions.**
-   The CLI has its own SemVer versions, tagged `cli/vX.Y.Z` or `cli/vX.Y.Z-rc.N`, apart from the catalogue's `v` tags.
-   `cech version` prints `cech` and the version, and with `--json` also the Go release that built it and the OS and architecture it was built for.
-   The version is the one a release build stamps with `-ldflags -X`, else the module version in the build information, else `0.0.0-dev`; a leading `v` is dropped.
-   Builds of `cli/` get no version number from git tags, so a release build needs the stamp; the CLI's release pipeline is left to a later ADR.
-10. **Gates.**
-    The CLI's gates are tasks of [ADR 10](0010-gates-and-ci.md): `go vet`, golangci-lint with a linter set that includes errcheck, the gofumpt and goimports format check, a tidy `go.mod`, and `go test` with the race detector where the platform and cgo allow.
-    CI runs them on Linux, macOS and Windows.
-    govulncheck reads a database that changes on its own, so it is not a merge gate, extending [ADR 10](0010-gates-and-ci.md) item 8.
-    It reports on pull requests that touch the CLI, and runs on `main` daily and after such pushes, where a failure opens an issue.
-    Tests are table-driven, and output that is a contract has golden files.
 
 ## Consequences
 
 - Only `cli/` has a `go.mod`, so Go commands run in `cli/`, or from the root with `-C cli`.
-- Every new dependency shows up as a change to this ADR.
-- Release tooling must handle the `cli/` tag prefix.
-- A new vulnerability report never blocks a merge; its issue on `main` asks for a fix.
 
 ## Options considered
 
 - **Python:** users would need a runtime.
-- **Rust:** its standard library has no JSON, HTTP, SHA-256 or archive support, so the commands planned here would start with many direct and transitive crates against the dependency budget; it is also slower to build, and fewer contributors know it.
+- **Rust:** its standard library has no JSON, HTTP, SHA-256 or archive support, so the commands planned here would start with many direct and transitive crates; it is also slower to build, and fewer contributors know it.
 - **A module at the repository root:** takes in Go files that plugins ship.
-- **A command-line framework:** a dependency for flags that the standard `flag` package handles.
 - **A separate exit status for partial success:** every caller would handle one more code, and one that checks only for 1 would read a partial success as success; `--json` and stderr already say what was done and what was skipped.
 - **Exit statuses as bit flags (1, 2, 4), combined when several apply:** callers would decode bits, and a script that checks for 1 would miss a combined status.
-- **govulncheck as a `tool` in `go.mod`:** puts its modules into `go.mod` and `go.sum`, among the binary's own dependencies.
-- **govulncheck as a merge gate:** a new report would block every pull request until Go is upgraded.
