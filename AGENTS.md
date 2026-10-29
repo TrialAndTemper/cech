@@ -17,6 +17,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 
 - The ADRs in `docs/adr/` are the contracts.
   Read the ones a change touches before designing it; changing a contract needs a new ADR or a change to an accepted one, in the form [ADR 1](docs/adr/0001-record-architecture-decisions.md) item 5 sets.
+  Read `.ai/changes/done/` only for the history of a change: the code and its tests say what CECH does now.
 - Keep files, commit messages, and branch and tag names vendor-neutral ([ADR 4](docs/adr/0004-vendor-neutrality.md)): nothing specific to a private organisation, and invented examples such as `example.com` and `acme`.
   Never copy text from git-ignored notes into the tree; rewrite it, run `mise run terms`, and let a person read it.
 - Text from another project needs a compatible licence, a `NOTICE` entry and, in a skill, a source note naming the upstream project and commit ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
@@ -29,6 +30,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | Change | Destination | Rule or reference |
 | --- | --- | --- |
 | A new decision that is costly to reverse, also added to `docs/adr/README.md` | `docs/adr/` | [ADR 1](docs/adr/0001-record-architecture-decisions.md) |
+| A change's spec, brief, research or spike results, before or with its code; moved to `done/` once tests cover each rule | `.ai/changes/YYYY-MM-DD-short-title/` | [.ai/README.md](.ai/README.md) |
 | A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 10](docs/adr/0010-gates-and-ci.md) |
 | A CLI command or package, with its Go tests | `cli/` | [ADR 14](docs/adr/0014-the-cech-cli.md) |
 | A Go dependency, in the same change that lists it in ADR 14 | `cli/go.mod` | [ADR 14](docs/adr/0014-the-cech-cli.md) item 8 |
@@ -42,7 +44,8 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 
 | Path | Responsibility |
 | --- | --- |
-| `docs/` | Decision records; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
+| `docs/` | Documents for people: decision records in `adr/`; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
+| `.ai/` | Working material written mostly by and for agents, one folder per change in `changes/`, finished ones in `changes/done/` |
 | `scripts/` | Gate scripts in POSIX sh that run under dash, macOS sh and Git Bash; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks |
 | `checks/` | Public tiers of the term check; the private tier lives outside git |
 | `cli/` | The `cech` CLI, Go module `github.com/TrialAndTemper/cech/cli`: `cmd/cech` for `main`, `internal/` for the rest, golden files in `testdata/`, linter settings in `.golangci.yml` |

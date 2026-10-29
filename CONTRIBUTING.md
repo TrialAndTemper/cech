@@ -10,6 +10,7 @@ Report security problems privately, as [SECURITY.md](SECURITY.md) explains, not 
 The [architecture decision records](docs/adr/README.md) (ADRs) hold the contracts CECH follows and the reasons for them.
 A change that fits an accepted ADR needs no new one.
 A change to a contract, or one that adds repo-wide machinery such as a command, a hook or a file format, needs a new ADR or a change to an accepted one ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
+An ADR holds the decision and its reasons; detail such as keys, flags and messages goes in a spec, as [.ai/README.md](.ai/README.md) explains.
 For a larger change, open an issue first so we can agree on the approach.
 Ask questions in [Discussions](https://github.com/TrialAndTemper/cech/discussions); issues are for bugs and proposals.
 
@@ -113,6 +114,7 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
 - Shell scripts are POSIX sh that runs under dash, macOS sh and Git Bash, and pass shellcheck and shfmt.
   A change to a script comes with a test in `test/` for each way it could let a gate pass when it should fail, where review would likely miss it, such as after a tool bump, on another platform or on the staged tree; a comment on each case names the way it guards ([ADR 10](docs/adr/0010-gates-and-ci.md) item 5).
   Check any other way by hand, and say so in the pull request.
+- Keep an ADR under 800 words of prose outside code blocks ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 6).
 - Until the first plugin merges, an accepted ADR is edited in place, and the commit says why.
   From then on, it is not rewritten, apart from typo and link fixes: a refinement goes in a dated amendment note, and a different choice in a new ADR that supersedes it ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
 
