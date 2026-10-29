@@ -23,4 +23,4 @@ It has no skills yet, so there is nothing to install.
 ## Licence
 
 CECH is licensed under the [MIT License](LICENSE).
-[NOTICE](NOTICE) lists the third-party material in the repository and the licence of each.
+[NOTICE](NOTICE) lists the third-party material outside skill folders and the licence of each; a skill lists its own in a `NOTICE` in its folder.

@@ -53,6 +53,7 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
    A source never holds credentials; access uses the machine's git configuration.
 2. **Rendered native files.**
    `cech` renders both settings files' marketplace and plugin entries from the config, leaving every other byte as it was ([ADR 14](0014-the-cech-cli.md) item 3); the project commits them.
+   A later ADR on install paths adds skill entries that `cech` renders into `.claude/settings.json`.
 3. **Exact pins.**
    A project declares each marketplace under the `name` in its catalogue at the pinned commit.
    Each CECH release names its catalogue `cech-` plus its version, dots as hyphens: `cech-0-1-0`, or `cech-0-2-0-rc-1` for `v0.2.0-rc.1` ([ADR 8](0008-categories-and-names.md) item 5).

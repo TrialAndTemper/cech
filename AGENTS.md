@@ -20,7 +20,8 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
   Read `.ai/changes/done/` only for the history of a change: the code and its tests say what CECH does now.
 - Keep files, commit messages, and branch and tag names vendor-neutral ([ADR 4](docs/adr/0004-vendor-neutrality.md)): nothing specific to a private organisation, and invented examples such as `example.com` and `acme`.
   Never copy text from git-ignored notes into the tree; rewrite it, run `mise run terms`, and let a person read it.
-- Text from another project needs a compatible licence, a `NOTICE` entry and, in a skill, a source note naming the upstream project and commit ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
+- Text from another project needs a compatible licence, its notice and, in a skill, a source note naming the upstream project and commit ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
+  The notice for text in a skill goes in the skill folder's `NOTICE`; any other goes in the root `NOTICE`.
 - ADR evidence cites tree files, dates and the versions of harnesses and tools, never pull request or issue numbers, so each ADR stands alone.
 - Commit messages and other published text link only to public, lasting pages, never to an agent session or a page that needs a login ([ADR 11](docs/adr/0011-change-record.md)).
 - Push, open a pull request or merge only when a person asks.
@@ -63,8 +64,8 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | `CONTRIBUTING.md` | The full contributor rules this file routes to |
 | `SECURITY.md` | How to report a vulnerability privately |
 | `CODE_OF_CONDUCT.md` | Adapted Contributor Covenant under CC BY-SA 4.0; edit only its CECH-specific parts |
-| `LICENSE` | MIT licence |
-| `NOTICE` | Notices of third-party material, one entry per copied or adapted text |
+| `LICENSE` | MIT licence; `cech build` will copy it into each skill folder ([ADR 9](docs/adr/0009-generated-files.md)) |
+| `NOTICE` | Notices of third-party material outside skill folders, one entry per copied or adapted text; a skill keeps its own in its folder |
 
 ## How to work
 

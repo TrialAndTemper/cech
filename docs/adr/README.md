@@ -21,3 +21,4 @@
 17. [The extension model](0017-the-extension-model.md)
 18. [Releases and versions](0018-releases-and-versions.md)
 19. [Roles](0019-roles.md)
+20. [Two install paths](0020-two-install-paths.md)

@@ -9,6 +9,7 @@
 Users, including companies with private extensions, must know they may use, change and share CECH.
 Contributors must know what they agree to.
 Some skills will build on other people's ideas or adapt text from other open-source projects.
+A skill installer, such as `npx skills`, can copy one skill folder out of the repository and leave the repository's root files behind.
 
 ## Decision
 
@@ -23,7 +24,8 @@ Some skills will build on other people's ideas or adapt text from other open-sou
    Naming a person beyond that needs their consent, and they choose the name and email shown, if any.
 4. **Third-party text.**
    Rewrite it where you can.
-   Copied or adapted text needs a compatible licence, its notice in the root `NOTICE` file, and a source note in the skill naming the upstream project and the commit it came from.
+   Copied or adapted text needs a compatible licence, its notice, and a source note in the skill naming the upstream project and the commit it came from.
+   The notice for text in a skill goes in a `NOTICE` file in the skill folder, so it travels with the folder; any other notice goes in the root `NOTICE` file.
 
 ## Consequences
 
