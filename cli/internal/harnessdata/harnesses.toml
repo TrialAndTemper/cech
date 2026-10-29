@@ -83,7 +83,7 @@ verified = { version = "0.165.0", date = 2026-10-29 }
 harness = "claude-code"
 kind = "behaviour"
 summary = "A dependency on another marketplace's plugin resolves only in the marketplace it names exactly, and, with none named, in the depending plugin's own marketplace; checked with the dependency already installed and enabled at the same scope, which the docs require for a dependency from another marketplace unless allowCrossMarketplaceDependenciesOn in the depending plugin's marketplace.json lists that marketplace."
-decision = "ADR 20 item 4"
+decision = "ADR 20 item 3"
 probe = """
 Do this three times, each with an empty CLAUDE_CONFIG_DIR in a new git \
 repository. Make two local marketplaces: cech-0-1-0, listing \

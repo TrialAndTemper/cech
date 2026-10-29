@@ -2,6 +2,25 @@
 
 [ADR 1](0001-record-architecture-decisions.md) sets the form and rules of these records.
 
+## Terms
+
+Words the ADRs use, in short:
+
+- **Harness:** a program that runs an agent, here Claude Code or Codex ([ADR 8](0008-a-marketplace-you-extend-not-fork.md)).
+- **Skill:** a folder with a `SKILL.md` that tells an agent how to do one kind of work.
+- **Plugin:** the package a harness installs; in CECH each holds one skill ([ADR 11](0011-one-plugin-one-skill.md)).
+- **Marketplace:** a repository or directory of plugins; CECH is one, and each extension is another.
+- **Catalogue:** the file that lists a marketplace's plugins, `.claude-plugin/marketplace.json`.
+- **Namespace:** a marketplace's short name, which starts each of its plugin names ([ADR 12](0012-categories-and-names.md)).
+- **Role:** a kind of skill that other skills rely on, such as the issue tracker ([ADR 21](0021-roles.md)).
+- **Extension:** an organisation's own marketplace, built on CECH ([ADR 20](0020-the-extension-model.md)).
+- **Gate:** a check that a change must pass before it merges ([ADR 4](0004-gates-and-ci.md)).
+- **Probe:** a repeatable check of how a harness behaves ([ADR 9](0009-native-harness-features-first.md)).
+- **Managed marketplace:** one that a project's `.cech/config.toml` lists ([ADR 19](0019-per-project-plugin-enablement.md)).
+- **Native files:** the harnesses' project settings, `.claude/settings.json` and `.codex/config.toml` ([ADR 19](0019-per-project-plugin-enablement.md)).
+
+## Records
+
 1. [Record architecture decisions](0001-record-architecture-decisions.md)
 2. [Licence and contributions](0002-licence-and-contributions.md)
 3. [Vendor neutrality](0003-vendor-neutrality.md)

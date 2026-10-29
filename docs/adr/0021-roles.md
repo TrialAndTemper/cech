@@ -7,22 +7,21 @@
 ## Context
 
 A skill often needs another kind of skill: release notes cite issues in the issue tracker's format.
-It cannot name that skill, because the project chooses its tracker, and may replace a CECH skill with an extension skill ([ADR 20](0020-the-extension-model.md) item 3).
+It cannot name that skill: the project chooses its tracker, and may replace a CECH skill with an extension's ([ADR 20](0020-the-extension-model.md) item 2).
 So skills compose through roles that the project binds ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 3), and a skill names another only when it depends on that exact plugin ([ADR 11](0011-one-plugin-one-skill.md) item 3).
-Projects keep `AGENTS.md` short, so the project's choices must live elsewhere.
 
 The [Agent Skills spec](https://agentskills.io/specification), read on 2026-10-29, makes `metadata` a map of strings and asks for key names "reasonably unique to avoid accidental conflicts".
 
 Probed on 2026-10-29 with Claude Code 2.1.312 (haiku, sonnet) and Codex CLI 0.165.0 (gpt-6-luna, gpt-6.1-sol), three runs per model: a project with two `AGENTS.md` layers, a release-notes skill, and two tracker skills with different issue formats, of which the project chose one.
 With the choice recorded nowhere, none of 12 runs used either format.
-With the choice in a generated `.cech/roles.toml` that the release-notes skill points to, all 12 runs used the chosen tracker's format, as did all 12 with the choice listed in the root `AGENTS.md`.
+With the choice in a generated `.cech/roles.toml` that the release-notes skill points to, all 12 used the chosen format, as did all 12 with it listed in the root `AGENTS.md`.
 
 ## Decision
 
 1. **A role** is a kind of skill that other skills rely on, such as `issue-tracker`.
-   A skill fills a role when it does that job; it uses a role when its rules rely on the skill that fills the role.
+   A skill fills a role when it does that job; it uses a role when its rules rely on the role's skill.
 2. **Vocabulary.**
-   Each marketplace lists the roles it defines in `data/marketplace.toml` ([ADR 20](0020-the-extension-model.md) item 2):
+   Each marketplace lists the roles it defines in `data/marketplace.toml` ([ADR 17](0017-repository-data-and-state.md) item 7):
 
    ```toml
    [[roles]]
@@ -35,9 +34,8 @@ With the choice in a generated `.cech/roles.toml` that the release-notes skill p
    many = true
    ```
 
-   Role names use the characters and length of [ADR 12](0012-categories-and-names.md) item 3 but do not start with `cech-`; an extension's start with `<namespace>-`, as in `acme-release-train`.
-   `means` is one line, not empty.
-   `many` is a boolean: `true` lets a project bind several skills to the role, and absent or `false`, it takes one.
+   Role names use the characters and length of [ADR 12](0012-categories-and-names.md) item 3 but do not start with `cech-`; an extension's start with `<namespace>-`.
+   With `many = true` a role may take several bound skills; otherwise at most one.
    Roles are versioned with the marketplace release that lists them ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 6), so removing or renaming one is a breaking change.
 3. **Metadata.**
    A skill declares its roles in `SKILL.md`, as role names separated by single spaces:
@@ -51,12 +49,10 @@ With the choice in a generated `.cech/roles.toml` that the release-notes skill p
    A CECH skill names only CECH's roles.
    An extension skill names its own roles and those of the CECH release its `cech` key names.
 4. **Every use is optional.**
-   Where a skill relies on a role, its text names the role and tells the agent to find the bound skills in `.cech/roles.toml` at the project root.
-   It also says what to do when the file or the role is missing, no skill is listed, or a listed skill is not available.
-   An unbound role is never an error.
-   A skill that cannot work without one exact skill declares a dependency instead ([ADR 11](0011-one-plugin-one-skill.md) item 3).
+   Where a skill relies on a role, its text names the role and tells the agent to find the bound skills in `.cech/roles.toml`.
+   It also says what to do when no bound skill is available, and an unbound role is never an error.
 5. **Binding.**
-   For each role that an enabled skill uses, `cech` binds the skills that `[roles]` in `.cech/config.toml` lists for it, or, when it has no entry for the role, the enabled skills that fill it:
+   For each role an enabled skill uses, `cech` binds the skills listed for it under `[roles]` in `.cech/config.toml`; with no entry, it binds the enabled skills that fill the role:
 
    ```toml
    [roles]
@@ -68,7 +64,7 @@ With the choice in a generated `.cech/roles.toml` that the release-notes skill p
    A listed skill must be enabled and fill the role, and a role without `many = true` takes at most one.
    Replacing a CECH skill with an extension skill that fills the same roles needs no entry.
 6. **Rendering.**
-   Whenever `cech` renders the harness settings files ([ADR 19](0019-per-project-plugin-enablement.md) item 2), it also writes the bindings to `.cech/roles.toml`, which the project commits:
+   Whenever `cech` renders the native files ([ADR 19](0019-per-project-plugin-enablement.md) item 2), it also writes the bindings to a committed `.cech/roles.toml`:
 
    ```toml
    # Generated by cech from .cech/config.toml; edit that file instead.
@@ -78,29 +74,14 @@ With the choice in a generated `.cech/roles.toml` that the release-notes skill p
    skills = ["acme-tracker"]
    ```
 
-   It lists each role an enabled skill uses, with `means` from the marketplace that defines the role, at its pinned commit, and `many = true` when the role has it.
-   Roles and skills are sorted by name, and an unbound role has `skills = []`.
-   If no enabled skill uses any role, `cech` writes no file and removes an existing one.
-7. **`cech validate`** rejects:
-   - a `[[roles]]` entry with a missing, unknown or invalid key, or a duplicate name;
-   - a metadata value that is empty, repeats a name, or is not names separated by single spaces;
-   - metadata that names one role in both keys, or a role that item 3 does not let it name or that no vocabulary it may draw on defines.
-
-   An extension reads CECH's roles at the release its `cech` key names, from CECH's public repository as in [ADR 20](0020-the-extension-model.md) item 4.
-8. **Every command that renders, and `cech check`,** fail on:
-   - a role that two managed marketplaces define at their pinned commits;
-   - a role that an enabled skill uses or fills and that no managed marketplace defines at its pinned commit;
-   - a role without `many = true` that an enabled skill uses, that several enabled skills fill, and that `[roles]` does not list;
-   - a `[roles]` entry for a role that no enabled skill uses, or whose list breaks item 5's rules.
-
-   They name what is at fault and never edit `[roles]` themselves.
-   Roles resolve at the managed marketplaces' pinned commits, not at the CECH release an extension's `cech` key names.
-   `cech check` also fails when `.cech/roles.toml` differs from the rendering, or exists when item 6 writes none.
-   A project with hand-written harness settings files ([ADR 19](0019-per-project-plugin-enablement.md) item 7) may write `.cech/roles.toml` by hand, and `cech check` then does not compare it with a rendering.
-9. **Installed without its plugin.**
-   A copy installed without its plugin finds no bindings, unless the project writes the file, and follows item 4, so using a role never ties a skill to `cech`.
-10. **The first skill that uses a role** carries an eval with and without `.cech/roles.toml` on both harnesses.
-    If agents miss the bound skill, a new ADR moves the bindings, for example into the root `AGENTS.md`.
+   A project with hand-written native files ([ADR 19](0019-per-project-plugin-enablement.md) item 7) may write it by hand.
+7. **Checks.**
+   `cech validate` rejects a vocabulary or metadata that breaks items 2 and 3.
+   `cech check` and every rendering command fail on, and name, a role that two managed marketplaces define, that no managed marketplace defines, or that is bound against item 5.
+   `cech check` also fails when `.cech/roles.toml` differs from its rendering, unless the project writes its native files by hand (item 6).
+8. **Without its plugin**, a copy of a skill finds no bindings unless the project writes the file.
+   Either way it follows item 4, so no role makes a skill need `cech`.
+9. **The first skill that uses a role** carries an eval with and without `.cech/roles.toml` on both harnesses.
 
 ## Consequences
 
