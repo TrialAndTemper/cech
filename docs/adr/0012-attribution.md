@@ -18,6 +18,12 @@ Checked on 2026-10-17 (Claude Code 2.1.302):
 - An unknown field such as `maintainer` or `maintainers` is a warning, so strict validation fails.
 - A `metadata` map in `SKILL.md`, an [Agent Skills](https://agentskills.io/specification) field, passes.
 
+Checked again on 2026-10-29 (Claude Code 2.1.312, Codex 0.165.0):
+
+- Strict validation still fails on a top-level `maintainer` or `maintainers` field, and passes a `plugin.json` whose `metadata` object holds an array of names; Claude Code installs and loads that plugin.
+  The [plugin manifest reference](https://code.claude.com/docs/en/plugins-reference), read the same day, documents `metadata`, from Claude Code 2.1.222, as a free-form object that Claude Code does not read.
+- Codex installs and loads a plugin whose `plugin.json` has such an object.
+
 [GitHub docs](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners), read on 2026-10-17: code owners must have write access to the repository, the last matching pattern wins, and GitHub reports invalid entries.
 
 ## Decision
@@ -26,9 +32,10 @@ Checked on 2026-10-17 (Claude Code 2.1.302):
    `plugin.json` `author` names the plugin's owner: the person who answers for it now, not necessarily who wrote it first.
    They choose the name and whether to give an `email` ([ADR 2](0002-licence-and-contributions.md)).
    A plugin with no individual owner names the CECH maintainers, with the organisation's GitHub page as `url`.
-2. **Further maintainers** go in `SKILL.md` frontmatter as `metadata.maintainers`: GitHub user names separated by spaces.
-   There is no `maintainer` field in `plugin.json`.
-   This works around the validator and is recorded in the harness data file ([ADR 5](0005-native-tool-features-first.md)); it ends if `claude plugin validate --strict` accepts a maintainers field.
+2. **Further maintainers** go in `plugin.json` as `metadata.maintainers`: an array of GitHub user names.
+   So the owner and the maintainers sit in one file, the plugin's manifest.
+   There is no top-level `maintainer` or `maintainers` field, which strict validation rejects.
+   The harness data file ([ADR 5](0005-native-tool-features-first.md) item 3) records that both harnesses load a plugin with the `metadata` object, and that strict validation passes it.
 3. **Credit for ideas** and earlier authors, as [ADR 2](0002-licence-and-contributions.md) allows, goes in `CREDITS.md` in the skill folder, next to any source notes for third-party text.
    It counts as an asset of the skill under [ADR 7](0007-one-plugin-one-skill.md).
    Credits are for people, not agents, so `SKILL.md` does not link to the file.
@@ -53,12 +60,13 @@ Checked on 2026-10-17 (Claude Code 2.1.302):
 
 ## Consequences
 
-- Changing a plugin's owner is a change to its manifest, reviewed like any other.
+- Changing a plugin's owner or maintainers is a change to its manifest, reviewed like any other.
 - Owners and maintainers need GitHub accounts with write access to get review requests.
 - A one-person plugin has no backup reviewer until the team adds one.
 
 ## Options considered
 
-- **A `maintainers` field in `plugin.json`:** fails strict validation (checked above).
+- **A top-level `maintainers` field in `plugin.json`:** fails strict validation (checked above).
+- **`metadata.maintainers` in `SKILL.md`:** it passes too, but splits who answers for a plugin over two files, and the Agent Skills `metadata` map holds only strings, so the names would need a separator.
 - **A hand-written maintainers file or code owners file:** drifts from the manifests.
 - **Owners derived from git history:** commits show who changed a plugin, not who answers for it now, and some come from bots or tools.
