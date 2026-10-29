@@ -84,6 +84,10 @@ depends = ["lint:*"]
 description = "Lint the GitHub Actions workflows"
 run = ["actionlint .github/workflows/*.y*ml", "zizmor --offline --pedantic --strict-collection ."]
 
+[tasks."lint:adr"]
+description = "Check the length of each ADR and that its code fences close"
+run = "scripts/check-adr"
+
 [tasks."lint:go"]
 description = "go vet, golangci-lint and go mod tidy -diff on the CLI"
 run = "scripts/check-go lint"
@@ -158,6 +162,7 @@ run = [
 description = "pre-commit hook: the term check, lint and format check on the staged tree"
 run = [
   "scripts/check-terms --staged",
+  "scripts/staged-tree scripts/check-adr",
   "scripts/staged-tree scripts/check-shell lint",
   "scripts/staged-tree scripts/check-shell format",
   "scripts/staged-tree scripts/check-go lint",
