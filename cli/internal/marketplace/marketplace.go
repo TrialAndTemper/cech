@@ -18,6 +18,7 @@ import (
 
 	"github.com/BurntSushi/toml"
 
+	"github.com/TrialAndTemper/cech/cli/internal/frontmatter"
 	"github.com/TrialAndTemper/cech/cli/internal/jsonedit"
 )
 
@@ -594,18 +595,18 @@ func (p *Plugin) readMaintainers(meta jsontext.Value) error {
 }
 
 func (p *Plugin) readSkill(src []byte) error {
-	fm, err := parseFrontmatter(src)
+	fm, err := frontmatter.Parse(src)
 	if err != nil {
 		return err
 	}
-	name, err := str(fm.fields, "name")
+	name, err := fm.Str("name")
 	if err != nil {
 		return err
 	}
 	if name != p.Name {
 		return fmt.Errorf("name is %q, not the plugin's name %q", name, p.Name)
 	}
-	if p.Description, err = str(fm.fields, "description"); err != nil {
+	if p.Description, err = fm.Str("description"); err != nil {
 		return err
 	}
 	if p.Description == "" {
@@ -616,14 +617,14 @@ func (p *Plugin) readSkill(src []byte) error {
 
 func readAgent(file string, src []byte) (Agent, error) {
 	a := Agent{File: file}
-	fm, err := parseFrontmatter(src)
+	fm, err := frontmatter.Parse(src)
 	if err != nil {
 		return a, err
 	}
-	if a.Name, err = str(fm.fields, "name"); err != nil {
+	if a.Name, err = fm.Str("name"); err != nil {
 		return a, err
 	}
-	if a.Description, err = str(fm.fields, "description"); err != nil {
+	if a.Description, err = fm.Str("description"); err != nil {
 		return a, err
 	}
 	switch {
@@ -632,6 +633,6 @@ func readAgent(file string, src []byte) (Agent, error) {
 	case a.Description == "":
 		return a, errors.New("description is missing")
 	}
-	a.Instructions = fm.body
+	a.Instructions = fm.Body
 	return a, nil
 }
