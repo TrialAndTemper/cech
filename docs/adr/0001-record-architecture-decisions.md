@@ -28,7 +28,7 @@ Written into an ADR, that detail hides the decision, pulls review towards edge c
 4. ADR numbers on `main` run from 1 with no gaps.
    A pull request numbers its ADRs right after the highest on `main`, and renumbers if another merges first.
    CI checks the branch merged onto current `main` and rejects duplicate or missing numbers.
-5. Until the first plugin merges, an accepted ADR is edited in place, whatever the change; its number and file name stay, so links keep working, and the commit that makes the edit says why.
+5. Until the first plugin merges, an accepted ADR is edited in place, whatever the change, and ADRs may be renumbered into the order they depend on; the commit says why, and a renumbering maps old numbers to new.
    From then on, an accepted ADR is not rewritten; typos and links may be fixed.
    - A refinement (a parameter, an edge case, a rename, an added list entry) goes in a dated `> **Amendment (YYYY-MM-DD).**` note, with its evidence, under the paragraph it changes.
      The status gains `Last amended: <date>`.
