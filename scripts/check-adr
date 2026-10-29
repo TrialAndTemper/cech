@@ -1,8 +1,17 @@
 #!/bin/sh
-# ADR gate: the length limit of ADR 1 item 6, run as `mise run lint:adr`
-# and, on the staged tree, by the pre-commit hook. POSIX sh and POSIX
-# awk (ADR 4): it must run under dash, macOS sh and Git Bash, with BSD
-# awk, mawk and gawk, so the awk program uses no interval expressions.
+# ADR gate: the numbering and index of ADR 1 items 4 and 7, and the
+# length limit of item 6, run as `mise run lint:adr` and, on the staged
+# tree, by the pre-commit hook. POSIX sh and POSIX awk (ADR 4): it must
+# run under dash, macOS sh and Git Bash, with BSD awk, mawk and gawk, so
+# the awk programs use no interval expressions.
+#
+# The tracked docs/adr/NNNN-*.md files must be numbered from 1 with no
+# gap and no number used twice, and each must start with the title line
+# `# N. Title`, N its number, with a title that is not blank. docs/adr/README.md must list each ADR once,
+# in order, as `N. [Title](NNNN-name.md)`, with the title and file name
+# of that ADR, and nothing else as a numbered list item. On a branch, CI
+# checks out the branch merged onto `main`, so a number that another
+# branch took first shows as used twice.
 #
 # Every tracked docs/adr/NNNN-*.md must have fewer than 800 words of
 # prose outside fenced code blocks. A word is a run of characters
@@ -25,9 +34,10 @@
 #   quote, is read as prose.
 # A list item starts with a marker and a gap, but not on a thematic
 # break or in indented code, and a number other than 1 starts one
-# after a paragraph line only inside a list. Nested lists are tracked one level deep, so in
-# rare layouts a line may be read as prose or as code wrongly; the other
-# simplifications can only count more words or add a finding.
+# after a paragraph line only inside a list. Nested lists are tracked
+# one level deep, so in rare layouts a line may be read as prose or as
+# code wrongly; the other simplifications can only count more words or
+# add a finding.
 #
 # Usage: scripts/check-adr
 #
@@ -55,8 +65,10 @@ usage() {
   cat << 'EOF2'
 Usage: mise run lint:adr (scripts/check-adr)
 
-Checks that each ADR in docs/adr/ has fewer than 800 words of prose
-outside fenced code blocks, and that every fence closes.
+Checks that the ADRs in docs/adr/ are numbered from 1 with no gaps,
+that each title carries its number, that docs/adr/README.md lists them
+all in order, and that each has fewer than 800 words of prose outside
+fenced code blocks, with every fence closed.
 
 Exit status: 0 clean, 1 findings, 2 the check could not run.
 EOF2
@@ -138,8 +150,57 @@ COUNT='
     }'
 readonly COUNT
 
+# INDEX is the awk program that checks the numbering and the index. Its
+# first input has one line per ADR, its file name and its first line
+# joined by a tab; its second is docs/adr/README.md. It prints one line
+# per finding.
+# shellcheck disable=SC2016 # the dollars are awk's, not the shell's
+INDEX='
+    BEGIN { FS = "\t" }
+    FNR == NR {
+      n++
+      name[n] = $1
+      num[n] = substr($1, 1, 4) + 0
+      # The whole first line, tabs included.
+      head = substr($0, length($1) + 2)
+      sub(/\r$/, "", head)
+      prefix = "# " num[n] ". "
+      if (substr(head, 1, length(prefix)) == prefix && substr(head, length(prefix) + 1) ~ /[^ \t]/) {
+        title[n] = substr(head, length(prefix) + 1)
+      } else {
+        title[n] = ""
+        printf "docs/adr/%s:1: the title line must be \"%sTitle\"\n", $1, prefix
+      }
+      if (n == 1) {
+        if (num[n] != 1) printf "docs/adr/%s: the first ADR is %d, not 1\n", $1, num[n]
+      } else if (num[n] < expect) {
+        printf "docs/adr/%s: ADR %d has more than one file\n", $1, num[n]
+      } else if (num[n] > expect) {
+        printf "docs/adr/%s: no ADR %d before ADR %d\n", $1, expect, num[n]
+      }
+      if (num[n] >= expect) expect = num[n] + 1
+      next
+    }
+    # Any numbered list item, indented or not, is an index entry.
+    /^[ \t]*[0-9]+[.)]([ \t]|\r?$)/ {
+      k++
+      sub(/\r$/, "")
+      want = (k <= n) ? k ". [" title[k] "](" name[k] ")" : ""
+      if (k > n) {
+        printf "docs/adr/README.md:%d: lists an ADR that does not exist: %s\n", FNR, $0
+      } else if ($0 != want && title[k] != "") {
+        printf "docs/adr/README.md:%d: should read: %s\n", FNR, want
+      }
+    }
+    END {
+      for (i = k + 1; i <= n; i++) {
+        printf "docs/adr/README.md: does not list ADR %d, %s\n", num[i], name[i]
+      }
+    }'
+readonly INDEX
+
 main() {
-  local f words from status n
+  local f words from status n index head
 
   case "${1:-}" in
     '') ;;
@@ -167,6 +228,8 @@ main() {
     # A file deleted but not yet staged has nothing to check.
     [ -f "${f}" ] || continue
     n=$((n + 1))
+    head=$(sed -n 1p "${f}") || die "cannot read ${f}"
+    printf '%s\t%s\n' "${f##*/}" "${head}" >> "${SCRATCH}/titles"
     LC_ALL=C awk "${COUNT}" "${f}" > "${SCRATCH}/count" ||
       die "cannot count the words in ${f}"
     words=$(sed -n 's/^words //p' "${SCRATCH}/count")
@@ -184,6 +247,19 @@ main() {
     fi
   done < "${SCRATCH}/files"
   [ "${n}" -gt 0 ] || die "no ADR found in docs/adr/"
+
+  index=docs/adr/README.md
+  if [ ! -f "${index}" ]; then
+    printf 'adr: %s: no index of the ADRs (ADR 1 item 7)\n' "${index}" >&2
+    status=1
+    index=/dev/null
+  fi
+  LC_ALL=C awk "${INDEX}" "${SCRATCH}/titles" "${index}" > "${SCRATCH}/index" ||
+    die "cannot check the numbering and the index"
+  if [ -s "${SCRATCH}/index" ]; then
+    sed 's/^/adr: /' "${SCRATCH}/index" >&2
+    status=1
+  fi
 
   if [ "${status}" != 0 ]; then
     printf 'adr: findings\n' >&2

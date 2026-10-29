@@ -1,12 +1,12 @@
 #!/usr/bin/env bats
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
-# Tests of scripts/check-adr, the gate on ADR length (ADR 1 item 6). As
-# ADR 4 asks of gate tests, each case guards a way the gate could pass
-# when it should fail, where review would likely miss it, and says
-# which. The other ways were checked by hand when the gate was added.
-# The pre-commit hook's run on the staged tree has its case in
-# tasks.bats.
+# Tests of scripts/check-adr, the gate on ADR numbering, index and
+# length (ADR 1 items 4, 6 and 7). As ADR 4 asks of gate tests, each
+# case guards a way the gate could pass when it should fail, where
+# review would likely miss it, and says which. The other ways were
+# checked by hand when the gate was added. The pre-commit hook's run
+# on the staged tree has its case in tasks.bats.
 #
 # Requires: bats (version in mise.toml), git >= 2.28 (init -b), and awk.
 
@@ -19,7 +19,9 @@ setup_file() {
   mkdir -p "${REPO}/scripts" "${REPO}/docs/adr"
   cp -- "${SRC}/scripts/check-adr" "${REPO}/scripts/"
   cp -R -- "${SRC}/scripts/lib" "${REPO}/scripts/"
-  words 10 > "${REPO}/docs/adr/0001-first.md"
+  printf '# 1. First\n\n' > "${REPO}/docs/adr/0001-first.md"
+  words 10 >> "${REPO}/docs/adr/0001-first.md"
+  printf '# ADRs\n\n1. [First](0001-first.md)\n' > "${REPO}/docs/adr/README.md"
   commit_template
 }
 
@@ -41,6 +43,20 @@ words() {
 plant_adr() {
   printf '%s\n' "$@" > "${REPO}/docs/adr/0002-planted.md"
   g add docs/adr/0002-planted.md
+}
+
+# add_adr <number> <name> <title>: stage docs/adr/<name> with the title
+# line `# <number>. <title>` and a little prose.
+add_adr() {
+  printf '# %s. %s\n\nw w w\n' "$1" "$3" > "${REPO}/docs/adr/$2"
+  g add -- "docs/adr/$2"
+}
+
+# set_index <entries...>: stage docs/adr/README.md listing the entries.
+set_index() {
+  printf '# ADRs\n\n' > "${REPO}/docs/adr/README.md"
+  printf '%s\n' "$@" >> "${REPO}/docs/adr/README.md"
+  g add docs/adr/README.md
 }
 
 # run_adr: run the gate in the case's repository.
@@ -203,4 +219,91 @@ run_adr() {
   run_adr
   assert_status 2
   assert_output_has "no ADR found"
+}
+
+# Guards the numbering rule of ADR 1 item 4 losing a case: a gap, a
+# number two branches both took, or a log that does not start at 1.
+@test "ADR numbers run from 1 with no gap and no number used twice" {
+  add_adr 3 0003-third.md Third
+  set_index '1. [First](0001-first.md)' '2. [Third](0003-third.md)'
+  run_adr
+  assert_status 1
+  assert_output_has "0003-third.md: no ADR 2 before ADR 3"
+  g rm -qf docs/adr/0003-third.md
+  add_adr 1 0001-other.md Other
+  run_adr
+  assert_status 1
+  assert_output_has "0001-other.md: ADR 1 has more than one file"
+  g rm -qf docs/adr/0001-first.md docs/adr/0001-other.md
+  add_adr 2 0002-second.md Second
+  set_index '1. [Second](0002-second.md)'
+  run_adr
+  assert_status 1
+  assert_output_has "the first ADR is 2, not 1"
+  # MADR names a template 0000-template.md; it must not pass as ADR 0.
+  add_adr 0 0000-template.md Template
+  set_index '1. [Template](0000-template.md)' '2. [Second](0002-second.md)'
+  run_adr
+  assert_status 1
+  assert_output_has "the first ADR is 0, not 1"
+}
+
+# Guards a title whose number does not match its file, which would
+# then read as another ADR in the log and in links.
+@test "a title must carry the number of its file" {
+  add_adr 3 0002-second.md Second
+  set_index '1. [First](0001-first.md)' '2. [Second](0002-second.md)'
+  run_adr
+  assert_status 1
+  assert_output_has '0002-second.md:1: the title line must be "# 2. Title"'
+  # A blank title would also make the index entry match nothing.
+  printf '# 2.  \n\nw w w\n' > "${REPO}/docs/adr/0002-second.md"
+  g add docs/adr/0002-second.md
+  set_index '1. [First](0001-first.md)' '2. [ ](0002-second.md)'
+  run_adr
+  assert_status 1
+  assert_output_has '0002-second.md:1: the title line must be "# 2. Title"'
+  # A tab inside a title is part of it.
+  printf '# 2. Sec\tond\n\nw w w\n' > "${REPO}/docs/adr/0002-second.md"
+  g add docs/adr/0002-second.md
+  set_index '1. [First](0001-first.md)' '2. [Sec](0002-second.md)'
+  run_adr
+  assert_status 1
+  assert_output_has "should read: 2. [Sec"
+}
+
+# Guards the index rule of ADR 1 item 7 losing a case: an ADR left out,
+# a stale title, entries out of order, an entry for a missing file, or
+# no index at all.
+@test "the index lists every ADR once, in order, with its title and file" {
+  add_adr 2 0002-second.md Second
+  set_index '1. [First](0001-first.md)'
+  run_adr
+  assert_status 1
+  assert_output_has "does not list ADR 2, 0002-second.md"
+  set_index '1. [First](0001-first.md)' '2. [Old title](0002-second.md)'
+  run_adr
+  assert_status 1
+  assert_output_has "README.md:4: should read: 2. [Second](0002-second.md)"
+  set_index '2. [Second](0002-second.md)' '1. [First](0001-first.md)'
+  run_adr
+  assert_status 1
+  assert_output_has "README.md:3: should read: 1. [First](0001-first.md)"
+  set_index '1. [First](0001-first.md)' '2. [Second](0002-second.md)' '3. [Gone](0003-gone.md)'
+  run_adr
+  assert_status 1
+  assert_output_has "lists an ADR that does not exist: 3. [Gone](0003-gone.md)"
+  set_index '1. [First](0001-first.md)' '2. [Second](0002-second.md)' '   3. [Gone](0003-gone.md)'
+  run_adr
+  assert_status 1
+  assert_output_has "lists an ADR that does not exist:    3. [Gone](0003-gone.md)"
+  # An empty numbered item is a list item too.
+  set_index '1. [First](0001-first.md)' '2. [Second](0002-second.md)' '3.'
+  run_adr
+  assert_status 1
+  assert_output_has "lists an ADR that does not exist: 3."
+  g rm -qf docs/adr/README.md
+  run_adr
+  assert_status 1
+  assert_output_has "no index of the ADRs"
 }
