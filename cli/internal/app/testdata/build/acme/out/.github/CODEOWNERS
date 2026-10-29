@@ -3,4 +3,6 @@
 
 * @acme/skill-maintainers
 /plugins/tool/acme-git/ @dave
+/evals/tool/acme-git/ @dave
 /plugins/writing/acme-prose/ @alice-dev @bob-dev @carol
+/evals/writing/acme-prose/ @alice-dev @bob-dev @carol
