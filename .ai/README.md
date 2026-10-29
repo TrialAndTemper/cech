@@ -34,6 +34,6 @@ Any other change needs no folder.
 
 ## Rules for everything here
 
-- Never commit notes that quote private or unpublished sources; rewrite their findings in your own words ([ADR 4](../docs/adr/0004-vendor-neutrality.md)).
+- Never commit notes that quote private or unpublished sources; rewrite their findings in your own words ([ADR 3](../docs/adr/0003-vendor-neutrality.md)).
 - An ADR never links here: it states the findings it rests on in its own words, since folders here move.
 - A commit message links here only at a fixed commit, for the same reason.

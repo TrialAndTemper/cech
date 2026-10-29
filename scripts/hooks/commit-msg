@@ -1,5 +1,5 @@
 #!/bin/sh
-# Optional hook (ADR 10): runs the commit-msg gates through mise.
+# Optional hook (ADR 4): runs the commit-msg gates through mise.
 # Enable with: git config core.hooksPath scripts/hooks
 set -eu
 command -v mise > /dev/null 2>&1 || {

@@ -1,5 +1,5 @@
 // Package app parses the cech command line and runs its commands, under
-// the output contract of ADR 14: results on stdout, messages on stderr,
+// the output contract of ADR 15: results on stdout, messages on stderr,
 // one JSON object on stdout with --json, and fixed exit codes.
 package app
 
@@ -14,7 +14,7 @@ import (
 	"github.com/TrialAndTemper/cech/cli/internal/version"
 )
 
-// Exit codes (ADR 14). Other codes are not used.
+// Exit codes (ADR 15). Other codes are not used.
 const (
 	ExitOK          = 0 // the command did what it was asked
 	ExitFailure     = 1 // it ran and met a failure, or only partly succeeded; wins over ExitUnreachable
@@ -51,7 +51,7 @@ func Run(args []string, stdout, stderr io.Writer) int {
 }
 
 func run(args []string, stdout, stderr io.Writer, info version.Info) (code int) {
-	// Go exits 2 after a panic, ADR 14's code for a wrong command line, so
+	// Go exits 2 after a panic, ADR 15's code for a wrong command line, so
 	// a panic is reported as the failure it is. This catches panics in
 	// this goroutine only: a command that starts goroutines recovers in
 	// each of them.

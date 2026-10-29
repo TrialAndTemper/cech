@@ -1,6 +1,6 @@
 # The harness data file: the harness behaviours CECH relies on, and the
-# workarounds for harness gaps (ADR 5 items 2 and 3), in the format ADR
-# 5 item 5 sets. The cech CLI builds it in. Code that works around a gap
+# workarounds for harness gaps (ADR 9 items 2 and 3), in the format ADR
+# 9 item 5 sets. The cech CLI builds it in. Code that works around a gap
 # names its entry. Re-run an entry's probe on a new harness release; on
 # the result in expect, update verified, and on any other, open an
 # issue.
@@ -13,7 +13,7 @@ workaround = """
 cech build writes each reviewer agent as a Codex agent file beside its \
 Markdown, and cech copies those of the enabled plugins into the \
 project's git-ignored .codex/agents/."""
-decision = "ADR 6 item 3"
+decision = "ADR 10 item 3"
 probe = """
 With an empty CODEX_HOME, make a local marketplace probe-mkt whose \
 plugin probe holds skills/probe/SKILL.md, agents/probe-reviewer.md and \
@@ -41,7 +41,7 @@ version = "0.165.0"
 harness = "claude-code"
 kind = "behaviour"
 summary = "A plugin whose plugin.json has a metadata object, where CECH keeps further maintainers, passes claude plugin validate --strict and installs and loads; strict validation fails on a top-level maintainer or maintainers field instead."
-decision = "ADR 12 item 2"
+decision = "ADR 13 item 2"
 probe = """
 With an empty CLAUDE_CONFIG_DIR, run claude plugin validate --strict on \
 three copies of a plugin with one skill, whose \
@@ -67,7 +67,7 @@ version = "2.1.312"
 harness = "codex"
 kind = "behaviour"
 summary = "Codex installs and loads a plugin whose plugin.json has a metadata object, where CECH keeps further maintainers."
-decision = "ADR 12 item 2"
+decision = "ADR 13 item 2"
 probe = """
 With an empty CODEX_HOME, make a local marketplace probe-mkt whose \
 plugin probe holds skills/probe/SKILL.md, with a description holding a \
@@ -83,7 +83,7 @@ verified = { version = "0.165.0", date = 2026-10-29 }
 harness = "claude-code"
 kind = "behaviour"
 summary = "A dependency on another marketplace's plugin resolves only in the marketplace it names exactly, and, with none named, in the depending plugin's own marketplace; checked with the dependency already installed and enabled at the same scope, which the docs require for a dependency from another marketplace unless allowCrossMarketplaceDependenciesOn in the depending plugin's marketplace.json lists that marketplace."
-decision = "ADR 17 item 4"
+decision = "ADR 20 item 4"
 probe = """
 Do this three times, each with an empty CLAUDE_CONFIG_DIR in a new git \
 repository. Make two local marketplaces: cech-0-1-0, listing \

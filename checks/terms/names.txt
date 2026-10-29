@@ -1,4 +1,4 @@
-# Term check, tier 2: product and brand names CECH does not cover (ADR 4).
+# Term check, tier 2: product and brand names CECH does not cover (ADR 3).
 # One name per line; `#` starts a comment line.
 # Matching ignores case. An end that is a letter, digit or `_` must sit at
 # a word boundary, so "foo" does not find "food". Spaces, `-` and `_`

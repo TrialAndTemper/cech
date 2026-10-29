@@ -1,4 +1,4 @@
-# 3. A marketplace you extend, not fork
+# 8. A marketplace you extend, not fork
 
 - Status: accepted
 - Date: 2026-10-16

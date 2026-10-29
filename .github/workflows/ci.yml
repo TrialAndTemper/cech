@@ -1,4 +1,4 @@
-# The gates of ADR 10, run with the tools pinned in mise.toml. CI runs
+# The gates of ADR 4, run with the tools pinned in mise.toml. CI runs
 # `mise run check`, as a contributor does, so there is no second list of
 # gates to keep in step; only the private term tier has its own step.
 name: CI
@@ -82,7 +82,7 @@ jobs:
         run: mise run --continue-on-error --output prefix check
 
       # check ran the public term tiers. This step runs the term gate again
-      # with the private tier (ADR 4), which runs, and must run, only where
+      # with the private tier (ADR 3), which runs, and must run, only where
       # the secret reaches: pushes and pull requests from this repository's
       # own branches, never forks. It has its own step so that no other gate
       # sees the secret; a public finding shows in both steps.

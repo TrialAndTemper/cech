@@ -2,7 +2,7 @@
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
 # Tests of scripts/lib/common.sh, which every gate script sources. As
-# ADR 10 asks of gate tests, each case guards a way a gate could pass
+# ADR 4 asks of gate tests, each case guards a way a gate could pass
 # when it should fail, where review would likely miss it, and says
 # which. The other ways were checked by hand when their cases were
 # dropped.

@@ -1,4 +1,4 @@
-# 8. Categories and names
+# 12. Categories and names
 
 - Status: accepted
 - Date: 2026-10-16
@@ -6,16 +6,16 @@
 
 ## Context
 
-CECH will hold many single-skill plugins ([ADR 7](0007-one-plugin-one-skill.md)), so people need to browse them by kind.
+CECH will hold many single-skill plugins ([ADR 11](0011-one-plugin-one-skill.md)), so people need to browse them by kind.
 Categories and names are decided together because a category in the name would rename a plugin whenever it moves.
 
-Names clash and are hard to change (checked on 2026-10-16, versions as in [ADR 6](0006-claude-code-and-codex-from-one-source.md)):
+Names clash and are hard to change (checked on 2026-10-16, versions as in [ADR 10](0010-claude-code-and-codex-from-one-source.md)):
 
 - Neither harness puts the marketplace in a skill's name.
   Given two enabled plugins named `issues`, Claude Code loads one without warning and Codex lists both under one name.
 - Projects commit enablement keys such as `cech-issues@cech-0-1-0`, so a rename breaks them.
 
-Plugins also come from marketplaces that follow no CECH rule, and a skill installer can copy a skill without its plugin into a project or user skills directory, where only its name identifies it (checked on 2026-10-16 with `npx skills` and `gh skill`, as in [ADR 3](0003-a-marketplace-you-extend-not-fork.md)).
+Plugins also come from marketplaces that follow no CECH rule, and a skill installer can copy a skill without its plugin into a project or user skills directory, where only its name identifies it (checked on 2026-10-16 with `npx skills` and `gh skill`, as in [ADR 8](0008-a-marketplace-you-extend-not-fork.md)).
 
 ## Decision
 

@@ -2,7 +2,7 @@
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
 # Tests of scripts/check-shell, the script behind the shell lint and
-# format gates. As ADR 10 asks of gate tests, each case guards a way the
+# format gates. As ADR 4 asks of gate tests, each case guards a way the
 # gates could pass when they should fail, where review would likely miss
 # it, and says which. The other ways were checked by hand when their
 # cases were dropped.

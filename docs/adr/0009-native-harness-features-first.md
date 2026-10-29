@@ -1,4 +1,4 @@
-# 5. Native harness features first
+# 9. Native harness features first
 
 - Status: accepted
 - Date: 2026-10-16
@@ -35,7 +35,7 @@ A typo in a hand-written data file should fail, not be ignored.
    kind = "gap"
    summary = "Codex leaves out the agents that a plugin bundles."
    workaround = "cech build writes each reviewer agent as a Codex agent file, which cech copies into the project."
-   decision = "ADR 6 item 3"
+   decision = "ADR 10 item 3"
    probe = "Install a plugin that bundles a skill and an agent, then render the prompt with codex debug prompt-input."
    expect = "The prompt names the skill but not the agent."
    verified = { version = "0.165.0", date = 2026-10-29 }

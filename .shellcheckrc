@@ -1,5 +1,5 @@
 # ShellCheck settings for CECH's scripts.
-# The scripts under scripts/ are POSIX sh (ADR 10), so the dialect is
+# The scripts under scripts/ are POSIX sh (ADR 4), so the dialect is
 # sh. Optional checks are listed one by one, each a deliberate choice.
 # Exceptions go inline on the line they cover, with a reason; the one
 # project-wide exception is at the end of this file.

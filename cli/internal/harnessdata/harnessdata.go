@@ -1,7 +1,7 @@
 // Package harnessdata holds the harness data file, harnesses.toml: the
 // harness behaviours CECH relies on, and its workarounds for harness
-// gaps, in the format ADR 5 item 5 sets. Code that knows one harness's
-// behaviour lives in internal/harness instead (ADR 14 item 6).
+// gaps, in the format ADR 9 item 5 sets. Code that knows one harness's
+// behaviour lives in internal/harness instead (ADR 15 item 6).
 package harnessdata
 
 import (
@@ -18,7 +18,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// File is the content of harnesses.toml, which the CLI builds in (ADR 5
+// File is the content of harnesses.toml, which the CLI builds in (ADR 9
 // item 3).
 //
 //go:embed harnesses.toml
@@ -32,9 +32,9 @@ const (
 
 // The kinds of entry.
 const (
-	// Gap is a harness gap that CECH works around (ADR 5 item 2).
+	// Gap is a harness gap that CECH works around (ADR 9 item 2).
 	Gap = "gap"
-	// Behaviour is a harness behaviour CECH relies on (ADR 5 item 3).
+	// Behaviour is a harness behaviour CECH relies on (ADR 9 item 3).
 	Behaviour = "behaviour"
 )
 
@@ -292,7 +292,7 @@ func describe(v any) string {
 	return "an array"
 }
 
-// check applies the rules of ADR 5 item 5 to e.
+// check applies the rules of ADR 9 item 5 to e.
 func (e Entry) check(meta toml.MetaData) []error {
 	var errs []error
 	add := func(format string, a ...any) { errs = append(errs, fmt.Errorf(format, a...)) }

@@ -1,5 +1,5 @@
 # Term check, tier 1: rules for commit and tag messages and ref names only
-# (ADR 4). CECH refers to its own issues as #N.
+# (ADR 3). CECH refers to its own issues as #N.
 
 [[rules]]
 id = "tracker-key"

@@ -1,8 +1,8 @@
 #!/bin/sh
 # Shell lint and format check over the shell code tracked under scripts/
-# and test/: the lint and format gates of ADR 10 for shell, run as
+# and test/: the lint and format gates of ADR 4 for shell, run as
 # `mise run lint`, `mise run format:check` and `mise run format:fix`.
-# POSIX sh (ADR 10): it must run under dash, macOS sh and Git Bash.
+# POSIX sh (ADR 4): it must run under dash, macOS sh and Git Bash.
 #
 # Each kind of file declares its dialect on its first lines, which the
 # linter reads; shfmt takes it from .editorconfig in scripts/ and from the

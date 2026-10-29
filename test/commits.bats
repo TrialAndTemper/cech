@@ -1,8 +1,8 @@
 #!/usr/bin/env bats
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
-# Tests of scripts/check-commits, the commit message gate (ADR 11). As
-# ADR 10 asks of gate tests, each case guards a way the gate could pass
+# Tests of scripts/check-commits, the commit message gate (ADR 6). As
+# ADR 4 asks of gate tests, each case guards a way the gate could pass
 # when it should fail, where review would likely miss it, and says
 # which. The other ways were checked by hand when their cases were
 # dropped.

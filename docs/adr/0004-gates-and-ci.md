@@ -1,4 +1,4 @@
-# 10. Gates and CI
+# 4. Gates and CI
 
 - Status: accepted
 - Date: 2026-10-19
@@ -6,7 +6,7 @@
 
 ## Context
 
-Earlier ADRs promise checks: ADR numbers ([ADR 1](0001-record-architecture-decisions.md)), DCO sign-off ([ADR 2](0002-licence-and-contributions.md)), the term check ([ADR 4](0004-vendor-neutrality.md)), the scheduled probes ([ADR 5](0005-native-tool-features-first.md)), the validator ([ADR 6](0006-claude-code-and-codex-from-one-source.md), [ADR 7](0007-one-plugin-one-skill.md), [ADR 8](0008-categories-and-names.md)) and the build check ([ADR 9](0009-generated-files.md)).
+Earlier ADRs promise checks: ADR numbers ([ADR 1](0001-record-architecture-decisions.md)), DCO sign-off ([ADR 2](0002-licence-and-contributions.md)), the term check ([ADR 3](0003-vendor-neutrality.md)), the scheduled probes ([ADR 9](0009-native-harness-features-first.md)), the validator ([ADR 10](0010-claude-code-and-codex-from-one-source.md), [ADR 11](0011-one-plugin-one-skill.md), [ADR 12](0012-categories-and-names.md)) and the build check ([ADR 18](0018-generated-files.md)).
 A check that runs only on some machines, or differently on each, lets breakage through.
 Git hooks can be skipped and do not run on edits made in the GitHub web interface.
 
@@ -35,7 +35,7 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    A GitHub Actions workflow runs `mise run check`, the command a contributor runs, on every pull request and push to `main`, so it holds no second list of gates.
    The gates, the link check included, run on Linux, macOS and Windows, apart from the bats tests on Windows, and each keeps running after another fails.
    A ruleset on `main` requires the gates to pass before merge.
-   Gates that need a secret, such as the private term tier ([ADR 4](0004-vendor-neutrality.md)), cannot run on fork pull requests, so they are required only where they run and are skipped locally without the secret.
+   Gates that need a secret, such as the private term tier ([ADR 3](0003-vendor-neutrality.md)), cannot run on fork pull requests, so they are required only where they run and are skipped locally without the secret.
    Only the private term tier has a step of its own, so that its secret reaches no other gate.
    A rule that CI cannot check is written as guidance in the contributing guide, not described as enforced.
 3. **Bypass.**
@@ -46,7 +46,7 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    They call `mise run` with the gate's staged or message mode.
    No rule exists only in a hook.
 5. **The gates**, each added when the thing it checks first exists:
-   - term check, all public tiers; private tier as in [ADR 4](0004-vendor-neutrality.md);
+   - term check, all public tiers; private tier as in [ADR 3](0003-vendor-neutrality.md);
    - DCO sign-off on every commit in the pull request;
    - commit message format;
    - Markdown lint and link check;
@@ -69,7 +69,7 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    Pull requests from forks run on `pull_request`, never `pull_request_target`, and never receive secrets.
    Jobs that need secrets (private terms, evals) run only on branches in the repository.
 7. **Scheduled jobs are not merge gates.**
-   The probes of [ADR 5](0005-native-tool-features-first.md) run on a schedule, open an issue on failure, and never block a pull request.
+   The probes of [ADR 9](0009-native-harness-features-first.md) run on a schedule, open an issue on failure, and never block a pull request.
 
 ## Consequences
 

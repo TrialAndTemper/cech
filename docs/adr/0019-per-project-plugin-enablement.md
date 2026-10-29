@@ -1,4 +1,4 @@
-# 16. Per-project plugin enablement
+# 19. Per-project plugin enablement
 
 - Status: accepted
 - Date: 2026-10-26
@@ -6,7 +6,7 @@
 
 ## Context
 
-A project enables plugins from CECH and from extensions ([ADR 3](0003-a-marketplace-you-extend-not-fork.md)), each at a version it chooses.
+A project enables plugins from CECH and from extensions ([ADR 8](0008-a-marketplace-you-extend-not-fork.md)), each at a version it chooses.
 Claude Code reads them from `.claude/settings.json` and Codex from `.codex/config.toml`, so the two files must agree.
 This ADR covers plugins only; skills installed without their plugins are outside it.
 
@@ -20,7 +20,7 @@ Probed on 2026-10-16 (Claude Code 2.1.301) and 2026-10-21 (Claude Code 2.1.303),
 - Codex refuses a marketplace whose catalogue `name` differs from the declared name.
   A tag whose catalogue is named `acme-1-0-0` loads under that name in both harnesses.
 - Two enabled plugins with one name collide silently: Claude Code loads one, chosen by key order; Codex loads both under one skill name.
-- Claude Code skips a plugin whose dependency is not enabled and installs nothing; Codex ignores dependencies ([ADR 6](0006-claude-code-and-codex-from-one-source.md)).
+- Claude Code skips a plugin whose dependency is not enabled and installs nothing; Codex ignores dependencies ([ADR 10](0010-claude-code-and-codex-from-one-source.md)).
 - Codex installs a newly enabled plugin only when its marketplace's tag changes or its fetched copy is re-synced; `codex plugin add` writes user settings.
 - Headless Claude Code loads project plugins only with `CLAUDE_CODE_SYNC_PLUGIN_INSTALL=1`; an interactive session needs `/reload-plugins` after a clone or pin change.
 
@@ -29,7 +29,7 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
 ## Decision
 
 1. **One config file.**
-   `.cech/config.toml` ([ADR 15](0015-repository-state-under-cech.md)) lists the marketplaces the project manages and the plugins it enables from each:
+   `.cech/config.toml` ([ADR 17](0017-repository-data-and-state.md)) lists the marketplaces the project manages and the plugins it enables from each:
 
    ```toml
    [marketplaces.cech]
@@ -47,16 +47,16 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
    acme = ["acme-tracker"]
    ```
 
-   Each key under `marketplaces` and `enable` is a namespace ([ADR 8](0008-categories-and-names.md) items 4 and 5).
+   Each key under `marketplaces` and `enable` is a namespace ([ADR 12](0012-categories-and-names.md) items 4 and 5).
    `ref` is a release tag (`v`, then `X.Y.Z` in decimal with no leading zeros, and optionally `-rc.N` for a pre-release, with `N` from 1) and `commit` the tag's commit at pinning; `cech` writes both.
    The config manages only CECH and extensions; other marketplaces go into the native files by hand, and `cech` leaves them as they are (items 2 and 4).
    A source never holds credentials; access uses the machine's git configuration.
 2. **Rendered native files.**
-   `cech` renders both settings files' marketplace and plugin entries from the config, leaving every other byte as it was ([ADR 14](0014-the-cech-cli.md) item 3); the project commits them.
+   `cech` renders both settings files' marketplace and plugin entries from the config, leaving every other byte as it was ([ADR 15](0015-the-cech-cli.md) item 3); the project commits them.
    A later ADR on install paths adds skill entries that `cech` renders into `.claude/settings.json`.
 3. **Exact pins.**
    A project declares each marketplace under the `name` in its catalogue at the pinned commit.
-   Each CECH release names its catalogue `cech-` plus its version, dots as hyphens: `cech-0-1-0`, or `cech-0-2-0-rc-1` for `v0.2.0-rc.1` ([ADR 8](0008-categories-and-names.md) item 5).
+   Each CECH release names its catalogue `cech-` plus its version, dots as hyphens: `cech-0-1-0`, or `cech-0-2-0-rc-1` for `v0.2.0-rc.1` ([ADR 12](0012-categories-and-names.md) item 5).
    Keys use it, `cech-prose@cech-0-1-0`, so versions sit side by side.
    Each extension release names its catalogue the same way, after its namespace: `acme-1-4-0`.
 4. **A complete map.**
@@ -66,7 +66,7 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
    `cech enable` also enables what an enabled plugin depends on, and fails when no managed catalogue at its pinned commit carries the plugin under the marketplace name the dependency gives, or under the depending plugin's own when it gives none.
    `cech disable` refuses to turn off a plugin another enabled plugin needs, and names the plugins that need it.
 6. **Unversioned copies.**
-   Outside a release tag, such as on a branch, a catalogue is named after its namespace ([ADR 8](0008-categories-and-names.md) items 4 and 5).
+   Outside a release tag, such as on a branch, a catalogue is named after its namespace ([ADR 12](0012-categories-and-names.md) items 4 and 5).
    For a managed marketplace pinned under a versioned name, the native files also hold `false` for each plugin of its pinned catalogue under the namespace, such as `cech-prose@cech`, so a copy enabled in user settings does not load beside the pin.
    `cech` never writes to user settings.
 7. **Hand-written files.**
@@ -77,17 +77,17 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
    - `cech enable` and `cech disable` change the plugin lists, apply item 5, and render again.
    - `cech upgrade` updates a pin, the marketplace's name and its keys together.
      Unless told a version, it moves the pin to the newest final release, and leaves a pin already at or above that release unchanged.
-   - `cech check` is read-only and fails when native files differ from the rendering, a `ref` is not a release tag or no longer points at its recorded commit, a pinned catalogue is not named after its namespace and the tag's version, two enabled plugins share a name ([ADR 8](0008-categories-and-names.md) item 7), a dependency is not enabled ([ADR 7](0007-one-plugin-one-skill.md) item 3), or a source holds credentials.
-   - `cech setup` runs `codex plugin marketplace upgrade` ([ADR 14](0014-the-cech-cli.md) item 2) and syncs the enabled plugins' reviewer agents ([ADR 6](0006-claude-code-and-codex-from-one-source.md) item 3).
+   - `cech check` is read-only and fails when native files differ from the rendering, a `ref` is not a release tag or no longer points at its recorded commit, a pinned catalogue is not named after its namespace and the tag's version, two enabled plugins share a name ([ADR 12](0012-categories-and-names.md) item 7), a dependency is not enabled ([ADR 11](0011-one-plugin-one-skill.md) item 3), or a source holds credentials.
+   - `cech setup` runs `codex plugin marketplace upgrade` ([ADR 15](0015-the-cech-cli.md) item 2) and syncs the enabled plugins' reviewer agents ([ADR 10](0010-claude-code-and-codex-from-one-source.md) item 3).
 
 ## Consequences
 
 - An upgrade changes every key in one reviewable diff.
 - Pinned versions cost disk space.
-- `cech check` reads each catalogue at its pinned commit and does not pass when it cannot reach a source ([ADR 14](0014-the-cech-cli.md) item 5).
+- `cech check` reads each catalogue at its pinned commit and does not pass when it cannot reach a source ([ADR 15](0015-the-cech-cli.md) item 5).
 - A copy enabled in user settings under another versioned name still loads beside the pin, and `cech check` misses it.
 - Each person trusts the project in both harnesses once per clone, and runs `cech setup` after each clone and config change.
-  `/reload-plugins`, `CLAUDE_CODE_SYNC_PLUGIN_INSTALL` and the Codex re-sync for a newly enabled plugin, barred to `cech` (item 6 here; [ADR 14](0014-the-cech-cli.md) item 2), are documented; each workaround goes in the harness data file ([ADR 5](0005-native-tool-features-first.md) item 2).
+  `/reload-plugins`, `CLAUDE_CODE_SYNC_PLUGIN_INSTALL` and the Codex re-sync for a newly enabled plugin, barred to `cech` (item 6 here; [ADR 15](0015-the-cech-cli.md) item 2), are documented; each workaround goes in the harness data file ([ADR 9](0009-native-harness-features-first.md) item 2).
 
 ## Options considered
 

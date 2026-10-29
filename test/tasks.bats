@@ -1,14 +1,14 @@
 #!/usr/bin/env bats
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
-# Tests of the mise tasks and the git hooks (ADR 10). As ADR 10 asks of
+# Tests of the mise tasks and the git hooks (ADR 4). As ADR 4 asks of
 # gate tests, each case guards a way `mise run check` or a hook could
 # pass when it should fail, where review would likely miss it, and says
 # which: most are a tool bump that changes what a gate sees, or a hook,
 # which checks the staged tree. The other ways, such as a task whose
 # command changes in mise.toml, show in the diff and were checked by
 # hand when their cases were dropped. The vuln task never blocks a merge
-# (ADR 22 item 3), so it has no case.
+# (ADR 16 item 3), so it has no case.
 #
 # Requires: mise and bats (run it with `mise run test`), git >= 2.28
 # (init -b), and what the gates require.

@@ -2,7 +2,7 @@
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
 # Tests of scripts/staged-tree, through which the pre-commit hook runs
-# its lint and format checks. As ADR 10 asks of gate tests, each case
+# its lint and format checks. As ADR 4 asks of gate tests, each case
 # guards a way a check run through it could pass when it should fail,
 # where review would likely miss it, and says which: a check run this
 # way shows its effect only during a commit. The other ways were checked
