@@ -10,7 +10,7 @@ A few CECH choices are costly to undo: formats, names, pins, CLI promises.
 Contributors need the reason behind each rule.
 A log full of small decisions hides the ones that matter, and parallel branches clash on numbers or leave gaps.
 On `main`, each ADR's status must say whether it is in force, and one index must list them all.
-Until the first plugin merges, nothing is built on the ADRs' exact wording, and the ADRs are still settling.
+Until the first plugin merges, nothing is built on the ADRs' exact wording.
 
 A contract also has detail, such as keys, flags, messages and workflow steps.
 Written into an ADR, that detail hides the decision, pulls review towards edge cases, and must change whenever the code does.
@@ -19,7 +19,7 @@ Written into an ADR, that detail hides the decision, pulls review towards edge c
 
 1. One decision per file, `docs/adr/NNNN-short-title.md`, in a light [MADR](https://adr.github.io/madr/) form: Context, Decision, Consequences, Options considered.
 2. An ADR records a **contract**: a choice that is costly to reverse or that many later changes must follow.
-   Work that fits an accepted contract (e.g. a new skill) needs no ADR, unless it adds repo-wide machinery (a CLI command, a hook, a file format) or settles a disputed boundary.
+   Work that fits an accepted contract, such as a new skill, needs no ADR, unless it adds repo-wide machinery, such as a CLI command, hook or file format, or settles a disputed boundary.
    An ADR holds the decision and the reasons for it, the options rejected, the names and paths others rely on, which changes to them stay compatible, and the rules every later change must keep.
    It leaves other detail to a spec (item 8), and names a key or flag only where the decision depends on it.
 3. A pull request writes its ADR as `accepted`; merging it is the acceptance.
@@ -32,7 +32,7 @@ Written into an ADR, that detail hides the decision, pulls review towards edge c
    From then on, an accepted ADR is not rewritten; typos and links may be fixed.
    - A refinement (a parameter, an edge case, a rename, an added list entry) goes in a dated `> **Amendment (YYYY-MM-DD).**` note, with its evidence, under the paragraph it changes.
      The status gains `Last amended: <date>`.
-   - A different option, one an earlier ADR rejected, or a removed or inverted rule needs a new ADR that supersedes the old one, with links both ways.
+   - A different option, one an earlier ADR rejected, or a removed or reversed rule needs a new ADR that supersedes the old one, with links both ways.
 6. Under 800 words of prose outside code blocks, plain English.
    Past that, move a second decision or a spec's detail out, not the rejected options.
    Cross-references use the form `[ADR N](NNNN-title.md)` and point only to earlier ADRs, except a `superseded by` status, so the log reads in order.

@@ -18,8 +18,9 @@ Probed with mise 2026.10.3 on 2026-10-19:
 ## Decision
 
 1. **Exact versions.**
-   Every tool that builds or checks CECH is pinned to an exact version in the `[tools]` table of `mise.toml`, with each download and its checksum in `mise.lock`.
-   The table holds no harness; the harness data file records the harness versions CECH relies on ([ADR 9](0009-native-harness-features-first.md) item 3).
+   Every tool that builds or checks CECH is pinned to an exact version in the `[tools]` table of `mise.toml`, and `mise.lock` records each download and its checksum.
+   For a Go tool that mise builds from source, it records only the version, and the Go checksum database checks the source.
+   The table holds only such tools, not Claude Code or Codex: CECH tests its work against them but does not pin them.
 2. **Locked installs.**
    CI installs an exact mise version, then the tools with `locked` set; `mise.toml` sets mise's `min_version`.
 3. **Bumps wait a week.**
@@ -28,7 +29,7 @@ Probed with mise 2026.10.3 on 2026-10-19:
 ## Consequences
 
 - A bump is a visible change to `mise.toml` and `mise.lock`, reviewed like any other.
-- A tool's new release reaches CECH no sooner than a week after it is published, unless a version is given by hand.
+- A tool's new release reaches CECH no sooner than a week after it is published; for a version given by hand, review holds to this.
 
 ## Options considered
 

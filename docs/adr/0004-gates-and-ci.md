@@ -6,45 +6,37 @@
 
 ## Context
 
-Earlier ADRs promise checks: ADR numbers ([ADR 1](0001-record-architecture-decisions.md)), DCO sign-off ([ADR 2](0002-licence-and-contributions.md)), the term check ([ADR 3](0003-vendor-neutrality.md)), the scheduled probes ([ADR 9](0009-native-harness-features-first.md)), the validator ([ADR 10](0010-claude-code-and-codex-from-one-source.md), [ADR 11](0011-one-plugin-one-skill.md), [ADR 12](0012-categories-and-names.md)) and the build check ([ADR 18](0018-generated-files.md)).
+ADRs promise checks, such as ADR numbering ([ADR 1](0001-record-architecture-decisions.md)) and the term check ([ADR 3](0003-vendor-neutrality.md)).
 A check that runs only on some machines, or differently on each, lets breakage through.
-Git hooks can be skipped and do not run on edits made in the GitHub web interface.
+Git hooks can be skipped, and do not run on web edits.
+A broken gate on `main` blocks every merge, even the one that would fix it.
 
-[GitHub docs](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions), read on 2026-10-17: standard GitHub-hosted runners are free in public repositories; private repositories on the Free plan get 2,000 minutes a month; per-minute prices are higher for Windows and macOS runners than for Linux.
+Probed with mise 2026.10.3 on 2026-10-19:
 
-A gate that breaks on `main` blocks every merge, including the merge that would fix it.
-
-mise installs the tools pinned in `mise.toml` and runs its tasks; probed with mise 2026.10.3 on 2026-10-19:
-
-- `mise run` puts each pinned tool on `PATH` without shell activation;
-- mise runs a `mise.toml` only after `mise trust` in each clone, and with `paranoid` on asks again after each change;
-- a tool's `os` option limits it to listed systems, which `mise lock` follows;
-- on Windows a task runs with cmd unless `run_windows` gives another command.
+- `mise run` runs a task with the tools pinned in `mise.toml` on `PATH`, without shell activation;
+- mise runs a `mise.toml` only after `mise trust`, and with `paranoid` on asks again after each change;
+- on Windows a task runs with cmd unless it names another shell.
 
 Workflows run third-party actions with the repository's token, and anyone can open a pull request from a fork.
-A mutable action tag or a workflow that hands secrets to fork code can leak secrets or alter the repository.
+A movable action tag, or a secret given to fork code, can leak secrets or change the repository.
 
 ## Decision
 
 1. **One entry point: mise.**
    mise is the required task runner.
    `mise run check` runs every gate; `mise run <gate>` runs one.
-   Each gate is a task in `mise.toml` that runs a pinned tool, CECH's CLI, or a POSIX shell script under `scripts/`, so contributors and CI run one implementation with the same pinned tools.
-   On Windows a script task runs through Git Bash's `sh`, and bats, limited to Linux and macOS by `os`, does not run.
+   Each gate is a task in `mise.toml` that runs a pinned tool, CECH's CLI, or a POSIX shell script under `scripts/`, so contributors and CI run the same thing.
+   On Windows a script task runs through Git Bash's `sh`, and bats, which has no Windows build, does not run.
 2. **CI is the authority.**
-   A GitHub Actions workflow runs `mise run check`, the command a contributor runs, on every pull request and push to `main`, so it holds no second list of gates.
-   The gates, the link check included, run on Linux, macOS and Windows, apart from the bats tests on Windows, and each keeps running after another fails.
+   A GitHub Actions workflow runs `mise run check` on every pull request and push to `main`, on Linux, macOS and Windows, and holds no second list of gates.
    A ruleset on `main` requires the gates to pass before merge.
-   Gates that need a secret, such as the private term tier ([ADR 3](0003-vendor-neutrality.md)), cannot run on fork pull requests, so they are required only where they run and are skipped locally without the secret.
-   Only the private term tier has a step of its own, so that its secret reaches no other gate.
-   A rule that CI cannot check is written as guidance in the contributing guide, not described as enforced.
+   A gate that needs a secret, such as the private term tier ([ADR 3](0003-vendor-neutrality.md)), is required only where the secret reaches, never on fork pull requests, and is skipped locally without it.
+   A rule CI cannot check is guidance in the contributing guide, not described as enforced.
 3. **Bypass.**
-   Organisation owners may bypass the ruleset only to repair a broken `main` or a broken gate.
+   Organisation owners may bypass the ruleset only to repair `main` or a gate.
    Each bypass gets an issue saying what was done and why.
 4. **Hooks are a convenience.**
-   A `pre-commit` hook (term check, lint, format checks and workflow lint on the staged tree) and a `commit-msg` hook (term check, message format, and a sign-off checked against the author git will record, as CI does) are offered for local use.
-   They call `mise run` with the gate's staged or message mode.
-   No rule exists only in a hook.
+   Optional `pre-commit` and `commit-msg` hooks run some of the gates through `mise run`, on the staged tree or on the message; no rule exists only in a hook.
 5. **The gates**, each added when the thing it checks first exists:
    - term check, all public tiers; private tier as in [ADR 3](0003-vendor-neutrality.md);
    - DCO sign-off on every commit in the pull request;
@@ -53,30 +45,29 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    - shell lint and format check of the gate scripts;
    - tests of the gate scripts;
    - workflow lint;
-   - ADR numbering and index;
+   - ADR numbering, index and length;
    - `cech build --check` and `cech validate`;
-   - eval case lint and grader tests (a later ADR on evals);
+   - code owners errors that GitHub reports;
+   - eval case lint and grader tests;
    - CLI tests on Linux, macOS and Windows.
 
-   A gate script has a test for each way the gate could pass when it should fail, where review would likely miss it, such as a finding it loses or a check it skips.
-   Such a way mostly hides outside the diff: in a bumped tool pin, on a platform the reviewer does not run, or in a gate run indirectly, such as on the staged tree.
-   Each case added since 2026-10-26 says in a comment which way it guards.
-   Any other way is checked by hand when the gate is added or changed, and the pull request records that check.
-   A gate that fails when it should pass shows itself the first time it runs on that input, so that case needs no test.
+   A gate script has a test for each way the gate could pass when it should fail, such as a lost finding or a skipped check, where review would likely miss it.
+   Most such faults lie outside the diff: in a bumped tool pin, on a platform the reviewer does not run, or on the staged tree.
+   Each case says in a comment which way it guards.
+   Other ways are checked by hand when the gate is added or changed, and the pull request records the check.
+   A gate that fails when it should pass shows itself the first time it runs, and needs no test.
 6. **Workflow safety.**
    Third-party actions are pinned by full commit SHA.
    Workflows default to `permissions: contents: read`, widened per job only where needed.
    Pull requests from forks run on `pull_request`, never `pull_request_target`, and never receive secrets.
-   Jobs that need secrets (private terms, evals) run only on branches in the repository.
+   Jobs that need secrets run only on branches in the repository, and a secret reaches only the step that needs it.
 7. **Scheduled jobs are not merge gates.**
-   The probes of [ADR 9](0009-native-harness-features-first.md) run on a schedule, open an issue on failure, and never block a pull request.
+   Jobs such as probes of harness behaviour run on a schedule, open an issue on failure, and never block a pull request.
 
 ## Consequences
 
-- A contributor installs mise, runs `mise trust` and `mise install`, then runs exactly what CI runs with one command.
-- While the repository is private, CI spends the Free plan's minutes, which cost most on macOS and Windows.
-  If a month's use passes half the allowance before going public, those jobs move to pushes to `main` and the schedule.
-- A fork pull request can merge without the gates that need a secret; their run on `main` catches a problem after merge.
+- A contributor runs exactly what CI runs with one command, after `mise trust` and `mise install`.
+- A fork pull request can merge without the gates that need a secret; their run on `main` catches a problem afterwards.
 
 ## Options considered
 

@@ -10,7 +10,7 @@ People reading the history later need to know what changed and why.
 Pull request text lives on GitHub, not in git: forks, mirrors and offline clones do not have it.
 Links to pages that need a login or expire break the same way.
 Squash merges fold a pull request into one commit and lose its steps; merge commits make the history hard to read and bisect.
-Release notes (a later ADR on the changelog) need commits they can sort by kind.
+Release notes need commits they can sort by kind.
 
 ## Decision
 
