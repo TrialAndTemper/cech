@@ -1,0 +1,54 @@
+#!/bin/sh
+# Probe of the harness data entry claude-code-plugin-metadata (ADR 9
+# item 4): claude plugin validate --strict passes a plugin.json with a
+# metadata object and fails one with a top-level maintainer or
+# maintainers field, and the first plugin installs and loads. The steps
+# are the entry's probe.
+#
+# Usage: scripts/probes/claude-code-plugin-metadata
+#
+# Requires: claude, git.
+#
+# Exit status: 0 the expected result, 1 another, 2 the probe could not
+# run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
+readonly ROOT
+[ -r "${ROOT}/scripts/lib/common.sh" ] && [ -r "${ROOT}/scripts/lib/probe.sh" ] || {
+  printf 'claude-code-plugin-metadata: cannot read scripts/lib/common.sh or probe.sh\n' >&2
+  exit 2
+}
+# shellcheck source=../lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+# shellcheck source=../lib/probe.sh
+. "${ROOT}/scripts/lib/probe.sh"
+PROG=claude-code-plugin-metadata
+readonly PROG
+
+probe_start claude
+write_marketplace "${SCRATCH}/mkt" probe-mkt probe
+write_plugin "${SCRATCH}/mkt/plugins/probe" probe quillfeather \
+  '"metadata": {"maintainers": ["octocat", "hubot"]}'
+write_plugin "${SCRATCH}/maintainers" probe quillfeather '"maintainers": ["octocat"]'
+write_plugin "${SCRATCH}/maintainer" probe quillfeather '"maintainer": "octocat"'
+
+must "claude plugin validate --strict fails on a plugin.json with a metadata object" \
+  claude plugin validate --strict "${SCRATCH}/mkt/plugins/probe"
+for field in maintainers maintainer; do
+  harness claude plugin validate --strict "${SCRATCH}/${field}"
+  [ "${STATUS}" = 1 ] ||
+    differs "claude plugin validate --strict exits ${STATUS}, not 1, on a top-level ${field} field"
+  expect_out "Unknown field '${field}'" \
+    "claude plugin validate --strict does not report Unknown field '${field}'"
+done
+
+new_project "${SCRATCH}/project"
+must "claude plugin marketplace add failed" \
+  claude plugin marketplace add --scope project "${SCRATCH}/mkt"
+must "claude plugin install failed" claude plugin install --scope project probe@probe-mkt
+must "claude plugin list failed" claude plugin list
+claude_plugin probe@probe-mkt
+expect_out 'Status:[^a-z]*enabled$' "claude plugin list does not show probe@probe-mkt as enabled"
+probe_ok

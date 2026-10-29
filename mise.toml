@@ -117,6 +117,14 @@ run_windows = "echo test:bats: skipped, bats has no Windows build"
 description = "Go tests of the CLI, with -race where the platform and cgo allow"
 run = "scripts/check-go test"
 
+# The harness probes run the claude and codex on PATH, whose newest
+# releases change without any change here, so check leaves them out,
+# and .github/workflows/probes.yml runs them on a schedule, without
+# blocking a merge (ADR 9 item 4).
+[tasks.probes]
+description = "Harness probes on the installed claude and codex; mise run probes -- --help lists its options"
+run = "scripts/run-probes"
+
 # govulncheck asks the Go vulnerability database, so it needs the
 # network, and a new report can fail a branch that has not changed. So
 # check leaves it out, and .github/workflows/vuln.yml runs it instead,

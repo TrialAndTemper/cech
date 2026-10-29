@@ -3,7 +3,9 @@
 # 9 item 5 sets. The cech CLI builds it in. Code that works around a gap
 # names its entry. Re-run an entry's probe on a new harness release; on
 # the result in expect, update verified, and on any other, open an
-# issue.
+# issue. scripts/probes/<entry> runs the probe of an entry marked
+# unattended = true, and mise run probes runs them all; a scheduled job
+# runs them on the newest releases (ADR 9 item 4).
 
 [codex-plugin-agents]
 harness = "codex"
@@ -25,7 +27,8 @@ the skill and each agent a description holding a word found nowhere \
 else. In the project, run codex debug prompt-input hi, and search its \
 output for the four words."""
 expect = "The words of the skill and of the agent in .codex/agents/ are in the prompt; neither plugin agent's word is."
-verified = { version = "0.165.0", date = 2026-10-29 }
+unattended = true
+verified = { version = "0.166.0", date = 2026-10-29 }
 
 [[codex-plugin-agents.sources]]
 source = "https://learn.chatgpt.com/docs/agent-configuration/subagents"
@@ -51,6 +54,7 @@ three copies of a plugin with one skill, whose \
 and install the plugin at project scope in a new git repository, and \
 run claude plugin list."""
 expect = "The first validation exits 0; the other two exit 1, reporting Unknown field 'maintainers' and Unknown field 'maintainer'; claude plugin list shows the plugin as enabled."
+unattended = true
 verified = { version = "2.1.312", date = 2026-10-29 }
 
 [[claude-code-plugin-metadata.sources]]
@@ -75,9 +79,11 @@ word found nowhere else, and whose .claude-plugin/plugin.json has \
 "metadata": {"maintainers": ["octocat", "hubot"]}. Add it with codex \
 plugin marketplace add <dir> and codex plugin add probe@probe-mkt, run \
 codex plugin list, and search the output of codex debug prompt-input hi \
-for the word."""
-expect = "codex plugin list shows probe@probe-mkt as installed and enabled, and the word is in the prompt."
-verified = { version = "0.165.0", date = 2026-10-29 }
+for the word. Search the output of every command, but only the stderr \
+of the last, for deprecat, in any case."""
+expect = "codex plugin list shows probe@probe-mkt as installed and enabled, the word is in the prompt, and no command prints a deprecation warning."
+unattended = true
+verified = { version = "0.166.0", date = 2026-10-29 }
 
 [claude-code-dependency-marketplace]
 harness = "claude-code"
@@ -95,6 +101,7 @@ in the third. Add both marketplaces at project scope, install \
 cech-prose@cech-0-1-0, then acme-x@acme, at project scope, and run \
 claude plugin list."""
 expect = "acme-x is enabled in the first run; it fails to load in the second, with cech-prose@cech not installed, and in the third, with cech-prose@acme not installed."
+unattended = true
 verified = { version = "2.1.312", date = 2026-10-29 }
 
 [[claude-code-dependency-marketplace.sources]]
