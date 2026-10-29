@@ -19,8 +19,9 @@ const buildHelp = `Usage: cech build [--check | --dry-run] [--release V] [--json
 
 Write the files generated from the hand-written sources of a
 marketplace with CECH's layout: the catalogue
-.claude-plugin/marketplace.json, Codex TOML for each reviewer agent,
-.github/CODEOWNERS and docs/catalogue.md. In each plugin.json it sets
+.claude-plugin/marketplace.json, Codex TOML for each reviewer agent, a
+copy of the root LICENSE in each skill folder, .github/CODEOWNERS and
+docs/catalogue.md. In each plugin.json it sets
 the description, the version and, in an extension, each CECH
 dependency's marketplace. It prints each file it creates, updates or
 removes.

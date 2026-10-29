@@ -1,8 +1,9 @@
 // Package build generates the files of a marketplace with CECH's layout
 // from their hand-written sources (ADR 18): the description and version
-// in each plugin.json, the catalogue, Codex TOML for reviewer agents,
-// the code owners file and the catalogue page. Each output has its own
-// file here, so a later change to one leaves the others alone.
+// in each plugin.json, the catalogue, Codex TOML for reviewer agents, a
+// copy of the licence in each skill folder, the code owners file and the
+// catalogue page. Each output that the build renders has its own file
+// here, so a later change to one leaves the others alone.
 package build
 
 import (
@@ -65,6 +66,12 @@ func Outputs(m *marketplace.Marketplace, release string) ([]Output, error) {
 		}
 		outs = append(outs, Output{Path: p.ManifestPath(), Content: manifest})
 		outs = append(outs, agents(p)...)
+		// A copy has no line saying it is generated, so without a root
+		// licence the build cannot tell a copy from a file written by
+		// hand, and leaves any there (ADR 18 item 2).
+		if m.License != nil {
+			outs = append(outs, Output{Path: p.LicensePath(), Content: m.License})
+		}
 	}
 	if err := errors.Join(errs...); err != nil {
 		return nil, err
