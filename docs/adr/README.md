@@ -20,3 +20,4 @@
 16. [Per-project plugin enablement](0016-per-project-plugin-enablement.md)
 17. [The extension model](0017-the-extension-model.md)
 18. [Releases and versions](0018-releases-and-versions.md)
+19. [Roles](0019-roles.md)
