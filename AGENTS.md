@@ -20,7 +20,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
   Read `.ai/changes/done/` only for the history of a change: the code and its tests say what CECH does now.
 - Keep files, commit messages, and branch and tag names vendor-neutral ([ADR 3](docs/adr/0003-vendor-neutrality.md)): nothing specific to a private organisation, and invented examples such as `example.com` and `acme`.
   Never copy text from git-ignored notes into the tree; rewrite it, run `mise run terms`, and let a person read it.
-- Text from another project needs a compatible licence, its notice and, in a skill, a source note naming the upstream project and commit ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
+- Text from another project needs a compatible licence, its notice and, in a skill, a source note naming the upstream project and commit ([ADR 2](docs/adr/0002-licence-and-contributions.md)); a skill that forks such text follows [ADR 23](docs/adr/0023-forking-upstream-skills.md).
   The notice for text in a skill goes in the skill folder's `NOTICE`; any other goes in the root `NOTICE`.
 - ADR evidence cites tree files, dates and the versions of harnesses and tools, never pull request or issue numbers, so each ADR stands alone.
 - Commit messages and other published text link only to public, lasting pages, never to an agent session or a page that needs a login ([ADR 6](docs/adr/0006-change-record.md)).

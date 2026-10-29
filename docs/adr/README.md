@@ -43,3 +43,4 @@ Words the ADRs use, in short:
 20. [The extension model](0020-the-extension-model.md)
 21. [Roles](0021-roles.md)
 22. [Two install paths](0022-two-install-paths.md)
+23. [Forking upstream skills](0023-forking-upstream-skills.md)
