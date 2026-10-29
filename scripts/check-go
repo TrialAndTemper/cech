@@ -1,6 +1,6 @@
 #!/bin/sh
 # Go gates for the cech CLI in cli/ (ADR 16): lint, format check, tests
-# and the vulnerability check of ADR 4, run as `mise run lint`,
+# and the vulnerability check of ADR 16 item 3, run as `mise run lint`,
 # `mise run format:check`, `mise run format:fix`, `mise run test` and
 # `mise run vuln`.
 # POSIX sh (ADR 4): it must run under dash, macOS sh and Git Bash.

@@ -6,15 +6,13 @@
 
 ## Context
 
-Earlier ADRs promise a `cech` command: `cech build` and its `--check` ([ADR 18](0018-generated-files.md)), the validator ([ADR 10](0010-claude-code-and-codex-from-one-source.md)), and the gates that run them ([ADR 4](0004-gates-and-ci.md)).
-Later commands will edit the settings of Claude Code and Codex in people's repositories and home directories, where a careless edit loses someone's settings.
-Claude Code and Codex are harnesses, as [ADR 8](0008-a-marketplace-you-extend-not-fork.md) defines them.
+Earlier ADRs promise a `cech` command: the validator ([ADR 10](0010-claude-code-and-codex-from-one-source.md)), the build of generated files, and the gates that run them ([ADR 4](0004-gates-and-ci.md)).
+Some commands edit the harnesses' settings in people's repositories and home directories, where a careless edit loses someone's settings.
 Scripts and CI read a command's output and exit status, so both become a contract as soon as someone depends on them.
 
 Checked on 2026-10-27 with Go 1.27.3:
 
 - Go builds a static binary for each of Linux, macOS and Windows, so users install no runtime.
-- `go build` stamps a version from git tags only for a module at the repository root, so a build of `cli/` records `(devel)`.
 - A module at the repository root takes in every Go file below it, including any that a plugin ships, and `go vet ./...` and `go test ./...` would build them.
 
 ## Decision
@@ -34,14 +32,11 @@ Checked on 2026-10-27 with Go 1.27.3:
    Every command that writes takes `--dry-run`, which reports the changes and writes nothing.
 5. **Output is a contract.**
    - Results go to stdout, and messages and errors to stderr.
-   - Every command except `help` takes `--json` and then prints one JSON object on stdout, also when it fails after its arguments are parsed, unless an internal error stops it (below).
+   - Every command except `help` takes `--json` and then prints one JSON object on stdout, even when it fails after parsing its arguments; after an internal error, such as a panic, stdout holds no valid JSON, and the command exits 1.
      A minor release may add fields; removing a field, renaming it or changing its meaning is a breaking change.
    - Exit status: 0 done; 1 the command ran and met a failure, including a partial success; 2 a wrong command line; 3 something it needs could not be reached, so it could not decide.
      When a command both meets a failure and cannot decide something else, it exits 1, since a retry cannot fix the failure, and its output names both.
      Other codes are not used.
-     Two statuses are outside `cech`'s control: the one a shell reports when a signal kills it, and the 2 that Go itself exits with, not meaning a wrong command line, after a fatal runtime error or a SIGQUIT.
-   - An internal error, such as a panic in a command's code, exits 1 with its report on stderr only; stdout then holds no valid result, even with `--json`.
-     A command that starts goroutines recovers a panic in each of them.
    - A command never reports success for a check it could not run, and after a partial success it says what it skipped.
 6. **Harness quirks stay in one place.**
    Code that knows one harness's behaviour lives in `internal/harness/claude` or `internal/harness/codex`.

@@ -21,15 +21,15 @@ Checked again on 2026-10-28 (Claude Code 2.1.312): it also fails when `plugin.js
    The name appears in both files and as the skill and plugin folder names.
    The validator checks that all of them match, extending the same-name rule of [ADR 11](0011-one-plugin-one-skill.md).
 
-   Repo-wide data in `data/` is hand-written too; it describes the catalogue, not one plugin.
+   Repo-wide data in `data/` is hand-written too ([ADR 17](0017-repository-data-and-state.md)); it describes the catalogue, not one plugin.
 2. Everything else derived from them is generated:
    - the `description` field in each `plugin.json`, copied from `SKILL.md`;
-   - the `version` field in each `plugin.json`, the same for every plugin: `0.0.0-dev`, or the release's version in a release build;
+   - the `version` field in each `plugin.json`, the same for every plugin: `0.0.0-dev`, or the release's version in a release build ([ADR 14](0014-releases-and-versions.md) item 3);
    - in an extension, the `marketplace` of each dependency on a CECH plugin, the versioned name of the CECH release the extension builds on;
    - the marketplace catalogue `.claude-plugin/marketplace.json`, named after the namespace (plus the version in a release build), with each plugin's category taken from its folder ([ADR 12](0012-categories-and-names.md));
    - Codex TOML for reviewer agents ([ADR 10](0010-claude-code-and-codex-from-one-source.md));
    - a copy of the root `LICENSE` in each skill folder, byte for byte and with no generated-file line (item 4), so a skill copied without its plugin keeps its licence ([ADR 2](0002-licence-and-contributions.md)); a marketplace with no root `LICENSE` gets none;
-   - the code owners file;
+   - the code owners file ([ADR 13](0013-attribution.md) item 4);
    - the catalogue page in `docs/`.
 3. One generator writes all of them: `cech build`.
    It works on any marketplace with CECH's layout, so extensions use it too ([ADR 8](0008-a-marketplace-you-extend-not-fork.md)).
@@ -46,7 +46,6 @@ Checked again on 2026-10-28 (Claude Code 2.1.312): it also fails when `plugin.js
 
 - A description is written once, in `SKILL.md`.
 - Every pull request that touches a plugin also commits regenerated files; the gate says which.
-- Until `cech build` exists there are no plugins, so nothing needs it.
 
 ## Options considered
 
