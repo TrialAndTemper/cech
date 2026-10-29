@@ -1,0 +1,195 @@
+#!/bin/sh
+# ADR gate: the length limit of ADR 1 item 6, run as `mise run lint:adr`
+# and, on the staged tree, by the pre-commit hook. POSIX sh and POSIX
+# awk (ADR 4): it must run under dash, macOS sh and Git Bash, with BSD
+# awk, mawk and gawk, so the awk program uses no interval expressions.
+#
+# Every tracked docs/adr/NNNN-*.md must have fewer than 800 words of
+# prose outside fenced code blocks. A word is a run of characters
+# between spaces or tabs, so table pipes and list markers count too.
+# Fences follow CommonMark as far as a line-by-line reading can.
+# Indents are counted in columns, a tab moving to the next multiple of
+# 4, and inside a list item from the item's content column, one
+# column after the marker when five or more blank columns follow it.
+# - A fence opens on a line whose first non-blank text is three or more
+#   backticks or tildes, indented less than four, so a fence inside a
+#   list item counts as code. A backtick run with a backtick after it
+#   opens none.
+# - It closes on a line of the same character, at least as long, with
+#   nothing but blanks after it and indented less than four columns
+#   into its container: the list item's text, or column 0.
+# - A fence that never closes is a finding, since it would hide the rest
+#   of the file; one left open inside a list item is reported too,
+#   though CommonMark closes it with the item.
+# - A fence after a list marker or `>` on the same line, as in a block
+#   quote, is read as prose.
+# A list item starts with a marker and a gap, but not on a thematic
+# break or in indented code, and a number other than 1 starts one
+# after a paragraph line only inside a list. Nested lists are tracked one level deep, so in
+# rare layouts a line may be read as prose or as code wrongly; the other
+# simplifications can only count more words or add a finding.
+#
+# Usage: scripts/check-adr
+#
+# Requires: git and awk.
+#
+# Exit status: 0 clean, 1 findings, 2 the check could not run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+readonly ROOT
+# A failed `.` exits 1 in some shells; 1 means findings, so check first.
+[ -r "${ROOT}/scripts/lib/common.sh" ] || {
+  printf 'adr: cannot read scripts/lib/common.sh\n' >&2
+  exit 2
+}
+# shellcheck source=lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+PROG=adr
+readonly PROG
+LIMIT=800
+readonly LIMIT
+
+usage() {
+  cat << 'EOF2'
+Usage: mise run lint:adr (scripts/check-adr)
+
+Checks that each ADR in docs/adr/ has fewer than 800 words of prose
+outside fenced code blocks, and that every fence closes.
+
+Exit status: 0 clean, 1 findings, 2 the check could not run.
+EOF2
+}
+
+# COUNT is the awk program that reads one ADR. It prints "words N", and
+# "unclosed L" for a fence opened on line L that never closes.
+# shellcheck disable=SC2016 # the dollars are awk's, not the shell's
+COUNT='
+    # run(s, c): the number of characters c at the start of s.
+    function run(s, c, n) {
+      n = 0
+      while (substr(s, n + 1, 1) == c) n++
+      return n
+    }
+    # indent(s, col): the column where the text of s starts, when s
+    # starts at column col, with a tab moving to the next multiple of 4;
+    # sets T to s without its indent.
+    function indent(s, col, ch) {
+      while ((ch = substr(s, 1, 1)) == " " || ch == "\t") {
+        col = (ch == "\t") ? col + 4 - col % 4 : col + 1
+        s = substr(s, 2)
+      }
+      T = s
+      return col
+    }
+    BEGIN { lcol = -1; prevblank = 1 }
+    {
+      sub(/\r$/, "")
+      ind = indent($0, 0)
+      t = T
+      c = substr(t, 1, 1)
+      n = (c == "`" || c == "~") ? run(t, c) : 0
+      blank = (t == "")
+      if (open) {
+        # A closer may sit less than four columns into its container.
+        if (c == fch && n >= flen && ind < obase + 4 && substr(t, n + 1) ~ /^[ \t]*$/) open = 0
+        prevblank = blank
+        next
+      }
+      # lcol is the content column of the list item the line is in, or
+      # -1 outside a list; a line indented less than it leaves the item.
+      # inlist is taken first, so that a number after a less indented
+      # line still continues the list.
+      inlist = (lcol >= 0)
+      if (!blank && lcol >= 0 && ind < lcol) lcol = -1
+      # A marker indented four or more into its container is code.
+      base = (lcol >= 0 && ind >= lcol) ? lcol : 0
+      # A list item starts with a marker and a gap, but not on a
+      # thematic break such as * * *, and a number other than 1 starts
+      # one after a paragraph line only inside a list.
+      bare = t
+      gsub(/[ \t]/, "", bare)
+      if (ind - base < 4 && match(t, /^([-*+]|[0-9]+[.)])[ \t]/) && bare !~ /^(---+|\*\*\*+|___+)$/ && (c ~ /[-*+]/ || t ~ /^1[.)]/ || prevblank || inlist)) {
+        match(t, /^([-*+]|[0-9]+[.)])/)
+        mcol = ind + RLENGTH
+        gap = indent(substr(t, RLENGTH + 1), mcol) - mcol
+        # Text five or more columns after the marker is indented code,
+        # so the item then starts one column after the marker.
+        lcol = (gap > 4) ? mcol + 1 : mcol + gap
+      }
+      # The indent that counts is the one inside the list item, if any.
+      base = (lcol >= 0 && ind >= lcol) ? lcol : 0
+      if (n >= 3 && ind - base < 4 && !(c == "`" && index(substr(t, n + 1), "`"))) {
+        open = 1
+        fch = c
+        flen = n
+        obase = base
+        from = NR
+        prevblank = 0
+        next
+      }
+      words += NF
+      prevblank = blank
+    }
+    END {
+      printf "words %d\n", words
+      if (open) printf "unclosed %d\n", from
+    }'
+readonly COUNT
+
+main() {
+  local f words from status n
+
+  case "${1:-}" in
+    '') ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      usage >&2
+      die "unexpected argument: $1"
+      ;;
+  esac
+
+  make_scratch
+  cd -- "${ROOT}"
+  # glob: keeps * from matching across /.
+  git ls-files -z -- ':(glob)docs/adr/[0-9][0-9][0-9][0-9]-*.md' > "${SCRATCH}/files.z" ||
+    die "cannot list the ADRs"
+  tr '\0' '\n' < "${SCRATCH}/files.z" > "${SCRATCH}/files" ||
+    die "cannot list the ADRs"
+
+  status=0
+  n=0
+  while IFS= read -r f; do
+    # A file deleted but not yet staged has nothing to check.
+    [ -f "${f}" ] || continue
+    n=$((n + 1))
+    LC_ALL=C awk "${COUNT}" "${f}" > "${SCRATCH}/count" ||
+      die "cannot count the words in ${f}"
+    words=$(sed -n 's/^words //p' "${SCRATCH}/count")
+    from=$(sed -n 's/^unclosed //p' "${SCRATCH}/count")
+    [ -n "${words}" ] || die "cannot count the words in ${f}"
+    if [ -n "${from}" ]; then
+      printf 'adr: %s:%s: this fence never closes, so the rest of the file would count as code\n' \
+        "${f}" "${from}" >&2
+      status=1
+    fi
+    if [ "${words}" -ge "${LIMIT}" ]; then
+      printf 'adr: %s: %s words of prose outside code blocks; keep it under %s (ADR 1 item 6)\n' \
+        "${f}" "${words}" "${LIMIT}" >&2
+      status=1
+    fi
+  done < "${SCRATCH}/files"
+  [ "${n}" -gt 0 ] || die "no ADR found in docs/adr/"
+
+  if [ "${status}" != 0 ]; then
+    printf 'adr: findings\n' >&2
+    exit 1
+  fi
+  printf 'adr: ok (files: %s)\n' "${n}"
+}
+
+main "$@"

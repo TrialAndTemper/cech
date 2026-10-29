@@ -281,3 +281,17 @@ EOF
   assert_status 1
   assert_output_has "note.md:3:1: [MD013]"
 }
+
+# Guards check-adr or staged-tree reading the ADRs on disk instead of
+# the staged ones, so that the hook passes an ADR over the limit.
+@test "pre-commit hook checks the staged ADRs" {
+  local i
+  for ((i = 0; i < 80; i++)); do
+    printf 'w w w w w w w w w w\n'
+  done > docs/adr/0099-long.md
+  g add docs/adr/0099-long.md
+  printf 'Short.\n' > docs/adr/0099-long.md
+  commit_with_hooks -m "docs(adr): add a long one"
+  assert_status 1
+  assert_output_has "0099-long.md: 800 words of prose"
+}

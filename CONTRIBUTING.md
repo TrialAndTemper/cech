@@ -50,7 +50,7 @@ This runs every gate, as CI does.
 | --- | --- |
 | `commits` | commit message format and sign-off |
 | `terms` | names and data that must not be in the repository |
-| `lint` | Markdown, shell scripts, workflows and the CLI's Go code |
+| `lint` | Markdown, ADR length, shell scripts, workflows and the CLI's Go code |
 | `format:check` | formatting of Markdown, shell scripts and Go code |
 | `test` | the tests of the CLI, and of the gate scripts (not on Windows) |
 | `docs:check` | links in the Markdown, YAML and text files; needs the network |
@@ -118,7 +118,7 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
 - Shell scripts are POSIX sh that runs under dash, macOS sh and Git Bash, and pass shellcheck and shfmt.
   A change to a script comes with a test in `test/` for each way it could let a gate pass when it should fail, where review would likely miss it, such as after a tool bump, on another platform or on the staged tree; a comment on each case names the way it guards ([ADR 4](docs/adr/0004-gates-and-ci.md) item 5).
   Check any other way by hand, and say so in the pull request.
-- Keep an ADR under 800 words of prose outside code blocks ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 6).
+- Keep an ADR under 800 words of prose outside fenced code blocks ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 6); `mise run lint:adr` counts them.
 - Until the first plugin merges, an accepted ADR is edited in place, and the commit says why.
   From then on, it is not rewritten, apart from typo and link fixes: a refinement goes in a dated amendment note, and a different choice in a new ADR that supersedes it ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
 
