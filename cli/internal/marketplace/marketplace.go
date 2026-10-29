@@ -40,6 +40,8 @@ type Data struct {
 	Owner Owner `toml:"owner"`
 	// Categories are those an extension adds to CECH's (ADR 12 item 6).
 	Categories []Category `toml:"categories"`
+	// Roles are the roles the marketplace defines (ADR 21 item 2).
+	Roles []Role `toml:"roles"`
 	// Terms are an extension's own term lists.
 	Terms Terms `toml:"terms"`
 }
@@ -54,6 +56,14 @@ type Owner struct {
 type Category struct {
 	Name  string `toml:"name"`
 	Holds string `toml:"holds"`
+}
+
+// Role is a kind of skill that other skills rely on.
+type Role struct {
+	Name  string `toml:"name"`
+	Means string `toml:"means"`
+	// Many lets the role take several bound skills.
+	Many bool `toml:"many"`
 }
 
 // Terms are the paths of an extension's term lists, from the repository
@@ -334,7 +344,7 @@ func (d Data) check(meta toml.MetaData) error {
 		case meta.IsDefined("terms"):
 			return errors.New("terms is out of place: only an extension, with a cech key, has term lists")
 		}
-		return nil
+		return checkRoles(d.Roles, "")
 	}
 	switch {
 	case !release.MatchString(d.CECH):
@@ -342,7 +352,33 @@ func (d Data) check(meta toml.MetaData) error {
 	case d.Namespace == "cech" || strings.HasPrefix(d.Namespace, "cech-"):
 		return fmt.Errorf("namespace %q is reserved for CECH (ADR 12 item 5)", d.Namespace)
 	}
-	return checkCategories(d.Categories, CECHCategories)
+	if err := checkCategories(d.Categories, CECHCategories); err != nil {
+		return err
+	}
+	return checkRoles(d.Roles, d.Namespace+"-")
+}
+
+// checkRoles checks that each role has a valid name, which starts with
+// prefix and not with cech-, is not given twice, and says what it means
+// (ADR 21 item 2). CECH's roles have no prefix.
+func checkRoles(rs []Role, prefix string) error {
+	seen := map[string]bool{}
+	for i, r := range rs {
+		switch {
+		case !isName(r.Name):
+			return fmt.Errorf("roles[%d].name %q is not a valid name: %s", i, r.Name, nameRule)
+		case strings.HasPrefix(r.Name, "cech-"):
+			return fmt.Errorf("roles[%d].name %q starts with cech-, which no role name does (ADR 21 item 2)", i, r.Name)
+		case !strings.HasPrefix(r.Name, prefix):
+			return fmt.Errorf("roles[%d].name %q does not start with %s, as an extension's roles do (ADR 21 item 2)", i, r.Name, prefix)
+		case seen[r.Name]:
+			return fmt.Errorf("roles[%d].name %q is already defined", i, r.Name)
+		case r.Means == "":
+			return fmt.Errorf("roles[%d].means is missing", i)
+		}
+		seen[r.Name] = true
+	}
+	return nil
 }
 
 // checkCategories checks that each category has a valid name, is not in
