@@ -56,9 +56,12 @@ type Entry struct {
 	Decision string `toml:"decision"`
 	// Probe is the steps that check the entry, and Expect the result
 	// while it holds.
-	Probe    string   `toml:"probe"`
-	Expect   string   `toml:"expect"`
-	Verified Verified `toml:"verified"`
+	Probe  string `toml:"probe"`
+	Expect string `toml:"expect"`
+	// Unattended is whether the probe runs with no person, login or key,
+	// as the script scripts/probes/<Name> (ADR 9 item 4).
+	Unattended bool     `toml:"unattended"`
+	Verified   Verified `toml:"verified"`
 	// Sources are decoded one by one, since the TOML package records
 	// one type for a key in every [[<entry>.sources]] table.
 	Sources []Source `toml:"-"`
@@ -160,6 +163,7 @@ var keys = map[string]string{
 	"decision":         "String",
 	"probe":            "String",
 	"expect":           "String",
+	"unattended":       "Bool",
 	"verified":         "Hash",
 	"verified.version": "String",
 	"verified.date":    "Datetime",

@@ -104,6 +104,7 @@ func TestParseRejects(t *testing.T) {
 		{"an array of tables", "[[codex-z]]\n", "codex-z: is not a table"},
 		{"a wrong type", strings.Replace(gap, `summary = "s"`, `summary = 1`, 1), "codex-x: summary is an integer, not a string"},
 		{"wrong types, each reported", strings.Replace(strings.Replace(gap, `summary = "s"`, `summary = 1`, 1), `probe = "p"`, `probe = true`, 1), "codex-x: summary is an integer, not a string\ncodex-x: probe is a boolean, not a string"},
+		{"unattended as a string", strings.Replace(behaviour, `expect = "e"`, "expect = \"e\"\nunattended = \"true\"", 1), "claude-code-y: unattended is a string, not a boolean"},
 		{"verified as a string", strings.Replace(behaviour, `verified = { version = "2.1.312", date = 2026-10-29 }`, `verified = "x"`, 1), "claude-code-y: verified is a string, not a table"},
 		{"sources as an array of strings", behaviour + `sources = ["x"]` + "\n", "claude-code-y: sources is an array, not [[claude-code-y.sources]] tables"},
 		{"sources as an inline array of tables", behaviour + `sources = [{ source = "claude", read = 2026-10-29, version = "2.1.312" }]` + "\n", "claude-code-y: sources is an array, not [[claude-code-y.sources]] tables"},

@@ -33,6 +33,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | A new decision that is costly to reverse, also added to `docs/adr/README.md` | `docs/adr/` | [ADR 1](docs/adr/0001-record-architecture-decisions.md) |
 | A change's spec, brief, research or spike results, before or with its code; moved to `done/` once tests cover each rule | `.ai/changes/YYYY-MM-DD-short-title/` | [.ai/README.md](.ai/README.md) |
 | A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 4](docs/adr/0004-gates-and-ci.md) |
+| A harness probe that runs unattended, with `unattended = true` on its entry in the harness data file | `scripts/probes/<entry name>` | [ADR 9](docs/adr/0009-native-harness-features-first.md) items 4 and 5 |
 | A CLI command or package, with its Go tests | `cli/` | [ADR 15](docs/adr/0015-the-cech-cli.md) |
 | A Go dependency, in the same change that lists it in ADR 16 | `cli/go.mod` | [ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1 |
 | A public term rule or an allowlisted email address | `checks/terms/` | [ADR 3](docs/adr/0003-vendor-neutrality.md) |
@@ -47,13 +48,13 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | --- | --- |
 | `docs/` | Documents for people: decision records in `adr/`; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
 | `.ai/` | Working material written mostly by and for agents, one folder per change in `changes/`, finished ones in `changes/done/` |
-| `scripts/` | Gate scripts in POSIX sh that run under dash, macOS sh and Git Bash; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks |
+| `scripts/` | Gate and harness probe scripts in POSIX sh that run under dash, macOS sh and Git Bash, the harness probes on Linux and macOS only; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks, `scripts/probes/` the harness probes that `run-probes` runs |
 | `checks/` | Public tiers of the term check; the private tier lives outside git |
 | `cli/` | The `cech` CLI, Go module `github.com/TrialAndTemper/cech/cli`: `cmd/cech` for `main`, `internal/` for the rest, golden files in `testdata/`, linter settings in `.golangci.yml` |
 | `test/` | bats suites for the scripts and tasks; a script change adds the cases, and the hand checks in the pull request, that [CONTRIBUTING.md](CONTRIBUTING.md#writing) and [ADR 4](docs/adr/0004-gates-and-ci.md) item 5 ask for |
 | `mise.toml` | Exact tool pins and every task; the single entry point for the gates |
 | `mise.lock` | Downloads and checksums for each pin and platform, or only the version of a pin built from source, written by `mise lock` |
-| `.github/` | The CI workflow, the vulnerability check workflow, issue forms and pull request template |
+| `.github/` | The CI workflow, the vulnerability check and harness probe workflows, issue forms and pull request template |
 | `.rumdl.toml` | Markdown lint and format settings: sentence per line, no line limit |
 | `lychee.toml` | Link check settings |
 | `.shellcheckrc` | shellcheck settings for every shell file |

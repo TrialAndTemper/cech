@@ -1,0 +1,58 @@
+#!/bin/sh
+# Probe of the harness data entry codex-plugin-agents (ADR 9 item 4):
+# Codex leaves out the agents a plugin bundles, Markdown and TOML ones,
+# and loads the custom agents in a trusted project's .codex/agents/. The
+# steps are the entry's probe.
+#
+# Usage: scripts/probes/codex-plugin-agents
+#
+# Requires: codex, git.
+#
+# Exit status: 0 the expected result, 1 another, 2 the probe could not
+# run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
+readonly ROOT
+[ -r "${ROOT}/scripts/lib/common.sh" ] && [ -r "${ROOT}/scripts/lib/probe.sh" ] || {
+  printf 'codex-plugin-agents: cannot read scripts/lib/common.sh or probe.sh\n' >&2
+  exit 2
+}
+# shellcheck source=../lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+# shellcheck source=../lib/probe.sh
+. "${ROOT}/scripts/lib/probe.sh"
+PROG=codex-plugin-agents
+readonly PROG
+
+# write_agent_toml <file> <name> <word>: write a Codex agent file whose
+# description holds word.
+write_agent_toml() {
+  printf 'name = "%s"\ndescription = "Use when the user asks about %s."\ndeveloper_instructions = "Answer briefly."\n' \
+    "$2" "$3" > "$1" || die "cannot write $1"
+}
+
+probe_start codex
+plugin=${SCRATCH}/mkt/plugins/probe
+write_marketplace "${SCRATCH}/mkt" probe-mkt probe
+write_plugin "${plugin}" probe quillfeather
+mkdir -p -- "${plugin}/agents" || die "cannot create ${plugin}/agents"
+printf -- '---\nname: probe-reviewer\ndescription: Use when the user asks about inkwell.\n---\n\nAnswer briefly.\n' \
+  > "${plugin}/agents/probe-reviewer.md" || die "cannot write the Markdown agent"
+write_agent_toml "${plugin}/agents/probe-reviewer.toml" probe-reviewer-toml lanternfish
+new_project "${SCRATCH}/project"
+mkdir -p -- .codex/agents "${PROBE_HOME}/.codex" || die "cannot create .codex/agents"
+write_agent_toml .codex/agents/probe-local.toml probe-local tidewater
+project=$(pwd -P) || die "cannot read the project's path"
+printf '[projects."%s"]\ntrust_level = "trusted"\n' "${project}" > "${PROBE_HOME}/.codex/config.toml" ||
+  die "cannot write config.toml"
+
+must "codex plugin marketplace add failed" codex plugin marketplace add "${SCRATCH}/mkt"
+must "codex plugin add failed" codex plugin add probe@probe-mkt
+must "codex debug prompt-input failed" codex debug prompt-input hi
+expect_out quillfeather "the skill's word is not in the prompt"
+expect_out tidewater "the word of the agent in .codex/agents/ is not in the prompt"
+refuse_out inkwell "the word of the plugin's Markdown agent is in the prompt"
+refuse_out lanternfish "the word of the plugin's TOML agent is in the prompt"
+probe_ok

@@ -1,0 +1,65 @@
+#!/bin/sh
+# Probe of the harness data entry claude-code-dependency-marketplace
+# (ADR 9 item 4): a dependency on another marketplace's plugin resolves
+# only in the marketplace it names exactly, and, with none named, in the
+# depending plugin's own marketplace. The steps are the entry's probe.
+#
+# Usage: scripts/probes/claude-code-dependency-marketplace
+#
+# Requires: claude, git.
+#
+# Exit status: 0 the expected result, 1 another, 2 the probe could not
+# run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
+readonly ROOT
+[ -r "${ROOT}/scripts/lib/common.sh" ] && [ -r "${ROOT}/scripts/lib/probe.sh" ] || {
+  printf 'claude-code-dependency-marketplace: cannot read scripts/lib/common.sh or probe.sh\n' >&2
+  exit 2
+}
+# shellcheck source=../lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+# shellcheck source=../lib/probe.sh
+. "${ROOT}/scripts/lib/probe.sh"
+PROG=claude-code-dependency-marketplace
+readonly PROG
+
+probe_start claude
+
+# Each run gets its own home, marketplaces and project, and names the
+# dependency in its own way; the 1st must load, the others must not.
+for run in 1 2 3; do
+  case "${run}" in
+    1) dependency='{"name": "cech-prose", "marketplace": "cech-0-1-0"}' missing='' ;;
+    2) dependency='{"name": "cech-prose", "marketplace": "cech"}' missing=cech-prose@cech ;;
+    *) dependency='{"name": "cech-prose"}' missing=cech-prose@acme ;;
+  esac
+  dir=${SCRATCH}/run-${run}
+  PROBE_HOME=${dir}/home
+  write_marketplace "${dir}/cech" cech-0-1-0 cech-prose
+  write_plugin "${dir}/cech/plugins/cech-prose" cech-prose quillfeather
+  write_marketplace "${dir}/acme" acme acme-x
+  write_plugin "${dir}/acme/plugins/acme-x" acme-x inkwell "\"dependencies\": [${dependency}]"
+  new_project "${dir}/project"
+
+  for mkt in cech acme; do
+    must "run ${run}: claude plugin marketplace add failed" \
+      claude plugin marketplace add --scope project "${dir}/${mkt}"
+  done
+  for plugin in cech-prose@cech-0-1-0 acme-x@acme; do
+    must "run ${run}: claude plugin install ${plugin} failed" \
+      claude plugin install --scope project "${plugin}"
+  done
+  must "run ${run}: claude plugin list failed" claude plugin list
+  claude_plugin acme-x@acme
+  if [ -z "${missing}" ]; then
+    expect_out 'Status:[^a-z]*enabled$' "run ${run}: acme-x@acme is not enabled, with ${dependency}"
+  else
+    refuse_out 'Status:[^a-z]*enabled$' "run ${run}: acme-x@acme is enabled, with ${dependency}"
+    expect_out "Dependency \"${missing}\" is not installed" \
+      "run ${run}: acme-x@acme does not fail to load with ${missing} not installed"
+  fi
+done
+probe_ok

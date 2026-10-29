@@ -71,10 +71,11 @@ commit_and_drop() {
 }
 
 # fake_tool <tool> <script body>: put a fake tool first on PATH for the
-# rest of the case. In the body, REAL names the real tool.
+# rest of the case. In the body, REAL names the real tool, empty if
+# there is none, as for a harness CI does not install.
 fake_tool() {
   local real
-  real=$(command -v "$1")
+  real=$(command -v "$1") || real=''
   if [[ ${real} == *"'"* ]]; then
     printf 'cannot wrap a path that holds a quote: %s\n' "${real}"
     return 1

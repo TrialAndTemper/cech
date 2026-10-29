@@ -1,0 +1,142 @@
+#!/bin/sh
+# Opens the issues for a failed run of the harness probes (ADR 9 item 4,
+# ADR 4 item 7), as .github/workflows/probes.yml's report job. RESULTS
+# is the file scripts/run-probes --results wrote, empty if the run
+# stopped before it.
+#
+# Each entry whose result differs gets an issue titled `harness probe:
+# <entry> gives another result`, labelled triage, bug and portability,
+# or a comment on the open one. A probe that could not run, a script in
+# scripts/probes/ with no line in RESULTS, or a run with no result to
+# report, gets one issue for the job, `harness probes: the scheduled
+# job fails on main`, labelled triage, bug and ci, or a comment on it.
+# gh finds the repository in GH_REPO, as the workflow sets it, and reads
+# nothing from stdin, which holds RESULTS.
+#
+# Usage: scripts/report-probes RESULTS RUN_URL
+#
+# Requires: gh, logged in with the right to write issues.
+#
+# Exit status: 0 reported, 2 could not report.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+readonly ROOT
+[ -r "${ROOT}/scripts/lib/common.sh" ] || {
+  printf 'report: cannot read scripts/lib/common.sh\n' >&2
+  exit 2
+}
+# shellcheck source=lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+PROG=report
+readonly PROG
+JOB_TITLE='harness probes: the scheduled job fails on main'
+readonly JOB_TITLE
+
+usage() {
+  cat << 'EOF2'
+Usage: scripts/report-probes RESULTS RUN_URL
+
+Opens an issue, or comments on the open one, for each entry whose probe
+gives another result in RESULTS, and one for the job when a probe could
+not run or RESULTS holds no result to report. gh takes the repository
+from GH_REPO.
+
+  -h, --help  show this help
+
+Exit status: 0 reported, 2 could not report.
+EOF2
+}
+
+# report <title> <body> <label...>: comment on the open issue with the
+# title, or open one with the labels.
+report() {
+  local title body number label
+  title=$1
+  body=$2
+  shift 2
+  # The plain list, not --search, whose index can lag behind a
+  # just-opened issue.
+  number=$(TITLE=${title} gh issue list --state open --limit 500 \
+    --json number,title --jq 'map(select(.title == env.TITLE)) | .[0].number // empty' < /dev/null) ||
+    die "cannot list the open issues"
+  if [ -n "${number}" ]; then
+    gh issue comment "${number}" --body "${body}" < /dev/null > /dev/null ||
+      die "cannot comment on issue ${number}"
+    printf 'report: commented on issue %s: %s\n' "${number}" "${title}"
+    return
+  fi
+  # Turn each label into --label <label>: for walks the labels as they
+  # were, while each turn adds a pair at the end and drops one label.
+  for label in "$@"; do
+    set -- "$@" --label "${label}"
+    shift
+  done
+  gh issue create --title "${title}" --body "${body}" "$@" < /dev/null > /dev/null ||
+    die "cannot open the issue: ${title}"
+  printf 'report: opened an issue: %s\n' "${title}"
+}
+
+main() {
+  local results url entry result harness version failed reported
+
+  case "${1:-}" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *) ;;
+  esac
+  [ "$#" -eq 2 ] || {
+    usage >&2
+    die "expected RESULTS and RUN_URL"
+  }
+  results=$1
+  url=$2
+  [ -r "${results}" ] || die "cannot read ${results}"
+
+  failed=''
+  reported=0
+  while read -r entry result harness version; do
+    # The results come from a job that ran the newest harnesses, so take
+    # only an entry that has a probe here as a title.
+    case "${entry}" in
+      *[!a-z0-9-]* | '') entry='' ;;
+      *) [ -x "${ROOT}/scripts/probes/${entry}" ] || entry='' ;;
+    esac
+    if [ -z "${entry}" ]; then
+      failed="${failed} (an unknown entry)"
+      continue
+    fi
+    case "${result}" in
+      differs)
+        report "harness probe: ${entry} gives another result" \
+          "The probe of ${entry} in cli/internal/harnessdata/harnesses.toml gave a result other than its expect on ${harness} ${version}: ${url}
+
+Run scripts/probes/${entry} on that version and read the entry: a behaviour CECH relies on changed, or a gap closed (ADR 9 item 4). Then update the entry and the code that names it, or the probe." \
+          triage bug portability
+        reported=$((reported + 1))
+        ;;
+      failed) failed="${failed} ${entry}" ;;
+      *) ;;
+    esac
+  done < "${results}"
+  # A probe with no line ran past the step's timeout, or never ran.
+  for entry in "${ROOT}"/scripts/probes/*; do
+    entry=${entry##*/}
+    if [ -f "${ROOT}/scripts/probes/${entry}" ] &&
+      ! grep -q -e "^${entry} " -- "${results}"; then
+      failed="${failed} ${entry} (no result)"
+    fi
+  done
+
+  if [ -n "${failed}" ] || [ "${reported}" -eq 0 ]; then
+    report "${JOB_TITLE}" "The harness probe job failed on main: ${url}
+
+${failed:+These probes could not run:${failed}. }Read the run: a harness that would not install, a probe that could not set up its fixture, or a change in scripts/run-probes." \
+      triage bug ci
+  fi
+}
+
+main "$@"

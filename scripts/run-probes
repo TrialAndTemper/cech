@@ -1,0 +1,144 @@
+#!/bin/sh
+# Runs the harness probes (ADR 9 item 4) as `mise run probes`: each
+# script in scripts/probes/, one per entry of the harness data file
+# marked unattended = true, or only the entries named. It is not a gate:
+# a probe runs the installed harness, whose newest release can change
+# without any change here, so check leaves it out, and
+# .github/workflows/probes.yml runs it on the newest releases.
+#
+# An entry's harness is the start of its name, claude-code or codex,
+# and the version reported is the first X.Y.Z in that harness's
+# --version. With --results FILE, it writes one line per probe to FILE:
+# the entry, its result (ok, differs or failed), its harness and the
+# version, separated by spaces.
+#
+# Usage: scripts/run-probes [--results FILE] [ENTRY...]
+#
+# Requires: git, and claude or codex for the probes of each.
+#
+# Exit status: 0 every probe gave the expected result, 1 one gave
+# another, 2 one could not run, or the runner could not.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+readonly ROOT
+# A failed `.` exits 1 in some shells; 1 means findings, so check first.
+[ -r "${ROOT}/scripts/lib/common.sh" ] || {
+  printf 'probes: cannot read scripts/lib/common.sh\n' >&2
+  exit 2
+}
+# shellcheck source=lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+PROG=probes
+readonly PROG
+
+usage() {
+  cat << 'EOF2'
+Usage: mise run probes -- [--results FILE] [ENTRY...]
+       (scripts/run-probes [--results FILE] [ENTRY...])
+
+Runs the probe of each harness data entry marked unattended = true, on
+the claude and codex on PATH, or only the probes of the entries named.
+
+  --results FILE  write a line per probe: entry, result (ok, differs or
+                  failed), harness and version
+  -h, --help      show this help
+
+Exit status: 0 every probe gave the expected result, 1 one gave
+another, 2 one could not run, or the runner could not.
+EOF2
+}
+
+# version <command>: print the first X.Y.Z in the command's --version,
+# or unknown.
+version() {
+  v=$("$1" --version < /dev/null 2> /dev/null |
+    sed -n 's/^[^0-9]*\([0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\).*/\1/p' | sed -n 1p) || v=''
+  printf '%s\n' "${v:-unknown}"
+}
+
+main() {
+  local results entry harness command v status result differs failed
+
+  results=''
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      --results)
+        [ "$#" -ge 2 ] || die "--results needs a file"
+        results=$2
+        shift 2
+        ;;
+      -*)
+        usage >&2
+        die "unexpected option: $1"
+        ;;
+      *) break ;;
+    esac
+  done
+  if [ -n "${results}" ]; then
+    : > "${results}" || die "cannot write ${results}"
+  fi
+  if [ "$#" -eq 0 ]; then
+    for entry in "${ROOT}"/scripts/probes/*; do
+      [ -f "${entry}" ] && set -- "$@" "${entry##*/}"
+    done
+    [ "$#" -gt 0 ] || die "no probe in scripts/probes/"
+  fi
+  # Check every entry first, so the runner never stops with some results
+  # written.
+  for entry in "$@"; do
+    case "${entry}" in
+      claude-code-* | codex-*) ;;
+      *) die "${entry}: not an entry of claude-code or codex" ;;
+    esac
+    [ -x "${ROOT}/scripts/probes/${entry}" ] || die "${entry}: no probe in scripts/probes/"
+  done
+
+  differs=''
+  failed=''
+  for entry in "$@"; do
+    case "${entry}" in
+      claude-code-*) harness=claude-code command=claude ;;
+      *) harness=codex command=codex ;;
+    esac
+    if command -v "${command}" > /dev/null 2>&1; then
+      v=$(version "${command}")
+    else
+      v=missing
+    fi
+    printf 'probes: %s on %s %s\n' "${entry}" "${harness}" "${v}"
+    "${ROOT}/scripts/probes/${entry}" && status=0 || status=$?
+    case "${status}" in
+      0) result=ok ;;
+      1)
+        result=differs
+        differs="${differs} ${entry}"
+        ;;
+      *)
+        result=failed
+        failed="${failed} ${entry}"
+        ;;
+    esac
+    if [ -n "${results}" ]; then
+      printf '%s %s %s %s\n' "${entry}" "${result}" "${harness}" "${v}" >> "${results}" ||
+        die "cannot write ${results}"
+    fi
+  done
+
+  if [ -n "${differs}" ]; then
+    printf 'probes: a result other than the expected one:%s\n' "${differs}" >&2
+  fi
+  if [ -n "${failed}" ]; then
+    printf 'probes: could not run:%s\n' "${failed}" >&2
+    exit 2
+  fi
+  [ -z "${differs}" ] || exit 1
+  printf 'probes: ok (probes: %s)\n' "$#"
+}
+
+main "$@"

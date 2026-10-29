@@ -1,0 +1,117 @@
+# The harness probes (ADR 9 item 4), outside the merge gates: they run
+# the newest Claude Code and Codex, which change without any change
+# here, so a new release must not block every pull request. They run,
+# without opening issues, on pull requests that touch the probes, and
+# on main daily and after each such push; a failure there opens an
+# issue for each entry whose result differs, and one for the job if a
+# probe could not run or gave no result, or comments on the open one
+# (ADR 4 item 7).
+name: probes
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - scripts/run-probes
+      - scripts/report-probes
+      - scripts/probes/**
+      - scripts/lib/**
+      - cli/internal/harnessdata/harnesses.toml
+      - .github/workflows/probes.yml
+  push:
+    branches: [main]
+    paths:
+      - scripts/run-probes
+      - scripts/report-probes
+      - scripts/probes/**
+      - scripts/lib/**
+      - cli/internal/harnessdata/harnesses.toml
+      - .github/workflows/probes.yml
+  schedule:
+    - cron: "41 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A new push to a pull request cancels its older run. Runs on main wait
+# for the running one, so two never open the same issue at once; a newer
+# waiting run replaces an older one.
+concurrency:
+  group: probes-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  probes:
+    name: probes
+    # The probes need sh, git and the harnesses, not the tools mise pins,
+    # and every harness behaviour they check is the same on each OS.
+    runs-on: ubuntu-24.04
+    # Above the step timeouts, so a hung harness fails its step and the
+    # report still runs, rather than the whole job being cancelled.
+    timeout-minutes: 20
+    outputs:
+      results: ${{ steps.results.outputs.results }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+
+      # zizmor asks for pinned packages; this step installs the newest
+      # releases on purpose, since the probes are there to catch what a
+      # new release changes.
+      # npm checks each download against the registry's checksum.
+      - name: install the newest harnesses
+        timeout-minutes: 5
+        run: npm install --global --no-audit --no-fund @anthropic-ai/claude-code@latest @openai/codex@latest # zizmor: ignore[adhoc-packages]
+
+      # TMPDIR outside /tmp: Codex warns when its home is under /tmp. A
+      # harness that hangs fails this step, not the whole job, so the
+      # results step still runs and the report opens the job's issue.
+      - name: probes
+        timeout-minutes: 10
+        env:
+          TMPDIR: ${{ runner.temp }}
+        run: scripts/run-probes --results "${RUNNER_TEMP}/results"
+
+      # Even when a probe fails, pass on what each one gave, for the
+      # report job. Entry names and versions hold no spaces or newlines.
+      - name: results
+        id: results
+        if: ${{ always() }}
+        run: |
+          if [ -f "${RUNNER_TEMP}/results" ]; then
+            results=$(tr '\n' ',' < "${RUNNER_TEMP}/results")
+          else
+            results=''
+          fi
+          printf 'results=%s\n' "${results}" >> "${GITHUB_OUTPUT}"
+
+  # On main, a failure becomes issues for a maintainer to triage.
+  report:
+    name: report
+    needs: probes
+    if: ${{ failure() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read # check out the report script
+      issues: write # open the issues, or comment on them
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: open or update the issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RESULTS: ${{ needs.probes.outputs.results }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          printf '%s' "${RESULTS}" | tr ',' '\n' > "${RUNNER_TEMP}/results"
+          scripts/report-probes "${RUNNER_TEMP}/results" "${RUN_URL}"

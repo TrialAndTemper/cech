@@ -1,0 +1,46 @@
+#!/bin/sh
+# Probe of the harness data entry codex-plugin-metadata (ADR 9 item 4):
+# Codex installs and loads a Claude-shaped plugin whose plugin.json has
+# a metadata object, and prints no deprecation warning for it (ADR 10
+# item 5). The steps are the entry's probe.
+#
+# Usage: scripts/probes/codex-plugin-metadata
+#
+# Requires: codex, git.
+#
+# Exit status: 0 the expected result, 1 another, 2 the probe could not
+# run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
+readonly ROOT
+[ -r "${ROOT}/scripts/lib/common.sh" ] && [ -r "${ROOT}/scripts/lib/probe.sh" ] || {
+  printf 'codex-plugin-metadata: cannot read scripts/lib/common.sh or probe.sh\n' >&2
+  exit 2
+}
+# shellcheck source=../lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+# shellcheck source=../lib/probe.sh
+. "${ROOT}/scripts/lib/probe.sh"
+PROG=codex-plugin-metadata
+readonly PROG
+
+probe_start codex
+write_marketplace "${SCRATCH}/mkt" probe-mkt probe
+write_plugin "${SCRATCH}/mkt/plugins/probe" probe quillfeather \
+  '"metadata": {"maintainers": ["octocat", "hubot"]}'
+new_project "${SCRATCH}/project"
+
+must "codex plugin marketplace add failed" codex plugin marketplace add "${SCRATCH}/mkt"
+must "codex plugin add failed" codex plugin add probe@probe-mkt
+must "codex plugin list failed" codex plugin list
+expect_out '^probe@probe-mkt  *installed, enabled ' \
+  "codex plugin list does not show probe@probe-mkt as installed and enabled"
+# Before prompt-input, whose prompt and tool schemas on stdout may name
+# a deprecation of their own; of its output, only stderr is searched.
+no_deprecation
+must "codex debug prompt-input failed" codex debug prompt-input hi
+expect_out quillfeather "the skill's word is not in the prompt"
+no_deprecation "${ERR}"
+probe_ok
