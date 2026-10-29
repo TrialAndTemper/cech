@@ -50,7 +50,7 @@ This runs every gate, as CI does.
 | --- | --- |
 | `commits` | commit message format and sign-off |
 | `terms` | names and data that must not be in the repository |
-| `lint` | Markdown, ADR length, shell scripts, workflows and the CLI's Go code |
+| `lint` | Markdown, ADR numbering, index and length, shell scripts, workflows and the CLI's Go code |
 | `format:check` | formatting of Markdown, shell scripts and Go code |
 | `test` | the tests of the CLI, and of the gate scripts (not on Windows) |
 | `docs:check` | links in the Markdown, YAML and text files; needs the network |

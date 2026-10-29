@@ -85,7 +85,7 @@ description = "Lint the GitHub Actions workflows"
 run = ["actionlint .github/workflows/*.y*ml", "zizmor --offline --pedantic --strict-collection ."]
 
 [tasks."lint:adr"]
-description = "Check the length of each ADR and that its code fences close"
+description = "Check the ADRs: numbering, the index, and length"
 run = "scripts/check-adr"
 
 [tasks."lint:go"]
