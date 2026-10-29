@@ -22,7 +22,9 @@ func TestCodeOwners(t *testing.T) {
 
 * @Acme/maintainers
 /plugins/tool/d-none/ @bob
+/evals/tool/d-none/ @bob
 /plugins/tool/e-dup/ @Carol @dan
+/evals/tool/e-dup/ @Carol @dan
 `
 	if got := string(CodeOwners(m)); got != want {
 		t.Errorf("got\n%s\nwant\n%s", got, want)
