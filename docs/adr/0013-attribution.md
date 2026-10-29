@@ -11,18 +11,13 @@ Credit for ideas follows [ADR 2](0002-licence-and-contributions.md).
 If the same names are kept in several hand-written files, they drift.
 CECH starts with one maintainer.
 
-Checked on 2026-10-17 (Claude Code 2.1.302):
+Checked on 2026-10-17 (Claude Code 2.1.302), and, where a line says so, on 2026-10-29 (Claude Code 2.1.312, Codex 0.165.0):
 
-- `plugin.json` `author` is a single object with `name`, `email` and `url`.
-  `claude plugin validate --strict` rejects an array or a string.
-- An unknown field such as `maintainer` or `maintainers` is a warning, so strict validation fails.
-- A `metadata` map in `SKILL.md`, an [Agent Skills](https://agentskills.io/specification) field, passes.
-
-Checked again on 2026-10-29 (Claude Code 2.1.312, Codex 0.165.0):
-
-- Strict validation still fails on a top-level `maintainer` or `maintainers` field, and passes a `plugin.json` whose `metadata` object holds an array of names; Claude Code installs and loads that plugin.
-  The [plugin manifest reference](https://code.claude.com/docs/en/plugins-reference), read the same day, documents `metadata`, from Claude Code 2.1.222, as a free-form object that Claude Code does not read.
-- Codex installs and loads a plugin whose `plugin.json` has such an object.
+- `plugin.json` `author` is a single object with `name`, `email` and `url`; `claude plugin validate --strict` rejects an array or a string.
+- An unknown top-level field such as `maintainer` or `maintainers` is a warning, so strict validation fails; still so on 2026-10-29.
+- On 2026-10-29, strict validation passes a `plugin.json` whose `metadata` object holds an array of names, and both harnesses install and load that plugin.
+  The [plugin manifest reference](https://code.claude.com/docs/en/plugins-reference), read on 2026-10-29, documents `metadata`, from Claude Code 2.1.222, as a free-form object that Claude Code does not read.
+- A `metadata` map in `SKILL.md`, an [Agent Skills](https://agentskills.io/specification) field, passes too.
 
 [GitHub docs](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners), read on 2026-10-17: code owners must have write access to the repository, the last matching pattern wins, and GitHub reports invalid entries.
 
@@ -40,15 +35,12 @@ Checked again on 2026-10-29 (Claude Code 2.1.312, Codex 0.165.0):
    It counts as an asset of the skill under [ADR 11](0011-one-plugin-one-skill.md).
    Credits are for people, not agents, so `SKILL.md` does not link to the file.
 4. **Generated code owners.**
-   `cech build` ([ADR 18](0018-generated-files.md)) writes `.github/CODEOWNERS`:
+   `cech build` writes `.github/CODEOWNERS`:
    - first, a catch-all line for the marketplace's maintainer team, the `team` in its `data/marketplace.toml` (for CECH, `@TrialAndTemper/maintainers`);
-   - then, for each plugin, its folder (and its evals folder, once a later ADR on evals places it), owned by the owner and the maintainers.
+   - then, for each plugin, its folder, owned by the owner and the maintainers.
 
    A marketplace with no `team` gets no code owners file.
-   The build reads the owner's user name from a `url` of the form `https://github.com/<user>`, without network access.
-   It leaves the owner out when `<user>` is the organisation of the catch-all team, or when the `url` has another form or is missing.
-   A plugin whose line would then name nobody gets no line, and the catch-all team owns it.
-   Any other organisation given as `url` is caught by the gate in item 5.
+   The build takes the names from the manifests alone, without network access; a plugin it can name no one for is left to the catch-all team.
 5. Being named an owner or maintainer is a request for write access.
    A CECH maintainer grants it, or the name is removed before merge.
    A gate ([ADR 4](0004-gates-and-ci.md)) fails when GitHub reports code owners errors for the change.

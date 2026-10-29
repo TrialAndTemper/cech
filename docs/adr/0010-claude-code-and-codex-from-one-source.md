@@ -32,7 +32,7 @@ Checked on 2026-10-16 (Claude Code 2.1.301, Codex CLI 0.162.1):
    The copies are git-ignored, so the project still commits only what it enables ([ADR 8](0008-a-marketplace-you-extend-not-fork.md)).
    The workaround ends when a probe shows Codex loads plugin-bundled agents.
 4. A skill's claims hold on both harnesses, unless the skill names the one harness it is limited to.
-   Evals run on both (a later ADR on evals).
+   Evals run on both; how they run is outside this ADR.
 5. The scheduled job ([ADR 9](0009-native-harness-features-first.md)) checks that the newest Codex still loads a Claude-shaped test plugin, and that it prints no deprecation warning for it.
    If either check fails, a new ADR chooses between a Codex generator and Agent Plugins as the source.
 
@@ -45,5 +45,4 @@ Checked on 2026-10-16 (Claude Code 2.1.301, Codex CLI 0.162.1):
 
 - **Two hand-written layouts plus a sync lint:** one description in many files, which drift.
 - **Agent Plugins as the source:** Claude Code does not document it.
-  Revisit if it does, or if Codex drops the Claude format.
 - **Claude Code only:** leaves out Codex users.
