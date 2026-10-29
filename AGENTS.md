@@ -69,7 +69,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | `CONTRIBUTING.md` | The full contributor rules this file routes to |
 | `SECURITY.md` | How to report a vulnerability privately |
 | `CODE_OF_CONDUCT.md` | Adapted Contributor Covenant under CC BY-SA 4.0; edit only its CECH-specific parts |
-| `LICENSE` | MIT licence; `cech build` will copy it into each skill folder ([ADR 18](docs/adr/0018-generated-files.md)) |
+| `LICENSE` | MIT licence; `cech build` copies it into each skill folder ([ADR 18](docs/adr/0018-generated-files.md)) |
 | `NOTICE` | Notices of third-party material outside skill folders, one entry per copied or adapted text; a skill keeps its own in its folder |
 
 ## How to work

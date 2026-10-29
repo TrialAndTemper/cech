@@ -2,9 +2,13 @@ updated .claude-plugin/marketplace.json
 created .github/CODEOWNERS
 created docs/catalogue.md
 updated plugins/tool/acme-docker/.claude-plugin/plugin.json
+created plugins/tool/acme-docker/skills/acme-docker/LICENSE
 updated plugins/tool/acme-git/.claude-plugin/plugin.json
 updated plugins/tool/acme-git/agents/acme-git-reviewer.toml
 removed plugins/tool/acme-git/agents/old-reviewer.toml
+created plugins/tool/acme-git/skills/acme-git/LICENSE
 updated plugins/workflow/acme-release/.claude-plugin/plugin.json
+created plugins/workflow/acme-release/skills/acme-release/LICENSE
 updated plugins/writing/acme-prose/.claude-plugin/plugin.json
 created plugins/writing/acme-prose/agents/acme-prose-reviewer.toml
+created plugins/writing/acme-prose/skills/acme-prose/LICENSE

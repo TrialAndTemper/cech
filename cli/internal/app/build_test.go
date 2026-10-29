@@ -169,6 +169,22 @@ func TestBuildReleaseOnPreRelease(t *testing.T) {
 	}
 }
 
+// TestBuildWithoutLicence checks that without a root LICENSE the build
+// leaves the copies in the skill folders, which it cannot tell from
+// files written by hand (ADR 18 item 2).
+func TestBuildWithoutLicence(t *testing.T) {
+	dir := t.TempDir()
+	copyTree(t, filepath.Join("testdata", "build", "acme", "out"), dir, nil)
+	remove("LICENSE")(t, dir)
+	before := readTree(t, dir)
+	if code, stdout, stderr := runIn(t, "build", "-C", dir); code != ExitOK || stdout != "" {
+		t.Errorf("exit code %d, stdout %q, stderr:\n%s\nwant 0 and nothing", code, stdout, stderr)
+	}
+	if after := readTree(t, dir); !maps.Equal(before, after) {
+		t.Error("the build changed the tree")
+	}
+}
+
 // readJSON decodes the JSON file name into v.
 func readJSON(t *testing.T, name string, v any) {
 	t.Helper()
@@ -183,12 +199,13 @@ func readJSON(t *testing.T, name string, v any) {
 
 // TestBuildCRLF builds the acme fixture with CRLF line ends in every
 // hand-written file. A plugin.json keeps them, the inserted description
-// member included; every generated file has LF.
+// member included, and so does each copy of the licence; every other
+// generated file has LF.
 func TestBuildCRLF(t *testing.T) {
 	fixture := filepath.Join("testdata", "build", "acme")
 	dir := t.TempDir()
 	handWritten := func(p string) bool {
-		return strings.HasSuffix(p, "/plugin.json") || strings.HasSuffix(p, ".md") ||
+		return strings.HasSuffix(p, "/plugin.json") || strings.HasSuffix(p, ".md") || p == "LICENSE" ||
 			(strings.HasSuffix(p, ".toml") && !strings.Contains(p, "/agents/"))
 	}
 	copyTree(t, filepath.Join(fixture, "in"), dir, handWritten)
@@ -197,7 +214,7 @@ func TestBuildCRLF(t *testing.T) {
 	}
 	want := t.TempDir()
 	copyTree(t, filepath.Join(fixture, "out"), want, func(p string) bool {
-		return handWritten(p) && !strings.HasPrefix(p, "docs/")
+		return handWritten(p) && !strings.HasPrefix(p, "docs/") || strings.HasSuffix(p, "/LICENSE")
 	})
 	if !*update {
 		checkTree(t, want, dir)
@@ -332,6 +349,17 @@ func TestBuildCheckFindsDrift(t *testing.T) {
 		{
 			"code owners team removed", replaceIn("data/marketplace.toml", `team = "@acme/skill-maintainers"`, ""),
 			"remove .github/CODEOWNERS\n",
+		},
+		{
+			"licence changed", appendTo("LICENSE", "More terms.\n"),
+			"update plugins/tool/acme-docker/skills/acme-docker/LICENSE\n" +
+				"update " + git + "skills/acme-git/LICENSE\n" +
+				"update plugins/workflow/acme-release/skills/acme-release/LICENSE\n" +
+				"update " + prose + "skills/acme-prose/LICENSE\n",
+		},
+		{
+			"licence copy edited", appendTo(prose+"skills/acme-prose/LICENSE", "More terms.\n"),
+			"update " + prose + "skills/acme-prose/LICENSE\n",
 		},
 		{
 			"plugin removed", removeAll("plugins/workflow/acme-release"),
@@ -482,6 +510,15 @@ func TestBuildErrors(t *testing.T) {
 		{
 			"role without means", replaceIn(data, `means = "The tracker where Acme files and moves issues"`, ""),
 			[]string{"data/marketplace.toml: roles[0].means is missing"},
+		},
+		{
+			"licence a folder", func(t *testing.T, dir string) {
+				remove("LICENSE")(t, dir)
+				if err := os.Mkdir(filepath.Join(dir, "LICENSE"), 0o755); err != nil {
+					t.Fatal(err)
+				}
+			},
+			[]string{"LICENSE: not a file"},
 		},
 		{
 			"term list outside the repository", replaceIn(data, `"checks/terms/rules.toml"`, `"../rules.toml"`),
@@ -737,12 +774,16 @@ func TestBuildPartial(t *testing.T) {
 	skipped := []build.Diff{
 		{Path: "docs/catalogue.md", Change: build.Create},
 		{Path: "plugins/tool/acme-docker/.claude-plugin/plugin.json", Change: build.Update},
+		{Path: "plugins/tool/acme-docker/skills/acme-docker/LICENSE", Change: build.Create},
 		{Path: "plugins/tool/acme-git/.claude-plugin/plugin.json", Change: build.Update},
 		{Path: "plugins/tool/acme-git/agents/acme-git-reviewer.toml", Change: build.Update},
 		{Path: "plugins/tool/acme-git/agents/old-reviewer.toml", Change: build.Remove},
+		{Path: "plugins/tool/acme-git/skills/acme-git/LICENSE", Change: build.Create},
 		{Path: "plugins/workflow/acme-release/.claude-plugin/plugin.json", Change: build.Update},
+		{Path: "plugins/workflow/acme-release/skills/acme-release/LICENSE", Change: build.Create},
 		{Path: "plugins/writing/acme-prose/.claude-plugin/plugin.json", Change: build.Update},
 		{Path: "plugins/writing/acme-prose/agents/acme-prose-reviewer.toml", Change: build.Create},
+		{Path: "plugins/writing/acme-prose/skills/acme-prose/LICENSE", Change: build.Create},
 	}
 	// setup gives the build a docs/ it cannot write to: the writes go in
 	// path order, so the two before docs/catalogue.md are made.

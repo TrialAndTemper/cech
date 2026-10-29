@@ -23,6 +23,10 @@ import (
 // DataFile describes the catalogue as a whole.
 const DataFile = "data/marketplace.toml"
 
+// LicenseFile is the marketplace's licence, which the build copies into
+// each skill folder.
+const LicenseFile = "LICENSE"
+
 // Data is the content of DataFile, whose keys and rules ADR 17 item 7
 // sets.
 type Data struct {
@@ -110,6 +114,8 @@ func IsPreRelease(v string) bool {
 // Marketplace is the sources of one marketplace.
 type Marketplace struct {
 	Data Data
+	// License is the content of LicenseFile, or nil without one.
+	License []byte
 	// Plugins are sorted by category, then name.
 	Plugins []Plugin
 }
@@ -146,6 +152,12 @@ func (p Plugin) ManifestPath() string {
 // SkillPath is the path of the plugin's SKILL.md.
 func (p Plugin) SkillPath() string {
 	return path.Join(p.Dir(), "skills", p.Name, "SKILL.md")
+}
+
+// LicensePath is the path of the copy of the marketplace's licence in
+// the plugin's skill folder.
+func (p Plugin) LicensePath() string {
+	return path.Join(p.Dir(), "skills", p.Name, LicenseFile)
 }
 
 // Agent is a reviewer agent written for Claude Code, in agents/<File>.md.
@@ -256,6 +268,9 @@ func Load(fsys fs.FS) (*Marketplace, error) {
 	} else {
 		m.Data = data
 	}
+	if m.License, err = loadLicense(fsys); err != nil {
+		errs = append(errs, fmt.Errorf("%s: %w", LicenseFile, err))
+	}
 	categories, err := subdirs(fsys, "plugins")
 	if err != nil {
 		errs = append(errs, err)
@@ -316,6 +331,20 @@ func loadData(fsys fs.FS) (Data, error) {
 		return d, err
 	}
 	return d, d.checkTerms(fsys)
+}
+
+// loadLicense reads LicenseFile, or returns nil when there is none.
+func loadLicense(fsys fs.FS) ([]byte, error) {
+	info, err := fs.Stat(fsys, LicenseFile)
+	switch {
+	case errors.Is(err, fs.ErrNotExist):
+		return nil, nil
+	case err != nil:
+		return nil, ReadError(err)
+	case !info.Mode().IsRegular():
+		return nil, errors.New("not a file")
+	}
+	return readFile(fsys, LicenseFile)
 }
 
 // check applies the rules of ADR 17 item 7 that need no other file.
