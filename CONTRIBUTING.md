@@ -70,6 +70,9 @@ CI runs `mise run check` on every pull request and every push to `main`, on Linu
 A new gate goes into `check` in `mise.toml`; the workflow needs no change.
 A pull request merges only when CI passes.
 
+A test that fails only sometimes is not fixed by a green rerun: open an issue for it, then fix it, or skip it with a reason that names the issue.
+A skipped test of a gate script leaves a way for that gate to pass when it should fail ([ADR 10](docs/adr/0010-gates-and-ci.md) item 5), so fix it before the next change to that gate.
+
 ### The CLI's Go gates
 
 The `cech` CLI is a Go module in `cli/` ([ADR 14](docs/adr/0014-the-cech-cli.md)).
