@@ -1,4 +1,4 @@
-# 13. Markdown source format
+# 7. Markdown source format
 
 - Status: accepted
 - Date: 2026-10-19
@@ -10,7 +10,7 @@ People review changes as raw source in diffs, often on a phone.
 The layout of the source decides how readable those diffs are and how much of a paragraph a small edit marks as changed.
 
 Checked on 2026-10-19 (rumdl 0.3.0, MIT licence): rumdl, a Markdown linter based on markdownlint's rules, checks and rewrites Markdown to one sentence per line.
-Applied to ADRs 1–12, it changed no rendered output.
+Applied to the twelve ADRs then written, it changed no rendered output.
 It leaves YAML frontmatter alone and does not split after "e.g.".
 Block disable comments and an exclude list in its configuration exempt parts of files or whole files.
 It is still at 0.x, so a new release may format files differently.
@@ -20,20 +20,20 @@ It is still at 0.x, so a new release may format files differently.
 1. **Scope.**
    The rule covers the body of every tracked Markdown file: docs, ADRs, the README and contributing guides, `SKILL.md` files and their references, and eval prompts.
    YAML frontmatter is outside it.
-   Generated Markdown follows it too ([ADR 9](0009-generated-files.md)).
+   Generated Markdown follows it too ([ADR 18](0018-generated-files.md)).
 2. **One sentence per line.**
    A sentence is never broken across lines.
    A sentence that is too long is shortened by rewriting it, not by wrapping it.
 3. **rumdl checks and fixes it.**
    `.rumdl.toml` at the repository root turns on sentence-per-line reflow and removes the line-length limit; every other setting is rumdl's default.
-   `rumdl check` is the Markdown lint gate of [ADR 10](0010-gates-and-ci.md), and `rumdl fmt` fixes files.
+   `rumdl check` is the Markdown lint gate of [ADR 4](0004-gates-and-ci.md), and `rumdl fmt` fixes files.
    Its version is pinned with the other check tools.
 4. **Upgrades are their own commit.**
    An upgrade and the reformat it causes land together in one commit.
 5. **Exceptions.**
    Text copied verbatim from upstream keeps its own layout: a whole file goes in the exclude list of `.rumdl.toml`, a part of a file sits between block disable comments, and each exception gives its reason next to it.
 6. **Commit messages are separate.**
-   Their bodies stay wrapped at 72 characters, as [ADR 11](0011-change-record.md) says; this rule does not change that.
+   Their bodies stay wrapped at 72 characters, as [ADR 6](0006-change-record.md) says; this rule does not change that.
 
 ## Consequences
 

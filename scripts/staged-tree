@@ -1,7 +1,7 @@
 #!/bin/sh
 # Run a command in a checkout of the index, so that a check sees the
 # files as they are staged, not as they are on disk. The pre-commit task
-# runs its lint and format checks through it (ADR 10). git commands run
+# runs its lint and format checks through it (ADR 4). git commands run
 # by the command see the repository's index, with the checkout as the
 # work tree.
 #

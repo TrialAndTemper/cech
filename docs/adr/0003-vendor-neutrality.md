@@ -1,4 +1,4 @@
-# 4. Vendor neutrality
+# 3. Vendor neutrality
 
 - Status: accepted
 - Date: 2026-10-16
@@ -6,7 +6,7 @@
 
 ## Context
 
-Organisations extend CECH ([ADR 3](0003-a-marketplace-you-extend-not-fork.md)).
+Organisations extend CECH ([ADR 8](0008-a-marketplace-you-extend-not-fork.md)).
 If the core holds one private organisation's names, hosts or products, it is no longer neutral and may leak private details.
 A leak in public git history is hard to undo.
 

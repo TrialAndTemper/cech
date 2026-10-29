@@ -1,4 +1,4 @@
-# mise is CECH's task runner (ADR 10): `mise run check` runs every gate,
+# mise is CECH's task runner (ADR 4): `mise run check` runs every gate,
 # and `mise run <gate>` runs one. Run `mise trust` and `mise install`
 # once per clone.
 min_version = "2026.10.3"
@@ -38,19 +38,19 @@ zizmor = "1.30.1"
 [task_config]
 shell = "sh -o errexit -c"
 
-# Entry point (ADR 10): every gate.
+# Entry point (ADR 4): every gate.
 
 [tasks.check]
 description = "Every gate"
 depends = ["commits", "terms", "lint", "format:check", "docs:check", "test"]
 
-# Gates (ADR 10): one task per gate, with its subtasks.
+# Gates (ADR 4): one task per gate, with its subtasks.
 # lint, format:check and test run every task that matches their
 # pattern, hidden ones too, so a task named like lint:x joins lint, and
 # through it check; the pre-commit task lists its checks by hand.
 
 [tasks.commits]
-description = "Commit message gate (ADR 11); mise run commits -- --help lists its modes"
+description = "Commit message gate (ADR 6); mise run commits -- --help lists its modes"
 run = "scripts/check-commits"
 
 [tasks."docs:check"]
@@ -97,7 +97,7 @@ description = "shellcheck, and the rules for each kind of shell file"
 run = "scripts/check-shell lint"
 
 [tasks.terms]
-description = "Term check (ADR 4); mise run terms -- --help lists its modes"
+description = "Term check (ADR 3); mise run terms -- --help lists its modes"
 run = "scripts/check-terms"
 
 [tasks.test]
@@ -116,7 +116,7 @@ run = "scripts/check-go test"
 # govulncheck asks the Go vulnerability database, so it needs the
 # network, and a new report can fail a branch that has not changed. So
 # check leaves it out, and .github/workflows/vuln.yml runs it instead,
-# without blocking a merge (ADR 22 item 3).
+# without blocking a merge (ADR 16 item 3).
 [tasks.vuln]
 description = "Known vulnerabilities in the CLI and the Go it is built with"
 run = "scripts/check-go vuln"
@@ -140,7 +140,7 @@ run = "rumdl fmt ."
 description = "Let shfmt rewrite the shell code"
 run = "scripts/check-shell fix"
 
-# Hooks (ADR 10): scripts/hooks/ runs these tasks.
+# Hooks (ADR 4): scripts/hooks/ runs these tasks.
 
 [tasks.commit-msg]
 description = "commit-msg hook: the term check and the commit message gate on a message"

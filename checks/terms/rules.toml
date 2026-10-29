@@ -1,4 +1,4 @@
-# Term check, tier 1: generic rules (ADR 4).
+# Term check, tier 1: generic rules (ADR 3).
 # These name no private organisation. They flag shapes that suggest
 # content copied from a private environment. gitleaks' own secret rules
 # run alongside them.

@@ -2,7 +2,7 @@
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
 # Tests of scripts/check-go, the script behind the CLI's Go gates; the
-# CLI itself is tested by go test in cli/. As ADR 10 asks of gate tests,
+# CLI itself is tested by go test in cli/. As ADR 4 asks of gate tests,
 # each case guards a way the gates could pass when they should fail,
 # where review would likely miss it, and says which. The rest of the script was
 # checked by hand when it was added.

@@ -22,7 +22,7 @@ A skill based on a person's unpublished work ships only once they agree; credit 
 ## Set up
 
 You need git, and [mise](https://mise.jdx.dev/getting-started.html) 2026.10.3 or later.
-mise installs the exact tool versions pinned in `mise.toml` and runs the gates as tasks ([ADR 10](docs/adr/0010-gates-and-ci.md)).
+mise installs the exact tool versions pinned in `mise.toml` and runs the gates as tasks ([ADR 4](docs/adr/0004-gates-and-ci.md)).
 On Windows, use Git Bash: the tasks run with `sh`.
 
 In a new clone, trust the repository's `mise.toml` and install the tools:
@@ -72,11 +72,11 @@ A new gate goes into `check` in `mise.toml`; the workflow needs no change.
 A pull request merges only when CI passes.
 
 A test that fails only sometimes is not fixed by a green rerun: open an issue for it, then fix it, or skip it with a reason that names the issue.
-A skipped test of a gate script leaves a way for that gate to pass when it should fail ([ADR 10](docs/adr/0010-gates-and-ci.md) item 5), so fix it before the next change to that gate.
+A skipped test of a gate script leaves a way for that gate to pass when it should fail ([ADR 4](docs/adr/0004-gates-and-ci.md) item 5), so fix it before the next change to that gate.
 
 ### The CLI's Go gates
 
-The `cech` CLI is a Go module in `cli/` ([ADR 14](docs/adr/0014-the-cech-cli.md)).
+The `cech` CLI is a Go module in `cli/` ([ADR 15](docs/adr/0015-the-cech-cli.md)).
 mise installs the pinned Go, golangci-lint and govulncheck, and `scripts/check-go` runs them in `cli/` with the pinned Go only:
 
 | Task | Runs |
@@ -96,7 +96,7 @@ mise -C cli exec -- go test ./internal/app -update
 `check` leaves out `vuln`, since a new report in its database can fail a branch that has not changed.
 CI runs it on pull requests that touch the CLI or its tools, without blocking them, and daily on `main`, where a failure opens an issue.
 
-A new Go dependency needs a change to [ADR 22](docs/adr/0022-building-the-cech-cli.md) in the same pull request.
+A new Go dependency needs a change to [ADR 16](docs/adr/0016-building-the-cech-cli.md) in the same pull request.
 
 ### Optional git hooks
 
@@ -111,12 +111,12 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
 
 ## Writing
 
-- Markdown has one sentence per line, never wrapped; shorten a long sentence rather than break it ([ADR 13](docs/adr/0013-markdown-source-format.md)).
+- Markdown has one sentence per line, never wrapped; shorten a long sentence rather than break it ([ADR 7](docs/adr/0007-markdown-source-format.md)).
   `mise run format:fix` reflows it.
-- Refer to Claude Code and Codex as harnesses, the programs that run an agent ([ADR 3](docs/adr/0003-a-marketplace-you-extend-not-fork.md)).
+- Refer to Claude Code and Codex as harnesses, the programs that run an agent ([ADR 8](docs/adr/0008-a-marketplace-you-extend-not-fork.md)).
   "Tool" means something else: a tool pinned in `mise.toml`, the `tool` plugin category, a tool an agent calls, or a command-line program.
 - Shell scripts are POSIX sh that runs under dash, macOS sh and Git Bash, and pass shellcheck and shfmt.
-  A change to a script comes with a test in `test/` for each way it could let a gate pass when it should fail, where review would likely miss it, such as after a tool bump, on another platform or on the staged tree; a comment on each case names the way it guards ([ADR 10](docs/adr/0010-gates-and-ci.md) item 5).
+  A change to a script comes with a test in `test/` for each way it could let a gate pass when it should fail, where review would likely miss it, such as after a tool bump, on another platform or on the staged tree; a comment on each case names the way it guards ([ADR 4](docs/adr/0004-gates-and-ci.md) item 5).
   Check any other way by hand, and say so in the pull request.
 - Keep an ADR under 800 words of prose outside code blocks ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 6).
 - Until the first plugin merges, an accepted ADR is edited in place, and the commit says why.
@@ -124,7 +124,7 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
 
 ## Commits
 
-Commits are the record of the project ([ADR 11](docs/adr/0011-change-record.md)): reviewers read each one, and the reason for a change belongs in its message, not only in the pull request.
+Commits are the record of the project ([ADR 6](docs/adr/0006-change-record.md)): reviewers read each one, and the reason for a change belongs in its message, not only in the pull request.
 
 - Make each commit one logical change that leaves the gates passing.
 - Write the header in the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) form `type(scope): summary`, at most 72 characters, imperative, with no final full stop.
@@ -205,7 +205,7 @@ A vulnerability report itself goes through [SECURITY.md](SECURITY.md), not an is
 
 ## Keep CECH vendor-neutral
 
-CECH holds nothing specific to a private organisation: no internal names, hosts, emails, products, ids or quotes in files, commit messages, or branch and tag names ([ADR 4](docs/adr/0004-vendor-neutrality.md)).
+CECH holds nothing specific to a private organisation: no internal names, hosts, emails, products, ids or quotes in files, commit messages, or branch and tag names ([ADR 3](docs/adr/0003-vendor-neutrality.md)).
 Examples use invented data such as `example.com`, `*.example`, `*.test` and the company `acme`.
 
 The term check enforces this with rules in `checks/terms/`.

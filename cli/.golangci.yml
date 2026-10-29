@@ -1,4 +1,4 @@
-# golangci-lint settings for the cech CLI (ADR 22), read through
+# golangci-lint settings for the cech CLI (ADR 16), read through
 # scripts/check-go by `mise run lint`, `mise run format:check` and
 # `mise run format:fix`. Each linter beyond the standard set is listed
 # with what it catches.
@@ -22,7 +22,7 @@ linters:
     - errorlint
     # A switch on an enum that misses one of its values.
     - exhaustive
-    # Output that bypasses the writers ADR 14 routes it through.
+    # Output that bypasses the writers ADR 15 routes it through.
     - forbidigo
     # Common bugs and simplifications beyond vet.
     - gocritic

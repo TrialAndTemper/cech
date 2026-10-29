@@ -1,4 +1,4 @@
-# 14. The cech CLI
+# 15. The cech CLI
 
 - Status: accepted
 - Date: 2026-10-20
@@ -6,9 +6,9 @@
 
 ## Context
 
-Earlier ADRs promise a `cech` command: `cech build` and its `--check` ([ADR 9](0009-generated-files.md)), the validator ([ADR 6](0006-claude-code-and-codex-from-one-source.md)), and the gates that run them ([ADR 10](0010-gates-and-ci.md)).
+Earlier ADRs promise a `cech` command: `cech build` and its `--check` ([ADR 18](0018-generated-files.md)), the validator ([ADR 10](0010-claude-code-and-codex-from-one-source.md)), and the gates that run them ([ADR 4](0004-gates-and-ci.md)).
 Later commands will edit the settings of Claude Code and Codex in people's repositories and home directories, where a careless edit loses someone's settings.
-Claude Code and Codex are harnesses, as [ADR 3](0003-a-marketplace-you-extend-not-fork.md) defines them.
+Claude Code and Codex are harnesses, as [ADR 8](0008-a-marketplace-you-extend-not-fork.md) defines them.
 Scripts and CI read a command's output and exit status, so both become a contract as soon as someone depends on them.
 
 Checked on 2026-10-27 with Go 1.27.3:
@@ -24,7 +24,7 @@ Checked on 2026-10-27 with Go 1.27.3:
    The repository root has no `go.mod`, so Go files in plugins stay out of the module, its tests and its gates.
    The module path matches the repository's path, so `go install github.com/TrialAndTemper/cech/cli/cmd/cech@<version>` works.
 2. **Compose the harnesses.**
-   Where Claude Code or Codex has a command for a job, `cech` runs it rather than changing the harness's state itself ([ADR 5](0005-native-tool-features-first.md)).
+   Where Claude Code or Codex has a command for a job, `cech` runs it rather than changing the harness's state itself ([ADR 9](0009-native-harness-features-first.md)).
    It edits only settings the harnesses document.
 3. **Edits preserve other bytes.**
    An edit to a file `cech` does not own changes only the keys it manages and leaves every other byte as it was.
@@ -45,7 +45,7 @@ Checked on 2026-10-27 with Go 1.27.3:
    - A command never reports success for a check it could not run, and after a partial success it says what it skipped.
 6. **Harness quirks stay in one place.**
    Code that knows one harness's behaviour lives in `internal/harness/claude` or `internal/harness/codex`.
-   Each workaround names its entry in the harness data file ([ADR 5](0005-native-tool-features-first.md)), so it can be deleted when the harness closes the gap.
+   Each workaround names its entry in the harness data file ([ADR 9](0009-native-harness-features-first.md)), so it can be deleted when the harness closes the gap.
    That file, at `internal/harnessdata/harnesses.toml`, and the code that reads it live apart from both packages, since they belong to no one harness.
 7. **Works without mise.**
    A user needs neither mise nor Go to run the binary, and it never calls mise.

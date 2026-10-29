@@ -3,7 +3,7 @@
 # file first, since sourcing resets PROG and SCRATCH, then sets PROG to
 # the name that die's messages start with. make_scratch owns the EXIT,
 # INT and TERM traps.
-# POSIX sh (ADR 10): it must run under dash, macOS sh and Git Bash.
+# POSIX sh (ADR 4): it must run under dash, macOS sh and Git Bash.
 
 PROG=''
 # Not TMP, TEMP or TMPDIR: Windows exports TMP and TEMP, and macOS

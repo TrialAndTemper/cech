@@ -1,4 +1,4 @@
-// Package version tells which version of cech is running (ADR 22).
+// Package version tells which version of cech is running (ADR 16).
 package version
 
 import (

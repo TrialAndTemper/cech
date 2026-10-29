@@ -1,6 +1,6 @@
 #!/bin/sh
-# Term check (ADR 4): the terms gate of ADR 10, run as `mise run terms`.
-# POSIX sh (ADR 10): it must run under dash, macOS sh and Git Bash.
+# Term check (ADR 3): the terms gate of ADR 4, run as `mise run terms`.
+# POSIX sh (ADR 4): it must run under dash, macOS sh and Git Bash.
 #
 # Usage: mise run terms -- [--staged | --message FILE | --range RANGE | --all]
 #

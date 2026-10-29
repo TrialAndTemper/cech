@@ -1,8 +1,8 @@
-# govulncheck (ADR 22 item 3), outside the merge gates: its database
+# govulncheck (ADR 16 item 3), outside the merge gates: its database
 # changes without any change here, so a new report must not block every
 # pull request. It reports on pull requests that touch the CLI or its
 # tools, and runs on main daily and after each such push; a failure there
-# opens an issue, or comments on the open one (ADR 10 item 7).
+# opens an issue, or comments on the open one (ADR 4 item 7).
 name: vuln
 
 on:

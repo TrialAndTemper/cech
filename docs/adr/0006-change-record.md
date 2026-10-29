@@ -1,4 +1,4 @@
-# 11. Change record
+# 6. Change record
 
 - Status: accepted
 - Date: 2026-10-17
@@ -21,7 +21,7 @@ Release notes (a later ADR on the changelog) need commits they can sort by kind.
    Anything that must last (the reason for a change, evidence, rejected options) goes in a commit message or an ADR.
    The pull request description summarises and links; it is not the only place for any of that.
 3. **Clean before merge.**
-   Each commit is one logical change and should leave the tree passing the gates ([ADR 10](0010-gates-and-ci.md)).
+   Each commit is one logical change and should leave the tree passing the gates ([ADR 4](0004-gates-and-ci.md)).
    CI runs them on the pull request as a whole, not on each commit, so this is guidance.
    Review fixes are pushed as `git commit --fixup` commits and folded in with `git rebase --autosquash` before merge, after rebasing on `main`.
    Force pushes to one's own pull request branch are expected.
@@ -37,7 +37,7 @@ Release notes (a later ADR on the changelog) need commits they can sort by kind.
 5. **Trailers.**
    `Signed-off-by:` on every commit ([ADR 2](0002-licence-and-contributions.md)).
    `Co-authored-by:` for each other author, human or tool.
-   No other content limits beyond [ADR 4](0004-vendor-neutrality.md).
+   No other content limits beyond [ADR 3](0003-vendor-neutrality.md).
 6. **Messages stand alone.**
    A link in a commit message points only to a public, durable page: a CECH issue or pull request, a spec, an upstream commit.
 7. **The commit message gate** checks every commit in a pull request for the item 4 header, a blank line after it, and a `Signed-off-by:` trailer that carries the commit author's email, since the DCO is the author's statement.

@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// TestFile holds the committed harnesses.toml to ADR 5 item 5, so the
+// TestFile holds the committed harnesses.toml to ADR 9 item 5, so the
 // merge gate fails on a wrong entry. The file is built in, so go test's
 // cache sees a change to it.
 func TestFile(t *testing.T) {
@@ -37,7 +37,7 @@ harness = "codex"
 kind = "gap"
 summary = "s"
 workaround = "w"
-decision = "ADR 6 item 3"
+decision = "ADR 10 item 3"
 probe = "p"
 expect = "e"
 verified = { version = "0.165.0", date = 2026-10-29 }
@@ -123,8 +123,8 @@ func TestParseRejects(t *testing.T) {
 		{"summary missing", strings.Replace(gap, "summary = \"s\"\n", "", 1), "codex-x: summary is missing"},
 		{"probe empty", strings.Replace(gap, `probe = "p"`, `probe = ""`, 1), "codex-x: probe is missing"},
 		{"expect blank", strings.Replace(gap, `expect = "e"`, `expect = "\n"`, 1), "codex-x: expect is missing"},
-		{"decision in another form", strings.Replace(gap, `"ADR 6 item 3"`, `"ADR 6"`, 1), `codex-x: decision is "ADR 6", not an ADR item as ADR N item M`},
-		{"decision empty", strings.Replace(gap, `"ADR 6 item 3"`, `""`, 1), `codex-x: decision is "", not an ADR item as ADR N item M`},
+		{"decision in another form", strings.Replace(gap, `"ADR 10 item 3"`, `"ADR 10"`, 1), `codex-x: decision is "ADR 10", not an ADR item as ADR N item M`},
+		{"decision empty", strings.Replace(gap, `"ADR 10 item 3"`, `""`, 1), `codex-x: decision is "", not an ADR item as ADR N item M`},
 		{"verified missing", strings.Replace(behaviour, "verified = { version = \"2.1.312\", date = 2026-10-29 }\n", "", 1), "claude-code-y: verified.version is missing\nclaude-code-y: verified.date is missing"},
 		{"verified version with a v", strings.Replace(gap, `version = "0.165.0", date`, `version = "v0.165.0", date`, 1), `codex-x: verified.version is "v0.165.0", not a version as X.Y.Z`},
 		{"verified version with a leading zero", strings.Replace(gap, `version = "0.165.0", date`, `version = "0.0165.0", date`, 1), `codex-x: verified.version is "0.0165.0", not a version as X.Y.Z`},

@@ -1,4 +1,4 @@
-# Link check settings for `mise run docs:check` (ADR 10). lychee reads
+# Link check settings for `mise run docs:check` (ADR 4). lychee reads
 # this file from the repository root and skips git-ignored files.
 
 # Keep results for a day in .lycheecache, which git ignores, so a second
