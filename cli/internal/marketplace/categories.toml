@@ -1,0 +1,38 @@
+# CECH's categories, the closed list of ADR 12 item 1, which the cech CLI
+# builds in. Adding, removing or merging one follows that item.
+
+[[categories]]
+name = "practice"
+holds = "Tool-neutral engineering rules (testing, coding, config, logging, dependencies, containers, infrastructure as code)"
+
+[[categories]]
+name = "writing"
+holds = "Prose, docs, decision records, changelogs, commit messages"
+
+[[categories]]
+name = "agent"
+holds = "How agents work in a repository (instruction files, task records, estimates, change specs)"
+
+[[categories]]
+name = "workflow"
+holds = "Multi-step flows that move a change through stages"
+
+[[categories]]
+name = "lang"
+holds = "Languages and runtimes"
+
+[[categories]]
+name = "framework"
+holds = "Libraries and frameworks"
+
+[[categories]]
+name = "tool"
+holds = "One command-line tool each"
+
+[[categories]]
+name = "platform"
+holds = "Hosted services: forges, trackers, clouds, observability"
+
+[[categories]]
+name = "meta"
+holds = "Authoring and testing CECH skills"
