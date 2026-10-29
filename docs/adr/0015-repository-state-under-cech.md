@@ -33,7 +33,9 @@ The `cech` CLI is written in Go ([ADR 14](0014-the-cech-cli.md)), whose standard
    Each marketplace's plugins keep their files in the folder named after its namespace: `cech` for CECH, and for an extension the namespace of [ADR 8](0008-categories-and-names.md) item 4.
    So CECH's `cech-prose` keeps `.cech/cech/cech-prose.toml`, and the `acme` extension's `acme-tracker` keeps `.cech/acme/acme-tracker.toml`.
    An extension writes nothing outside its folder.
-4. `cech check` fails on, and names, any file under `.cech/` other than `config.toml`, `roles.toml` and the files of the plugins the project enables, such as one left behind by a plugin the project no longer enables.
+4. `cech check` fails on, and names, any file directly under `.cech/` except `config.toml` and `roles.toml`.
+   In the folder of each namespace whose marketplace `.cech/config.toml` lists, it also fails on any file except those of the plugins the project enables, such as one left behind by a plugin it no longer enables.
+   It leaves the folders of other namespaces alone.
 5. **TOML.**
    Files in `.cech/` are TOML, like those in `data/`.
    Files whose format a harness, a tool or a spec owns keep it: skill frontmatter, plugin manifests and catalogues, harness settings, workflows, and the eval cases of `claude plugin eval`.

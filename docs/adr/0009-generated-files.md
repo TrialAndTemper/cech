@@ -28,6 +28,7 @@ Checked again on 2026-10-28 (Claude Code 2.1.312): it also fails when `plugin.js
    - in an extension, the `marketplace` of each dependency on a CECH plugin, the versioned name of the CECH release the extension builds on;
    - the marketplace catalogue `.claude-plugin/marketplace.json`, named after the namespace (plus the version in a release build), with each plugin's category taken from its folder ([ADR 8](0008-categories-and-names.md));
    - Codex TOML for reviewer agents ([ADR 6](0006-claude-code-and-codex-from-one-source.md));
+   - a copy of the root `LICENSE` in each skill folder, byte for byte and with no generated-file line (item 4), so a skill copied without its plugin keeps its licence ([ADR 2](0002-licence-and-contributions.md)); a marketplace with no root `LICENSE` gets none;
    - the code owners file;
    - the catalogue page in `docs/`.
 3. One generator writes all of them: `cech build`.

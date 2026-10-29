@@ -3,9 +3,10 @@ Copyright (c) 2026 Michał Bożek and CECH contributors
 
 CECH is licensed under the MIT License; see LICENSE.
 
-This file lists the third-party material in the repository and its
-notices (ADR 2, docs/adr/0002-licence-and-contributions.md). Material
-listed here keeps its own licence.
+This file lists the third-party material outside skill folders and its
+notices (ADR 2, docs/adr/0002-licence-and-contributions.md); a skill
+lists its own in a NOTICE file in its folder. Material listed here
+keeps its own licence.
 
 CODE_OF_CONDUCT.md
   Adapted from the Contributor Covenant, version 3.0,
