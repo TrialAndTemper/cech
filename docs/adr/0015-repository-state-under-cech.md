@@ -45,7 +45,7 @@ The `cech` CLI is written in Go ([ADR 14](0014-the-cech-cli.md)), whose standard
 
 - A reviewer finds a project's CECH files in one folder, and code owners can be set for it and for each namespace.
 - Upgrading or dropping a plugin changes no other plugin's file, and `cech check` fails until a project that stops enabling a plugin removes that plugin's file.
-- The CLI's TOML parser, already needed for Codex settings, also reads `.cech/`; it is code of its own or a dependency added to the list in [ADR 14](0014-the-cech-cli.md) item 8.
+- The CLI's TOML parser, already needed for Codex settings, also reads `.cech/`.
 - Everyone on a project needs a `cech` at least as new as the one that last wrote its config.
 
 ## Options considered

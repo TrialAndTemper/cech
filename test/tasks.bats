@@ -8,7 +8,7 @@
 # which checks the staged tree. The other ways, such as a task whose
 # command changes in mise.toml, show in the diff and were checked by
 # hand when their cases were dropped. The vuln task never blocks a merge
-# (ADR 14 item 10), so it has no case.
+# (ADR 22 item 3), so it has no case.
 #
 # Requires: mise and bats (run it with `mise run test`), git >= 2.28
 # (init -b), and what the gates require.

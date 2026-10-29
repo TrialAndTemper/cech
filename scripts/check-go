@@ -1,5 +1,5 @@
 #!/bin/sh
-# Go gates for the cech CLI in cli/ (ADR 14): lint, format check, tests
+# Go gates for the cech CLI in cli/ (ADR 22): lint, format check, tests
 # and the vulnerability check of ADR 10, run as `mise run lint`,
 # `mise run format:check`, `mise run format:fix`, `mise run test` and
 # `mise run vuln`.

@@ -12,15 +12,11 @@ Git hooks can be skipped and do not run on edits made in the GitHub web interfac
 
 [GitHub docs](https://docs.github.com/en/billing/managing-billing-for-your-products/managing-billing-for-github-actions/about-billing-for-github-actions), read on 2026-10-17: standard GitHub-hosted runners are free in public repositories; private repositories on the Free plan get 2,000 minutes a month; per-minute prices are higher for Windows and macOS runners than for Linux.
 
-Check tools give different results in different versions, so contributors and CI need the same versions.
 A gate that breaks on `main` blocks every merge, including the merge that would fix it.
 
 mise installs the tools pinned in `mise.toml` and runs its tasks; probed with mise 2026.10.3 on 2026-10-19:
 
 - `mise run` puts each pinned tool on `PATH` without shell activation;
-- `mise lock` records each tool's download and checksum per platform; bats has no Windows build;
-- with `locked` set, an install fails on an unlocked version or a checksum mismatch;
-- `minimum_release_age` applies when mise resolves a version, not to an exact version given by hand;
 - mise runs a `mise.toml` only after `mise trust` in each clone, and with `paranoid` on asks again after each change;
 - a tool's `os` option limits it to listed systems, which `mise lock` follows;
 - on Windows a task runs with cmd unless `run_windows` gives another command.
@@ -67,17 +63,12 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
    Each case added since 2026-10-26 says in a comment which way it guards.
    Any other way is checked by hand when the gate is added or changed, and the pull request records that check.
    A gate that fails when it should pass shows itself the first time it runs on that input, so that case needs no test.
-6. **Tool versions are pinned exactly** in the `[tools]` table of `mise.toml`, with downloads and checksums in `mise.lock`.
-   CI installs an exact mise version, then the tools with `locked` set; `mise.toml` sets mise's `min_version`.
-   A tool that mise builds from source with its `go` backend, such as govulncheck, has no download to record: `mise.lock` holds only its version, and the Go checksum database checks the source that `go install` fetches.
-   Pins are added and bumped by letting mise resolve them under a week's `minimum_release_age`; review checks the release date of a version given by hand.
-   The table holds only tools that build or check CECH; the harness data file ([ADR 5](0005-native-tool-features-first.md) item 3) records the harness behaviours CECH relies on.
-7. **Workflow safety.**
+6. **Workflow safety.**
    Third-party actions are pinned by full commit SHA.
    Workflows default to `permissions: contents: read`, widened per job only where needed.
    Pull requests from forks run on `pull_request`, never `pull_request_target`, and never receive secrets.
    Jobs that need secrets (private terms, evals) run only on branches in the repository.
-8. **Scheduled jobs are not merge gates.**
+7. **Scheduled jobs are not merge gates.**
    The probes of [ADR 5](0005-native-tool-features-first.md) run on a schedule, open an issue on failure, and never block a pull request.
 
 ## Consequences
@@ -92,5 +83,4 @@ A mutable action tag or a workflow that hands secrets to fork code can leak secr
 - **Hooks as the gate:** skipped with `--no-verify`, absent on web edits.
 - **A shell script as the entry point, with mise optional:** contributors without mise install each pinned tool by hand, and two ways to run the gates can drift apart.
 - **Another task runner (make, just):** it would still need a second tool to install the pins.
-- **Version ranges, with exact versions only in the lockfile:** a lock refresh could change a tool's version with no visible change to its pin.
 - **CI steps written straight into workflow files:** local runs drift from CI.
