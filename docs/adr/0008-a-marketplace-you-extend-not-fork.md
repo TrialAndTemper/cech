@@ -19,10 +19,9 @@ These ADRs call Claude Code and Codex harnesses: the programs that run an agent,
    An extension is another marketplace with the same layout.
    A project enables plugins from CECH and from any number of extensions.
    It commits only which plugins and versions it enables; the plugins are not copied into it.
-   A team may instead copy single skills into a project or a home directory with a skill installer, without `cech`; a later ADR on install paths says which skills allow it.
+   A team may instead copy single skills into a project or a home directory with a skill installer, without `cech`.
 3. **Skills compose through roles.**
    A skill asks for "the issue tracker", and the project binds that role to a skill from any marketplace.
-   A later ADR on roles defines this.
 4. **Extensions reuse CECH's tooling** by installing the `cech` CLI, not by copying scripts.
    `cech validate` wraps `claude plugin validate` and adds CECH rules.
    `cech eval` wraps `claude plugin eval` and adds runs on Codex, which has no eval command of its own (checked on 2026-10-16, Codex CLI 0.162.1).

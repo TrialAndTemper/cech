@@ -44,7 +44,7 @@ Plugins also come from marketplaces that follow no CECH rule, and a skill instal
    Names use `a-z`, `0-9` and `-`, start with a letter, do not end with `-`, contain no `--`, and have at most 64 characters.
    Such names are valid in both harnesses and in Agent Skills.
 4. Each extension prefixes its plugin names with `<namespace>-` (`acme-tracker`).
-   The namespace is the name the extension's catalogue carries outside a release tag; each release adds its version to it, as CECH's do (item 5).
+   The namespace is the name the catalogue carries outside a release tag; each release adds its version to it, as CECH's releases do (item 5).
    It is not `cech` and does not start with `cech-` (item 5), so its plugin names cannot equal a CECH name.
    CECH keeps no registry of namespaces, so clashes between extensions fall to item 7.
 5. CECH's namespace is `cech`, and marketplace names `cech` and `cech-*` are reserved for CECH.
@@ -55,7 +55,8 @@ Plugins also come from marketplaces that follow no CECH rule, and a skill instal
 
 ## Consequences
 
-- No CECH name can equal a name without the `cech-` prefix, whether it comes from an extension, another marketplace or a skill installed without its plugin; a third party that copies the `cech-` prefix still clashes, and item 7 catches that only between enabled plugins.
+- No CECH name can equal a name without the `cech-` prefix, whether it comes from an extension, another marketplace or a skill installed without its plugin.
+  A third party that copies the `cech-` prefix still clashes, and item 7 catches that only between enabled plugins.
 - Longer names and invocations (`cech-prose:cech-prose` in Claude Code, `$cech-prose` in Codex), and keys repeat the namespace (`cech-prose@cech-0-1-0`).
 - Moving a plugin to another category does not rename it.
 
