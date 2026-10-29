@@ -6,7 +6,7 @@
 
 ## Context
 
-A project that uses CECH commits facts for the `cech` CLI and for plugins: which marketplaces and plugins it enables, later which skill fills each role ([ADR 3](0003-a-marketplace-you-extend-not-fork.md)), and facts a skill reads, such as a tracker's project key.
+A project that uses CECH commits facts for the `cech` CLI and for plugins: which marketplaces and plugins it enables, which skill fills each role ([ADR 3](0003-a-marketplace-you-extend-not-fork.md)), and facts a skill reads, such as a tracker's project key.
 Extensions add plugins of their own, and their files must not clash with CECH's.
 Files scattered over a repository's root are hard to find and can clash with other tools' files.
 When several owners write one shared file, an upgrade of one can rewrite the others' parts, and their changes conflict in merges.
@@ -24,7 +24,7 @@ The `cech` CLI is written in Go ([ADR 14](0014-the-cech-cli.md)), whose standard
    Apart from what the project enables ([ADR 3](0003-a-marketplace-you-extend-not-fork.md) item 2), it holds facts only, never a plugin's content.
    It holds no secrets, no values that differ between machines, and no caches; those stay outside the repository or in git-ignored paths outside `.cech/`.
 2. **One file per owner**, named after it:
-   - `.cech/config.toml` belongs to the `cech` CLI;
+   - `.cech/config.toml` belongs to the `cech` CLI, and so does `.cech/roles.toml`, which it generates from the config and the pinned marketplaces;
    - `.cech/<namespace>/<plugin>.toml` belongs to the plugin of that name, and holds the facts its skill reads.
 
    The owner defines a file's keys; a person or the owner's tooling edits it.
@@ -33,7 +33,7 @@ The `cech` CLI is written in Go ([ADR 14](0014-the-cech-cli.md)), whose standard
    Each marketplace's plugins keep their files in the folder named after its namespace: `cech` for CECH, and for an extension the namespace of [ADR 8](0008-categories-and-names.md) item 4.
    So CECH's `cech-prose` keeps `.cech/cech/cech-prose.toml`, and the `acme` extension's `acme-tracker` keeps `.cech/acme/acme-tracker.toml`.
    An extension writes nothing outside its folder.
-4. `cech check` fails on, and names, any file under `.cech/` other than `config.toml` and the files of the plugins the project enables, such as one left behind by a plugin the project no longer enables.
+4. `cech check` fails on, and names, any file under `.cech/` other than `config.toml`, `roles.toml` and the files of the plugins the project enables, such as one left behind by a plugin the project no longer enables.
 5. **TOML.**
    Files in `.cech/` are TOML, like those in `data/`.
    Files whose format a harness, a tool or a spec owns keep it: skill frontmatter, plugin manifests and catalogues, harness settings, workflows, and the eval cases of `claude plugin eval`.

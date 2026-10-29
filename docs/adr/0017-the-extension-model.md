@@ -58,6 +58,7 @@ The [docs on private marketplaces](https://code.claude.com/docs/en/plugins/host-
    | `owner` | yes | The catalogue's owner: a `name`, not empty, and optionally an `email` |
    | `team` | no | The catch-all code owners team, `@<org>/<team>` ([ADR 12](0012-attribution.md) item 4); with none, no code owners file is built |
    | `categories` | no; extensions only | Categories added to CECH's ([ADR 8](0008-categories-and-names.md) item 6): each a unique `name` that follows the plugin name rules and is not one of CECH's, and a `holds` text, not empty |
+   | `roles` | no | Roles the marketplace defines: each a unique `name` with the characters and length of plugin names that does not start with `cech-` and, in an extension, starts with `<namespace>-`; a `means` text of one line, not empty; and optionally `many`, a boolean, true when a project may bind several skills to the role |
    | `terms.rules`, `terms.names` | no; extensions only | Paths from the repository root to existing files inside it, in the formats of CECH's generic and vendor-name term rules; the term check skips these files |
 
    A `cech` key makes the file an extension's; its namespace is not `cech` and does not start with `cech-`.
