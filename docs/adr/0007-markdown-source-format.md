@@ -20,7 +20,7 @@ It is still at 0.x, so a new release may format files differently.
 1. **Scope.**
    The rule covers the body of every tracked Markdown file: docs, ADRs, the README and contributing guides, `SKILL.md` files and their references, and eval prompts.
    YAML frontmatter is outside it.
-   Generated Markdown follows it too ([ADR 18](0018-generated-files.md)).
+   Generated Markdown follows it too.
 2. **One sentence per line.**
    A sentence is never broken across lines.
    A sentence that is too long is shortened by rewriting it, not by wrapping it.
