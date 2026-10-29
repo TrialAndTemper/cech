@@ -18,7 +18,7 @@
 14. [Releases and versions](0014-releases-and-versions.md)
 15. [The cech CLI](0015-the-cech-cli.md)
 16. [Building the cech CLI](0016-building-the-cech-cli.md)
-17. [Repository state under .cech/](0017-repository-data-and-state.md)
+17. [Repository data and state](0017-repository-data-and-state.md)
 18. [Generated files](0018-generated-files.md)
 19. [Per-project plugin enablement](0019-per-project-plugin-enablement.md)
 20. [The extension model](0020-the-extension-model.md)
