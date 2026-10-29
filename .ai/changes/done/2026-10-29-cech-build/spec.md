@@ -1,5 +1,7 @@
 # cech build
 
+Implemented 2026-10-29; not maintained: the code and its tests are current.
+
 What `cech build` reads, what it writes, and how its flags behave.
 The ADRs behind it are ADR 13 item 4, ADR 14 items 3 and 5, ADR 15 items 4 and 5, ADR 17 item 7, ADR 18 and ADR 21 item 2.
 
