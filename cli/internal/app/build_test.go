@@ -277,7 +277,11 @@ func TestBuildCheckFindsDrift(t *testing.T) {
 			"update .claude-plugin/marketplace.json\nupdate .github/CODEOWNERS\nupdate docs/catalogue.md\n",
 		},
 		{
-			"namespace changed", replaceIn("data/marketplace.toml", `namespace = "acme"`, `namespace = "acme-corp"`),
+			"namespace changed", func(t *testing.T, dir string) {
+				replaceIn("data/marketplace.toml", `namespace = "acme"`, `namespace = "acme-corp"`)(t, dir)
+				replaceIn("data/marketplace.toml", `"acme-tracker"`, `"acme-corp-tracker"`)(t, dir)
+				replaceIn("data/marketplace.toml", `"acme-brand-voice"`, `"acme-corp-brand-voice"`)(t, dir)
+			},
 			"update .claude-plugin/marketplace.json\nupdate docs/catalogue.md\n",
 		},
 		{
@@ -458,6 +462,26 @@ func TestBuildErrors(t *testing.T) {
 		{
 			"category without holds", replaceIn(data, `holds = "Brand voice and visual identity"`, ""),
 			[]string{"data/marketplace.toml: categories[0].holds is missing"},
+		},
+		{
+			"role not a name", replaceIn(data, `name = "acme-tracker"`, `name = "Acme-Tracker"`),
+			[]string{`data/marketplace.toml: roles[0].name "Acme-Tracker" is not a valid name: use a-z`},
+		},
+		{
+			"role named as CECH's", replaceIn(data, `name = "acme-tracker"`, `name = "cech-tracker"`),
+			[]string{`data/marketplace.toml: roles[0].name "cech-tracker" starts with cech-, which no role name does (ADR 21 item 2)`},
+		},
+		{
+			"role without the namespace", replaceIn(data, `name = "acme-tracker"`, `name = "tracker"`),
+			[]string{`data/marketplace.toml: roles[0].name "tracker" does not start with acme-, as an extension's roles do (ADR 21 item 2)`},
+		},
+		{
+			"role defined twice", appendTo(data, "\n[[roles]]\nname = \"acme-tracker\"\nmeans = \"Again\"\n"),
+			[]string{`data/marketplace.toml: roles[2].name "acme-tracker" is already defined`},
+		},
+		{
+			"role without means", replaceIn(data, `means = "The tracker where Acme files and moves issues"`, ""),
+			[]string{"data/marketplace.toml: roles[0].means is missing"},
 		},
 		{
 			"term list outside the repository", replaceIn(data, `"checks/terms/rules.toml"`, `"../rules.toml"`),

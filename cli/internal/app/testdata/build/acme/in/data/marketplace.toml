@@ -12,6 +12,15 @@ email = "skills@acme.example"
 name = "brand"
 holds = "Brand voice and visual identity"
 
+[[roles]]
+name = "acme-tracker"
+means = "The tracker where Acme files and moves issues"
+
+[[roles]]
+name = "acme-brand-voice"
+means = "A voice that Acme's writing follows"
+many = true
+
 [terms]
 rules = ["checks/terms/rules.toml"]
 names = ["checks/terms/names.txt"]
