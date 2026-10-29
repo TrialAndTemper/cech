@@ -18,6 +18,8 @@ Checked on 2026-10-27 with Go 1.27.3:
 - `go build` stamps a version from git tags only for a module at the repository root, so a build of `cli/` records `(devel)`.
 - A module at the repository root takes in every Go file below it, including any that a plugin ships, and `go vet ./...` and `go test ./...` would build them.
 
+Checked on 2026-10-29: `github.com/BurntSushi/toml` v1.6.0 (MIT) requires no other module.
+
 ## Decision
 
 1. **Go, in its own module.**
@@ -54,7 +56,7 @@ Checked on 2026-10-27 with Go 1.27.3:
    The standard library comes first.
    A third-party module is added only for a feature the standard library lacks, when writing it would cost more than depending on it.
    Each module in `go.mod` is listed here with its reason, and adding one changes this ADR in the form [ADR 1](0001-record-architecture-decisions.md) item 5 sets.
-   Today the list is empty.
+   Today the list holds one module, `github.com/BurntSushi/toml`, because the harness data file is TOML ([ADR 5](0005-native-tool-features-first.md) item 5) and the standard library reads no TOML.
    Tools that only build or check the CLI are pinned in `mise.toml`, not in `go.mod`.
 9. **Versions.**
    The CLI has its own SemVer versions, tagged `cli/vX.Y.Z` or `cli/vX.Y.Z-rc.N`, apart from the catalogue's `v` tags.

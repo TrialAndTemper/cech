@@ -1,0 +1,103 @@
+# The harness data file: the harness behaviours CECH relies on, and the
+# workarounds for harness gaps (ADR 5 items 2 and 3), in the format ADR
+# 5 item 5 sets. The cech CLI builds it in. Code that works around a gap
+# names its entry. Re-run an entry's probe on a new harness release; on
+# the result in expect, update verified, and on any other, open an
+# issue.
+
+[codex-plugin-agents]
+harness = "codex"
+kind = "gap"
+summary = "Codex leaves out the agents that a plugin bundles, both Markdown and TOML ones, and loads the custom agents in a trusted project's .codex/agents/."
+workaround = """
+cech build writes each reviewer agent as a Codex agent file beside its \
+Markdown, and cech copies those of the enabled plugins into the \
+project's git-ignored .codex/agents/."""
+decision = "ADR 6 item 3"
+probe = """
+With an empty CODEX_HOME, make a local marketplace probe-mkt whose \
+plugin probe holds skills/probe/SKILL.md, agents/probe-reviewer.md and \
+agents/probe-reviewer.toml. Add it with codex plugin marketplace add \
+<dir> and codex plugin add probe@probe-mkt. In a project that \
+$CODEX_HOME/config.toml marks with [projects."<path>"] trust_level = \
+"trusted", put a third agent, as a TOML file, in .codex/agents/. Give \
+the skill and each agent a description holding a word found nowhere \
+else. In the project, run codex debug prompt-input hi, and search its \
+output for the four words."""
+expect = "The words of the skill and of the agent in .codex/agents/ are in the prompt; neither plugin agent's word is."
+verified = { version = "0.165.0", date = 2026-10-29 }
+
+[[codex-plugin-agents.sources]]
+source = "https://learn.chatgpt.com/docs/agent-configuration/subagents"
+read = 2026-10-29
+version = "0.165.0"
+
+[[codex-plugin-agents.sources]]
+source = "https://developers.openai.com/plugins/build/plugins"
+read = 2026-10-29
+version = "0.165.0"
+
+[claude-code-plugin-metadata]
+harness = "claude-code"
+kind = "behaviour"
+summary = "A plugin whose plugin.json has a metadata object, where CECH keeps further maintainers, passes claude plugin validate --strict and installs and loads; strict validation fails on a top-level maintainer or maintainers field instead."
+decision = "ADR 12 item 2"
+probe = """
+With an empty CLAUDE_CONFIG_DIR, run claude plugin validate --strict on \
+three copies of a plugin with one skill, whose \
+.claude-plugin/plugin.json adds, in turn, "metadata": {"maintainers": \
+["octocat", "hubot"]}, "maintainers": ["octocat"], and "maintainer": \
+"octocat". Then list the first copy in a local marketplace, add it \
+and install the plugin at project scope in a new git repository, and \
+run claude plugin list."""
+expect = "The first validation exits 0; the other two exit 1, reporting Unknown field 'maintainers' and Unknown field 'maintainer'; claude plugin list shows the plugin as enabled."
+verified = { version = "2.1.312", date = 2026-10-29 }
+
+[[claude-code-plugin-metadata.sources]]
+source = "https://code.claude.com/docs/en/plugins-reference"
+read = 2026-10-29
+version = "2.1.312"
+
+[[claude-code-plugin-metadata.sources]]
+source = "claude plugin validate --help"
+read = 2026-10-29
+version = "2.1.312"
+
+[codex-plugin-metadata]
+harness = "codex"
+kind = "behaviour"
+summary = "Codex installs and loads a plugin whose plugin.json has a metadata object, where CECH keeps further maintainers."
+decision = "ADR 12 item 2"
+probe = """
+With an empty CODEX_HOME, make a local marketplace probe-mkt whose \
+plugin probe holds skills/probe/SKILL.md, with a description holding a \
+word found nowhere else, and whose .claude-plugin/plugin.json has \
+"metadata": {"maintainers": ["octocat", "hubot"]}. Add it with codex \
+plugin marketplace add <dir> and codex plugin add probe@probe-mkt, run \
+codex plugin list, and search the output of codex debug prompt-input hi \
+for the word."""
+expect = "codex plugin list shows probe@probe-mkt as installed and enabled, and the word is in the prompt."
+verified = { version = "0.165.0", date = 2026-10-29 }
+
+[claude-code-dependency-marketplace]
+harness = "claude-code"
+kind = "behaviour"
+summary = "A dependency on another marketplace's plugin resolves only in the marketplace it names exactly, and, with none named, in the depending plugin's own marketplace; checked with the dependency already installed and enabled at the same scope, which the docs require for a dependency from another marketplace unless allowCrossMarketplaceDependenciesOn in the depending plugin's marketplace.json lists that marketplace."
+decision = "ADR 17 item 4"
+probe = """
+Do this three times, each with an empty CLAUDE_CONFIG_DIR in a new git \
+repository. Make two local marketplaces: cech-0-1-0, listing \
+cech-prose, and acme, listing acme-x. Set the dependencies in acme-x's \
+.claude-plugin/plugin.json to [{"name": "cech-prose", "marketplace": \
+"cech-0-1-0"}] in the first run, to [{"name": "cech-prose", \
+"marketplace": "cech"}] in the second, and to [{"name": "cech-prose"}] \
+in the third. Add both marketplaces at project scope, install \
+cech-prose@cech-0-1-0, then acme-x@acme, at project scope, and run \
+claude plugin list."""
+expect = "acme-x is enabled in the first run; it fails to load in the second, with cech-prose@cech not installed, and in the third, with cech-prose@acme not installed."
+verified = { version = "2.1.312", date = 2026-10-29 }
+
+[[claude-code-dependency-marketplace.sources]]
+source = "https://code.claude.com/docs/en/plugins/dependencies"
+read = 2026-10-29
+version = "2.1.312"
