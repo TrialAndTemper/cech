@@ -19,23 +19,9 @@ Plugins also come from marketplaces that follow no CECH rule, and a skill instal
 
 ## Decision
 
-1. CECH's categories are a closed list.
-   Adding one refines this ADR, with an amendment note directly under the table; removing or merging one needs a superseding ADR.
-   Until the first plugin merges, either is an edit in place instead ([ADR 1](0001-record-architecture-decisions.md) item 5).
-   CI checks that `data/categories.toml` matches the table, together with any amendment notes under it.
-
-   | Category | Holds |
-   |---|---|
-   | `practice` | Tool-neutral engineering rules (testing, coding, config, logging, dependencies, containers, infrastructure as code) |
-   | `writing` | Prose, docs, decision records, changelogs, commit messages |
-   | `agent` | How agents work in a repository (instruction files, task records, estimates, change specs) |
-   | `workflow` | Multi-step flows that move a change through stages |
-   | `lang` | Languages and runtimes |
-   | `framework` | Libraries and frameworks |
-   | `tool` | One command-line tool each |
-   | `platform` | Hosted services: forges, trackers, clouds, observability |
-   | `meta` | Authoring and testing CECH skills |
-
+1. CECH's categories are a closed list, kept with what each holds in [`cli/internal/marketplace/categories.toml`](../../cli/internal/marketplace/categories.toml), which the `cech` CLI builds in.
+   Adding one refines this ADR, with an amendment note under this item naming it; removing or merging one needs a superseding ADR.
+   Until the first plugin merges, either is a change to the file alone ([ADR 1](0001-record-architecture-decisions.md) item 5).
 2. The category is the plugin's folder (`plugins/<category>/<name>/`).
    The build generates the marketplace catalogue, including its `category` field, from it.
    It is not part of the name.

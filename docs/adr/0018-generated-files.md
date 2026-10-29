@@ -11,6 +11,7 @@ Copies kept by hand drift, and a drifted catalogue shows users a wrong descripti
 
 Checked on 2026-10-17 (Claude Code 2.1.302): `claude plugin validate --strict` fails when `plugin.json` has no `description`, so the field cannot just be left out.
 Checked again on 2026-10-28 (Claude Code 2.1.312): it also fails when `plugin.json` has no `version`, and Claude Code uses `version` to decide whether an update changes anything.
+The same check fails when the marketplace catalogue has no `description`, and accepts one at the top level.
 
 ## Decision
 

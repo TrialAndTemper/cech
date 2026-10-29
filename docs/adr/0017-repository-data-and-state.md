@@ -43,7 +43,7 @@ JSON has no comments, which hand-edited files need.
    An extension's file also has a `cech` key, the one CECH release it builds on ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 6), as that release's tag without the `v`.
    A namespace never ends in a version, such as `-1-4-0`, so it cannot look like a release's name.
    A file with a `cech` key is an extension's, and its namespace is not `cech` and does not start with `cech-`.
-   A file without one is CECH's own: its namespace is `cech`, and it has no `categories` or `terms`; CECH's categories are in `data/categories.toml` ([ADR 12](0012-categories-and-names.md) item 1).
+   A file without one is CECH's own: its namespace is `cech`, and it has no `categories` or `terms`; CECH's categories are built into the `cech` CLI ([ADR 12](0012-categories-and-names.md) item 1).
 
 ## Consequences
 
