@@ -11,7 +11,7 @@ Extensions add plugins of their own, and their files must not clash with CECH's.
 Files scattered over a repository's root are hard to find and can clash with other tools' files.
 When several owners write one shared file, an upgrade of one can rewrite the others' parts, and their changes conflict in merges.
 
-Earlier ADRs place repository-wide data in `data/`: `data/harnesses.toml` ([ADR 5](0005-native-tool-features-first.md)) and `data/categories.toml` ([ADR 8](0008-categories-and-names.md)).
+An earlier ADR places repository-wide data in `data/`: `data/categories.toml` ([ADR 8](0008-categories-and-names.md)).
 Other files have formats set by their harnesses, tools or specs: `SKILL.md` frontmatter is YAML, plugin manifests and Claude Code settings are JSON, Codex settings are TOML, and GitHub workflows are YAML.
 YAML reads some unquoted values as other types: `no` can become false and `1.10` a number.
 JSON has no comments, which hand-edited files need.

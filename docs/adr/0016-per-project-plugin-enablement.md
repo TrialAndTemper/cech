@@ -86,7 +86,7 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
 - `cech check` reads each catalogue at its pinned commit and does not pass when it cannot reach a source ([ADR 14](0014-the-cech-cli.md) item 5).
 - A copy enabled in user settings under another versioned name still loads beside the pin, and `cech check` misses it.
 - Each person trusts the project in both harnesses once per clone, and runs `cech setup` after each clone and config change.
-  `/reload-plugins`, `CLAUDE_CODE_SYNC_PLUGIN_INSTALL` and the Codex re-sync for a newly enabled plugin, barred to `cech` (item 6 here; [ADR 14](0014-the-cech-cli.md) item 2), are documented; each workaround goes in `data/harnesses.toml` ([ADR 5](0005-native-tool-features-first.md) item 2).
+  `/reload-plugins`, `CLAUDE_CODE_SYNC_PLUGIN_INSTALL` and the Codex re-sync for a newly enabled plugin, barred to `cech` (item 6 here; [ADR 14](0014-the-cech-cli.md) item 2), are documented; each workaround goes in the harness data file ([ADR 5](0005-native-tool-features-first.md) item 2).
 
 ## Options considered
 
