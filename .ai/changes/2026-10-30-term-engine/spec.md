@@ -1,7 +1,8 @@
 # Term tiers in `cech check` and in CECH's gate
 
 The rule files, the engine settings, the private list and the scan scope that [ADR 24](../../../docs/adr/0024-the-term-check-engine.md) decides, for the term tiers of `cech check` and for CECH's own term gate.
-Nothing here is built yet; the change that builds `cech check` takes these rules.
+The package `cli/internal/terms` follows these rules; the next change moves CECH's gate onto them (items 1 to 8 and 33 to 35).
+The change that adds the `cech check` command calls the package, and builds what the package leaves to it: reading the environment for items 19 and 22; the output of items 22 and 24 on stderr and in `--json`; item 25; the exit statuses of items 24, 27, 29 and 32, exit 2 for `--range` outside an extension included; item 30's `--json` field names; and the tests of items 36 to 44.
 [research.md](research.md) holds the measurements behind the decision.
 
 The items are numbered; "item N" below means one of them, never a term rule.
@@ -9,11 +10,12 @@ The items are numbered; "item N" below means one of them, never a term rule.
 ## Files
 
 1. `cli/internal/terms/generic.toml` holds the generic tier and is built into the binary.
-   It starts from today's `checks/terms/rules.toml` and keeps `[extend] useDefault = true`, the inline-marker allowlist, the `email` rule with its allowlist of example domains, forge no-reply addresses and public forge remotes, and the `aws-arn`, `azure-subscription`, `gcp-project`, `signed-url` and `sso-user` rules.
+   It starts from the `checks/terms/rules.toml` that came before it and keeps `[extend] useDefault = true`, the inline-marker allowlist, the `email` rule with its allowlist of example domains, forge no-reply addresses and public forge remotes, and the `aws-arn`, `azure-subscription`, `gcp-project`, `signed-url` and `sso-user` rules.
    It leaves out every address of CECH's own authors, co-authors, credited people and contacts, and the allowlist for the paths of `checks/terms/`.
 2. `checks/terms/rules.toml` holds only what is CECH's own: `[extend] path = "cli/internal/terms/generic.toml"`, a path from the repository root; a global allowlist of CECH's addresses; and the allowlist for the rule files in `checks/terms/`.
    A test fails when an address in it is also in `generic.toml`.
-3. `checks/terms/messages.toml` and `checks/terms/names.txt` stay as they are; `cech check` never reads them.
+   The rule-file allowlist also covers `cli/internal/terms/generic.toml`, whose regex text, such as the guest-user marker that `sso-user` looks for, matches its own rules; so neither the vendor names nor the default rules scan that file.
+3. `checks/terms/messages.toml` and `checks/terms/names.txt` keep their rules; `cech check` never reads them.
 4. The comment at the top of each rule file names Betterleaks, not gitleaks.
 
 ## Engine
@@ -24,8 +26,10 @@ The items are numbered; "item N" below means one of them, never a term rule.
    `mise run terms` exits 2, naming both versions, when the pinned CLI's version differs from the one in `cli/go.mod`.
 7. `cech` never enables Betterleaks' validation or analysis, and makes no network request for the term tiers.
 8. `cech` sets the engine to ignore `betterleaks:allow` and `gitleaks:allow` comments, and never reads a `.betterleaksignore` or `.gitleaksignore` file.
-   CECH's gate refuses to run while either ignore file exists, as it does today for `.gitleaksignore`.
-9. `cech` checks every extension rule file against items 11 to 16 before it builds the engine, so an invalid file is reported as a finding and never reaches the engine's own fatal error paths.
+   CECH's gate refuses to run while either ignore file exists, as it did for `.gitleaksignore` alone.
+9. `cech` checks every extension rule file against items 11 to 16 before it builds the engine, so an invalid file is reported as a finding.
+   Should the engine still refuse the rules, that too is a rule-file finding, not a crash.
+   The configs are parsed without a path, since the engine skips any scanned file at its config's path.
 10. Every regular expression is compiled with Go's `regexp` package, which the engine uses.
 
 ## An extension's term lists
@@ -40,16 +44,19 @@ The items are numbered; "item N" below means one of them, never a term rule.
 
     Any other key, such as `extend`, `filter`, `prefilter`, `validate`, `components` or `required`, is a finding that names the file and the key.
 13. A rule's `id` starts with the extension's namespace and `-`, and is unique across every file under `terms.rules`.
-    An id that is also a generic or default rule's id is a finding.
-14. A rule needs `id`, and `regex` or `path`.
+    An id that is also a generic or default rule's id, or that starts with `name-` or `private-term-`, is a finding.
+14. A rule needs `id`, and `regex` or `path`; a `secretGroup` is from 0 to the number of groups in its `regex`.
+    An allowlist needs at least one of `regexes`, `paths` and `stopwords`.
 15. Every `regex`, allowlist regex and allowlist path must compile; a finding names the file and the rule id.
 16. A file under `terms.names` has one name per line.
     Carriage returns and white space around a name are dropped, and blank lines and lines starting with `#` are ignored.
     Each name becomes the rule `name-<k>-<n>`, where `<k>` is the file's place in `terms.names`, counting from 1, and `<n>` is the line number.
+    A name of `-`, `_` and white space alone is a finding, since it would match everywhere.
     It matches as CECH's gate matches `names.txt`: without regard to case; with spaces, `-` and `_` between words matching each other or nothing; and, where a name starts or ends with a word character, with a word boundary there.
 17. The public tiers skip the files listed under `terms.rules` and `terms.names`; the private tier scans them.
 18. An extension allowlist may hide hits of the generic, default and extension rules.
     A broad one, such as a global `paths = ['.*']`, hides them all; that is the extension's own reviewed choice, and `cech` does not judge it.
+    A global path allowlist, like the path filter in Betterleaks' default rules (lock files, images, vendored code), drops a file before any rule runs, as it does in CECH's gate.
 
 ## The private list
 
@@ -57,12 +64,11 @@ The items are numbered; "item N" below means one of them, never a term rule.
     In a repository that is not an extension, it reads neither `CECH_PRIVATE_TERMS` nor `CECH_REQUIRE_PRIVATE_TERMS`.
     CECH's gate keeps its own default, `.private/denylist.txt`.
 20. The format is that of CECH's gate: one regular expression per line, matched without regard to case, with carriage returns and surrounding white space dropped, and blank lines and lines starting with `#` ignored.
-    A line holding `'''` cannot be used.
     Line `n` becomes the rule `private-term-<n>`.
 21. The private tier runs only these rules: no default or generic rule, and no allowlist, inline marker or extension allowlist.
 22. When `CECH_PRIVATE_TERMS` is unset or empty, names a missing file, or names a list with no terms, the private tier is skipped, and the output says so on stderr and in `--json`; the skip alone leaves the exit status 0.
     With `CECH_REQUIRE_PRIVATE_TERMS=1`, any of these makes the private tier a check that could not run.
-23. An unreadable list, or a line that does not compile, also makes it a check that could not run; the message names the line number, never its text.
+23. An unreadable list, a line that does not compile, a line holding `'''`, or a list the engine refuses also makes it a check that could not run; the message names the line number, never its text, and never quotes the engine's own message.
 24. When the private tier could not run, the public tiers still run, since a failure there is worth reporting.
     But no path, file name, key, ref name or range then appears anywhere in the output, `--json` included: each finding shows only its rule id or kind, since any of these could hold a private term.
     `cech check` then exits 1 if anything else failed, else 3, and names both, as ADR 15 item 5 sets.
@@ -83,7 +89,7 @@ The items are numbered; "item N" below means one of them, never a term rule.
 28. In a repository that is both, a hit in `.cech/` that items 26 and 27 both find is reported once.
 29. `--range <revision range>` adds, for each commit in the range: its message, the lines its diff adds against each parent, and the paths it touches.
     It also adds the names of local branches, tags and remote-tracking refs, and the messages of annotated tags.
-    A value that starts with `-` exits 2; a range git cannot resolve, such as one cut off by a shallow clone, exits 3 and names the range, unless the private rules match the range text, in which case it says only that the range could not be resolved; an empty range adds no commits and says so.
+    A value that starts with `-` exits 2, and the message does not repeat it; a range git cannot resolve, such as one cut off by a shallow clone, exits 3 and names the range, unless the private rules match the range text or item 24 or 31 hides details, in which case it says only that the range could not be resolved; an empty range adds no commits and says so.
     `--range` in a repository that is not an extension exits 2.
 
 ## Output and exit status
@@ -92,11 +98,14 @@ The items are numbered; "item N" below means one of them, never a term rule.
     Where it is: a path and line; the commit for a hit from `--range`; `paths` for a hit in the list of paths; `commit message`, `ref names` or `tag messages` for those.
     The `--json` field names are set with the rest of `cech check`'s output.
 31. A private hit shows `private term <n>` and never the term or the matched text.
-    Once any private hit is in a path or a ref name, later private hits show only the term number and the commit, and no path, ref name or range appears anywhere in the output, `--json` included.
-    While any private hit exists, public hits show only their rule id.
+    Once any private hit is in a path or a ref name, every other private hit shows only the term number and the commit, and no path, ref name or range appears anywhere in the output, `--json` included.
+    A private hit in the list of paths or in the ref names keeps that place and its line, since the line shows no text.
+    While any private hit exists, public hits show only their rule id, problems show only their kind, and an unresolved range is not named, since an entry, key, rule id or range could hold a term.
+    The same holds for a project's findings merged into an extension's result (item 28).
     No message from an engine run with the private list reaches the output.
 32. A term hit, an invalid entry under `terms` or an invalid rule file exits 1.
-    An invalid extension rule file stops the generic and extension tiers of item 27, which load together, and the output names them as skipped; the private tier and the project scan of item 26 still run.
+    Any problem under items 11 to 16 stops the generic and extension tiers of item 27, which load together, and the output says they were skipped; the private tier and the project scan of item 26 still run.
+    Should the scan of the generic and extension tiers fail, those tiers could not run, and the private results are kept; a failed project scan likewise could not run.
     Exit statuses otherwise follow [ADR 15](../../../docs/adr/0015-the-cech-cli.md) item 5.
 
 ## CECH's gate

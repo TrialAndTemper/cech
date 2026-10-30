@@ -15,16 +15,19 @@ Checked on 2026-10-27 with Go 1.27.3: a module in a subdirectory takes its versi
 
 Checked on 2026-10-28: `go.yaml.in/yaml/v3` v3.0.5 (MIT and Apache-2.0) requires no other module.
 Checked on 2026-10-29: neither does `github.com/BurntSushi/toml` v1.6.0 (MIT).
+Checked on 2026-10-30 with Go 1.27.3: `github.com/betterleaks/betterleaks` v1.9.0 (MIT) links 48 other modules, under MIT, BSD, ISC, Apache-2.0 and MPL-2.0.
 
 ## Decision
 
 1. **Dependency budget.**
    The standard library comes first.
    A third-party module is added only for a feature the standard library lacks, when writing it would cost more than depending on it.
-   Each module in `go.mod` is listed here with its reason, and adding one changes this ADR in the form [ADR 1](0001-record-architecture-decisions.md) item 5 sets.
+   Each module that `go.mod` requires directly is listed here with its reason, and adding one changes this ADR in the form [ADR 1](0001-record-architecture-decisions.md) item 5 sets.
+   The modules those need are recorded only in `go.mod` and `go.sum`.
    Tools that only build or check the CLI are pinned in `mise.toml`, not in `go.mod`.
    The list:
    - `github.com/BurntSushi/toml`: the harness data file is TOML ([ADR 9](0009-native-harness-features-first.md) item 5), as are `data/marketplace.toml` and CECH's categories file, and the standard library reads no TOML.
+   - `github.com/betterleaks/betterleaks`, v1: the term check's engine ([ADR 3](0003-vendor-neutrality.md) item 4), whose maintained rules also find leaked credentials.
    - `go.yaml.in/yaml/v3`, the YAML project's maintained YAML package: `SKILL.md` and agent frontmatter are YAML, which the standard library does not read, and a parser of our own could read a description differently from the harnesses.
 2. **Versions.**
    The CLI has its own SemVer versions, on the `cli/` tags of [ADR 14](0014-releases-and-versions.md) item 2.
@@ -37,7 +40,8 @@ Checked on 2026-10-29: neither does `github.com/BurntSushi/toml` v1.6.0 (MIT).
 
 ## Consequences
 
-- Every new dependency shows up as a change to this ADR.
+- Every new direct dependency shows up as a change to this ADR.
+- A binary release must ship the notices its modules' licences ask for.
 - Release tooling must handle the `cli/` tag prefix.
 - A new vulnerability report never blocks a merge; its issue on `main` asks for a fix.
 
