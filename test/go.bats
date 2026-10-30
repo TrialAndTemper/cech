@@ -118,21 +118,40 @@ func TestFails(t *testing.T) { t.Fatal("planted failure") }
 
 # Generated files
 
+# fake_cech_first: put a cech that passes everything first on PATH, as
+# an older release a contributor installed might.
+fake_cech_first() {
+  mkdir -p -- "${BATS_TEST_TMPDIR}/bin"
+  printf '#!/bin/sh\nexit 0\n' > "${BATS_TEST_TMPDIR}/bin/cech"
+  chmod 755 "${BATS_TEST_TMPDIR}/bin/cech"
+  PATH="${BATS_TEST_TMPDIR}/bin:${PATH}"
+}
+
 # Guards the gate running a cech found on PATH, such as an older release
 # a contributor installed, instead of the one built from the checkout:
 # the verdict would then depend on the machine, and a stale cech could
 # pass where the checkout's build fails.
 @test "build runs the cech built from the checkout, not one on PATH" {
-  mkdir -p -- "${BATS_TEST_TMPDIR}/bin"
-  printf '#!/bin/sh\nexit 0\n' > "${BATS_TEST_TMPDIR}/bin/cech"
-  chmod 755 "${BATS_TEST_TMPDIR}/bin/cech"
-  PATH="${BATS_TEST_TMPDIR}/bin:${PATH}"
+  fake_cech_first
   cp -R -- "${REPO}/cli/internal/app/testdata/build/acme/in/." "${REPO}/"
   run_go build
   assert_status 1
   assert_output_has "update .claude-plugin/marketplace.json"
   assert_output_has "go: build findings"
   assert_output_has "mise run build:fix"
+}
+
+# Guards the eval gate running a cech found on PATH, which could pass
+# eval cases that the checkout's cech fails, as the build case above
+# guards cech build.
+@test "evals runs the cech built from the checkout, not one on PATH" {
+  fake_cech_first
+  cp -R -- "${REPO}/cli/internal/app/testdata/eval/complete/." "${REPO}/"
+  rm -- "${REPO}/evals/writing/cech-example/cech-example-control/cech.toml"
+  run_go evals
+  assert_status 1
+  assert_output_has "cech-example-control: has no cech.toml"
+  assert_output_has "go: evals findings"
 }
 
 # fake_go: a fake go on linux/amd64 with cgo on, whose race runtime

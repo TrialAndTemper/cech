@@ -88,6 +88,7 @@ A trace holds one JSON object per line, read strictly, so a duplicate key, inval
 Any other line, key or block is a finding, as is a trace without its last line.
 In a recording, the run's workspace is written as `/cech/workspace`, the plugin's folder as `/cech/plugin` and the harness's home as `/cech/home`.
 With those removed, no string in a recording or another `.jsonl` file in a case holds a local path such as one under `/home/`, `/Users/` or `/tmp/`.
+The Markdown and link checks leave recordings out, since a model wrote them, and the Markdown checks leave out `routing.md`; the term check covers every file.
 
 ## Grading a recording
 

@@ -141,6 +141,23 @@ commit_with_hooks() {
   assert_output_has "yaml-missing-guide.md"
 }
 
+# Guards the exclude_path for eval recordings in lychee.toml, or a
+# lychee bump's reading of it, leaving out more than evals/**/recordings/,
+# so a broken link elsewhere would pass.
+@test "docs:check task leaves out eval recordings" {
+  local rec=evals/writing/acme-x/acme-x-case/recordings/codex/run/workspace
+  mkdir -p "${rec}"
+  printf '# Note\n\nSee [the guide](recording-missing-guide.md).\n' > "${rec}/note.md"
+  g add evals
+  run mise run docs:check -- --offline
+  assert_status 0
+  cp "${rec}/note.md" note.md
+  g add note.md
+  run mise run docs:check -- --offline
+  assert_status 2
+  assert_output_has "recording-missing-guide.md"
+}
+
 # Guards a rumdl bump after which fmt --check exits 0 on a file it would
 # rewrite.
 @test "format:check:markdown task fails on a file it would rewrite" {
