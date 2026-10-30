@@ -1,0 +1,6 @@
+# A marketplace with one complete plugin, for cech eval --check.
+namespace = "cech"
+description = "Agent skills for Claude Code and Codex"
+
+[owner]
+name = "CECH maintainers"

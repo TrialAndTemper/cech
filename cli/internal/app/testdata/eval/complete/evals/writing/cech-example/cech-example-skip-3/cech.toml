@@ -1,0 +1,11 @@
+family = "trigger"
+expect = "skip"
+wording = "near-miss"
+
+[recordings.claude-code]
+pass = ["not-loaded"]
+fail = ["loaded"]
+
+[recordings.codex]
+pass = ["not-loaded"]
+fail = ["loaded"]

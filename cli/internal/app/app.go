@@ -98,6 +98,7 @@ func newRoot(out, stdout, stderr io.Writer, info version.Info, code *int) *cobra
 		"{{if .Runnable}}", "{{if and .Runnable (not .HasAvailableSubCommands)}}", 1))
 	root.AddCommand(
 		newBuildCommand(stdout, stderr, code),
+		newEvalCommand(stdout, stderr, code),
 		newVersionCommand(stdout, stderr, info, code),
 	)
 	// Cobra adds the help flag, help and completion when the command line

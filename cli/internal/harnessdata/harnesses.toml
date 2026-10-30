@@ -167,3 +167,175 @@ verified = { version = "0.166.0", date = 2026-11-06 }
 source = "https://learn.chatgpt.com/docs/build-skills"
 read = 2026-11-06
 version = "0.166.0"
+
+[codex-exec-trace]
+harness = "codex"
+kind = "behaviour"
+summary = "codex exec --json reports a run's messages as agent_message items and its shell commands as command_execution items with their aggregated_output, each on an item.completed line, and ends with a turn.completed line; cech eval --check grades a recorded run of Codex from them, the last message as the reply."
+decision = "ADR 25 item 4"
+probe = """
+In a copy of the project in \
+cli/internal/app/testdata/eval/complete/evals/writing/cech-example/project/, \
+with the plugin cech-example installed from a local marketplace into an \
+empty CODEX_HOME, run codex exec --json --ephemeral \
+--skip-git-repo-check -s read-only with the prompt of the case \
+cech-example-load-1. Trim its output as docs/reference/evals.md says, put it in \
+place of that case's recording recordings/codex/real-run, and run cech \
+eval --check."""
+expect = "cech eval --check reports nothing about the recording but, when the run did not load the skill, that the codex load detector reads no load."
+verified = { version = "0.165.0", date = 2026-10-30 }
+
+[[codex-exec-trace.sources]]
+source = "https://learn.chatgpt.com/docs/non-interactive-mode"
+read = 2026-10-29
+version = "0.165.0"
+
+[claude-code-skill-load]
+harness = "claude-code"
+kind = "behaviour"
+summary = "Claude Code reports a skill it loads as a Skill tool_use naming the skill, or <plugin>:<skill> for a plugin's, whose tool_result has no is_error; a Skill call for a skill that is not installed gets a tool_result with is_error true. cech eval reads a load from this."
+decision = "ADR 25 item 6"
+probe = """
+In a routed copy of the project in \
+cli/internal/app/testdata/eval/complete/evals/writing/cech-example/project/, \
+with the plugin cech-example installed from a local marketplace into an \
+empty CLAUDE_CONFIG_DIR, run claude -p --output-format stream-json \
+--verbose --model haiku --allowedTools Skill once with the prompt Load \
+the cech-example skill and quote its first rule, and once with What is \
+the capital of Portugal?; rerun a run that misses once. Trim each as \
+docs/reference/evals.md says, put them in place of the recordings \
+recordings/claude-code/loaded and not-loaded of the case \
+cech-example-load-1, and run cech eval --check."""
+expect = "cech eval --check reports nothing: the detector reads a load in the first run and none in the second."
+verified = { version = "2.1.314", date = 2026-10-30 }
+
+[[claude-code-skill-load.sources]]
+source = "https://code.claude.com/docs/en/skills"
+read = 2026-10-29
+version = "2.1.312"
+
+[codex-skill-load]
+harness = "codex"
+kind = "behaviour"
+summary = "When Codex loads a skill, a command_execution reads its SKILL.md, and its aggregated_output holds the skill's name line and the first line of its description; cech eval reads a load from this, as codex-skill-load-event says."
+decision = "ADR 25 item 6"
+probe = """
+In a routed copy of the project in \
+cli/internal/app/testdata/eval/complete/evals/writing/cech-example/project/, \
+with the plugin cech-example installed from a local marketplace into an \
+empty CODEX_HOME, run codex exec --json --ephemeral \
+--skip-git-repo-check -s read-only once with the prompt Load the \
+cech-example skill and quote its first rule, and once with What is the \
+capital of Portugal?; rerun a run that misses once. Trim each as \
+docs/reference/evals.md says, put them in place of the recordings \
+recordings/codex/loaded and not-loaded of the case cech-example-load-1, \
+and run cech eval --check."""
+expect = "cech eval --check reports nothing: the detector reads a load in the first run and none in the second."
+verified = { version = "0.165.0", date = 2026-10-30 }
+
+[[codex-skill-load.sources]]
+source = "https://learn.chatgpt.com/docs/build-skills"
+read = 2026-10-29
+version = "0.165.0"
+
+[claude-code-eval-offline-grading]
+harness = "claude-code"
+kind = "gap"
+summary = "claude plugin eval grades only the runs it makes, with a model; it cannot grade a recorded run, and has no grader that runs the author's code."
+workaround = """
+cech eval --check grades each case's recorded runs itself, with the \
+regex and file_exists graders of CECH's own case format, so the eval \
+gate runs no agent."""
+decision = "ADR 25 item 4"
+probe = """
+Run claude plugin eval --help and read the plugin eval docs, looking \
+for a way to grade a saved transcript without starting a run, and for \
+graders that run code."""
+expect = "Neither exists: context.history_file resumes a transcript as the start of a new run, and the docs say there are no custom-code graders."
+verified = { version = "2.1.312", date = 2026-10-29 }
+
+[[claude-code-eval-offline-grading.sources]]
+source = "https://code.claude.com/docs/en/plugin-evals"
+read = 2026-10-29
+version = "2.1.312"
+
+[[claude-code-eval-offline-grading.sources]]
+source = "claude plugin eval --help"
+read = 2026-10-29
+version = "2.1.312"
+
+[claude-code-eval-project-instructions]
+harness = "claude-code"
+kind = "gap"
+summary = "claude plugin eval runs on Claude Code only, and loads no CLAUDE.md or AGENTS.md from the workspace it runs in, so it cannot test a skill reached through a project's routing rows, nor run on Codex."
+workaround = """
+cech eval drives both harnesses itself, starting each run in a copy of \
+the eval folder's project/, with the routing rows added for a routed \
+run; the eval gate checks those folders without running an agent."""
+decision = "ADR 25 item 6"
+probe = """
+Copy the plugin folder plugins/writing/cech-example of \
+cli/internal/app/testdata/eval/complete to the same path in an empty \
+folder, and there write a case in claude plugin eval's format, \
+evals/writing/cech-example/probe/: a script scaffold.sh that writes \
+an AGENTS.md and a CLAUDE.md, each holding the line Marker: \
+PROBE-7351, into the workspace; a case.yaml with name probe, \
+context.scaffold_script scaffold.sh and one regex grader, no-marker, \
+with pattern PROBE-7351 and match not_contains; and a prompt.md \
+with plugins: ["../../../../plugins/writing/cech-example"] in its \
+frontmatter, \
+asking the model to repeat every line of its project instructions \
+that holds the word Marker, or say NONE. Run \
+claude plugin eval . --case probe --runs 1 \
+--ablation none --model haiku --scaffold --keep-temp --trust-plugin \
+--no-publish --json result.json, and read the kept trace; then run \
+claude plugin eval --help."""
+expect = "The trace does not hold PROBE-7351, and the help names no option to run another harness."
+verified = { version = "2.1.330", date = 2026-11-23 }
+
+[[claude-code-eval-project-instructions.sources]]
+source = "https://code.claude.com/docs/en/plugin-evals"
+read = 2026-10-29
+version = "2.1.312"
+
+[codex-skill-load-event]
+harness = "codex"
+kind = "gap"
+summary = "codex exec --json has no item for a skill the model loads: a load shows only as the skill's text in the output of a shell command that reads its SKILL.md."
+workaround = """
+cech eval reads a Codex load from one command's output that holds the \
+skill's name line and the first line of its description, whatever the \
+command's exit status."""
+decision = "ADR 25 item 6"
+probe = """
+Run codex exec --json with the plugin cech-example installed and a \
+prompt asking it to load the skill cech-example and quote its first \
+rule, and list the item types of its item.completed lines."""
+expect = "The item types are agent_message, command_execution and error only; the skill's text is in a command_execution's aggregated_output."
+verified = { version = "0.165.0", date = 2026-10-29 }
+
+[[codex-skill-load-event.sources]]
+source = "https://learn.chatgpt.com/docs/non-interactive-mode"
+read = 2026-10-29
+version = "0.165.0"
+
+[codex-read-outside-workspace]
+harness = "codex"
+kind = "gap"
+summary = "Codex's read-only sandbox limits writes, not reads: a run can read files anywhere the user can, so a run without the plugin can read an installed copy of the skill."
+workaround = """
+cech eval runs each arm in its own directory tree, with the plugin \
+installed only in the arm that has it, out of reach of the other."""
+decision = "ADR 25 item 6"
+probe = """
+In an empty folder, run codex exec --json --ephemeral \
+--skip-git-repo-check -s read-only with a prompt asking it to print \
+the first line of a file outside that folder, named by its absolute \
+path."""
+expect = "A command_execution reads the file and its aggregated_output holds the line."
+verified = { version = "0.165.0", date = 2026-10-29 }
+
+[[codex-read-outside-workspace.sources]]
+source = "https://learn.chatgpt.com/docs/sandboxing"
+read = 2026-10-29
+version = "0.165.0"

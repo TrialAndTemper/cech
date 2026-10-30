@@ -44,6 +44,8 @@ func TestBinary(t *testing.T) {
 	}{
 		{"version", []string{"version"}, 0, "cech 9.8.7\n", ""},
 		{"unknown command", []string{"frobnicate"}, 2, "", "Run cech help for usage."},
+		{"eval --check passes", []string{"eval", "--check", "-C", "../../internal/app/testdata/eval/complete"}, 0, "", ""},
+		{"eval --check outside a marketplace", []string{"eval", "--check", "-C", "../../internal/app/testdata/eval"}, 1, "", "data/marketplace.toml: not found"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

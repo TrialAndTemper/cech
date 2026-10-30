@@ -1,0 +1,8 @@
+Fix off-by-one that dropped the last page
+
+The range stop was len(items) - 1, so the final partial page was
+omitted. For [1, 2, 3] with size 2 the result was [[1, 2]] instead
+of [[1, 2], [3]].
+
+Co-Authored-By: Claude Haiku 5.5 <noreply@anthropic.com>
+Change-Kind: fix
