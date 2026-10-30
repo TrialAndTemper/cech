@@ -91,6 +91,7 @@ Any other line, key or block is a finding, as is a trace without its last line.
 In a recording, the run's workspace is written as `/cech/workspace`, the plugin's folder as `/cech/plugin` and the harness's home as `/cech/home`.
 With each placeholder removed, together with the path parts that follow it, no string in `trace.jsonl` and no path in `created.txt` holds a local path: one under `/home/`, `/Users/`, `/tmp/`, `/private/` or `/var/folders/`, or a drive letter followed by `:\` at the start of a word.
 A path part ends at a character other than a letter, digit or one of `._@+~-`, or at a `..` part.
+The Markdown and link checks leave recordings out, since a model wrote them, and the Markdown checks leave out `routing.md`; the term check covers every file.
 
 ## Grading a recording
 
