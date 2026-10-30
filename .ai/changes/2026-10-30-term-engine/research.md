@@ -10,7 +10,7 @@ Each spike was a small `main` package in a scratch module, built with `CGO_ENABL
 | --- | --- | --- | --- | --- |
 | None: today's `cech` | | | 1 | 2.6 MB |
 | gitleaks as a module | 8.30.1, 2026-03-21 | MIT | 62 | 9.4 MB |
-| Betterleaks v1 as a module | 1.9.0, 2026-09-29 | MIT | 49 | 17.7 MB |
+| Betterleaks v1 as a module | 1.9.0, 2026-09-29 | MIT | 49, not counting BurntSushi/toml | 17.7 MB |
 | Betterleaks v2 as a module | 2.0.0-rc.5, 2026-10-28 | MIT | 47 | 18.8 MB |
 | A standard-library matcher | | | 1 | about 2.6 MB |
 
@@ -32,4 +32,6 @@ Each spike was a small `main` package in a scratch module, built with `CGO_ENABL
 - Betterleaks still ships maintenance releases of v1.
   Its v1 CLI has every option `scripts/check-terms` passes to gitleaks: `-c`, `--no-banner`, `--exit-code`, `--ignore-gitleaks-allow` (which drops both `betterleaks:allow` and `gitleaks:allow`), `-i`, `-f template`, `--report-template`, `-r`, `-l` and `--log-opts`.
   It reads `.betterleaksignore`, and `.gitleaksignore` for backward compatibility.
+  It matches with `go-re2` unless given `--regex-engine stdlib`; the module's default is Go's `regexp`, and a package that never selects `go-re2` does not link it or `wazero`.
   mise's registry has `betterleaks` through `aqua:betterleaks/betterleaks`, with 1.9.0 available; the 1.9.0 release has builds for Linux, macOS and Windows on x86-64 and arm64, and a checksum file.
+- The package built on 1.9.0 links 50 third-party modules, BurntSushi/toml included.

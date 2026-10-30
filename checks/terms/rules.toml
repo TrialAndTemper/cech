@@ -18,7 +18,7 @@ regexes = ['''cech-terms: allow \S''']
 
 [[allowlists]]
 description = "The rule files themselves"
-paths = ['''^checks/terms/[^/]+\.toml$''']
+paths = ['''^(?:checks/terms/[^/]+\.toml|cli/internal/terms/generic\.toml)$''']
 
 [[rules]]
 id = "email"
