@@ -1,0 +1,51 @@
+family = "content"
+expect = "better"
+critical = true
+claim = "A commit message ends with a Change-Kind trailer that matches the change."
+
+[[graders]]
+name = "file-listed"
+type = "regex"
+pattern = '^COMMIT_MSG$'
+target = "files"
+
+[[graders]]
+name = "file-trailer"
+type = "regex"
+pattern = '\nChange-Kind: fix\s*$'
+target = "file"
+path = "COMMIT_MSG"
+
+[[graders]]
+name = "file-written"
+type = "file_exists"
+path = "COMMIT_MSG"
+arm = "with-only"
+
+[[graders]]
+name = "no-feat"
+type = "regex"
+pattern = '(?i)change-kind: feat'
+match = "not_contains"
+arm = "both"
+
+[[graders]]
+name = "one-trailer"
+type = "regex"
+pattern = 'Change-Kind:'
+match = "count"
+count = 1
+
+[[graders]]
+name = "reply-trailer"
+type = "regex"
+pattern = '\nChange-Kind: fix\s*$'
+weight = 2
+
+[recordings.claude-code]
+pass = ["real-run", "trailer"]
+fail = ["no-trailer"]
+
+[recordings.codex]
+pass = ["trailer"]
+fail = ["no-trailer"]

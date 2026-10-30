@@ -13,10 +13,13 @@ import (
 // Doc is the YAML mapping at the top of a Markdown file, and the
 // Markdown after it.
 type Doc struct {
-	// Fields are the mapping's values by key.
+	// Fields are the mapping's values by key. A node's Line, here and in
+	// KeyNodes, counts from the line after the opening ---.
 	Fields map[string]*yaml.Node
 	// Keys are the mapping's keys in the order written.
 	Keys []string
+	// KeyNodes are the mapping's key nodes by key.
+	KeyNodes map[string]*yaml.Node
 	// Body is the Markdown after the frontmatter.
 	Body string
 }
@@ -50,7 +53,11 @@ func Parse(src []byte) (*Doc, error) {
 	if err != nil {
 		return nil, fmt.Errorf("frontmatter: %w", err)
 	}
-	return &Doc{Fields: fields, Keys: keys, Body: string(body)}, nil
+	keyNodes := make(map[string]*yaml.Node, len(keys))
+	for i := 0; i < len(doc.Content[0].Content); i += 2 {
+		keyNodes[doc.Content[0].Content[i].Value] = doc.Content[0].Content[i]
+	}
+	return &Doc{Fields: fields, Keys: keys, KeyNodes: keyNodes, Body: string(body)}, nil
 }
 
 // Mapping returns the values of the YAML mapping node n by key, and its

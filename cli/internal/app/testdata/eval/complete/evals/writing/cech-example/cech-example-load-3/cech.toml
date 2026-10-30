@@ -1,0 +1,11 @@
+family = "trigger"
+expect = "load"
+wording = "oblique"
+
+[recordings.claude-code]
+pass = ["loaded"]
+fail = ["not-loaded"]
+
+[recordings.codex]
+pass = ["loaded"]
+fail = ["not-loaded"]

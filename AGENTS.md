@@ -3,8 +3,9 @@
 ## Where am I?
 
 The root of CECH, a marketplace of agent skills for Claude Code and Codex that organisations extend rather than fork ([README](README.md)).
-It has no skills yet: the tree holds the decision records, the pages on what CECH does now, a first `cech` CLI that prints its version and generates a marketplace's files, the gates that check every change, and their tests.
-This is the only `AGENTS.md`, so it answers for every path.
+It has no skills yet: the tree holds the decision records, the pages on what CECH does now, a first `cech` CLI that prints its version, generates a marketplace's files and checks a marketplace's eval cases, the gates that check every change, and their tests.
+This is the only `AGENTS.md` layer, so it answers for every path.
+An `AGENTS.md` in an eval fixture project (`project/` or `project.staged/`), whether under `evals/` or in a fixture marketplace under `cli/internal/app/testdata/`, is test data for eval runs, not a layer.
 
 ## What belongs to this layer?
 
@@ -63,12 +64,12 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | `mise.toml` | Exact tool pins and every task; the single entry point for the gates |
 | `mise.lock` | Downloads and checksums for each pin and platform, or only the version of a pin built from source, written by `mise lock` |
 | `.github/` | The CI workflow, the approval diff, vulnerability check and harness probe workflows, issue forms, pull request template, and the code owners file that `cech build` generates |
-| `.rumdl.toml` | Markdown lint and format settings: sentence per line, no line limit |
+| `.rumdl.toml` | Markdown lint and format settings: sentence per line, no line limit; leaves out eval recordings and routing rows, and lets eval prompts start without a heading |
 | `lychee.toml` | Link check settings |
 | `.shellcheckrc` | shellcheck settings for every shell file |
 | `.editorconfig` | Encoding, indentation and the shfmt dialect per path |
 | `.gitattributes` | LF line endings for every text file, which the scripts need on Windows |
-| `.gitignore` | Keeps private notes, local overrides and tool caches out of git |
+| `.gitignore` | Keeps private notes, local overrides, tool caches and eval run results out of git |
 | `README.md` | What CECH is and its status; no install steps until there is something to install |
 | `CONTRIBUTING.md` | The full contributor rules this file routes to |
 | `SECURITY.md` | How to report a vulnerability privately |

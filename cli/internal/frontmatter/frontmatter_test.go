@@ -54,6 +54,16 @@ func TestParseKeepsKeyOrder(t *testing.T) {
 	}
 }
 
+func TestParseKeyNodes(t *testing.T) {
+	fm, err := Parse([]byte("---\nname: n\n\"description\": d\n---\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if k := fm.KeyNodes["description"]; k == nil || k.Line != 2 || k.Column != 1 {
+		t.Errorf("description key node %+v, want one at line 2, column 1", k)
+	}
+}
+
 func TestMappingNil(t *testing.T) {
 	if _, _, err := Mapping(nil); err == nil || !strings.Contains(err.Error(), "not a mapping") {
 		t.Errorf("error %v, want one holding %q", err, "not a mapping")

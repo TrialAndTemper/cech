@@ -1,3 +1,13 @@
+# Recorded runs of eval cases hold what a model wrote, and a plugin's
+# routing.md holds table rows without their header, so the Markdown
+# checks leave them out (ADR 25). An eval prompt is sent to a model as
+# it is, so it starts with no heading.
+[global]
+exclude = ["**/evals/**/recordings/**", "**/evals/**/routing.md"]
+
+[per-file-ignores]
+"**/evals/**/prompt.md" = ["MD041"]
+
 [MD013]
 reflow = true
 reflow-mode = "sentence-per-line"

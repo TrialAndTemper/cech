@@ -21,9 +21,16 @@ func TestFile(t *testing.T) {
 	// The entries that code cites, or relies on.
 	for _, want := range []string{
 		"claude-code-dependency-marketplace",
+		"claude-code-eval-offline-grading",
+		"claude-code-eval-project-instructions",
 		"claude-code-plugin-metadata",
+		"claude-code-skill-load",
+		"codex-exec-trace",
 		"codex-plugin-agents",
 		"codex-plugin-metadata",
+		"codex-read-outside-workspace",
+		"codex-skill-load",
+		"codex-skill-load-event",
 	} {
 		if !slices.Contains(names, want) {
 			t.Errorf("harnesses.toml has no entry %s", want)

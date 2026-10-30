@@ -1,0 +1,15 @@
+family = "control"
+expect = "same"
+
+[[graders]]
+name = "answer"
+type = "regex"
+pattern = '^391$'
+
+[recordings.claude-code]
+pass = ["right"]
+fail = ["wrong"]
+
+[recordings.codex]
+pass = ["right"]
+fail = ["wrong"]
