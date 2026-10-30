@@ -35,7 +35,7 @@ JSON has no comments, which hand-edited files need.
 4. `cech check` fails on, and names, any file under `.cech/` that no owner claims.
 5. **TOML.**
    Files in `.cech/` are TOML, like those in `data/`.
-   Files whose format a harness, a tool or a spec owns keep it, such as plugin manifests and the eval cases of `claude plugin eval`.
+   Files whose format a harness, a tool or a spec owns keep it, such as plugin manifests.
 6. `cech` rejects, and names, a bad key in a file it owns, so a typo, or a file written by a newer `cech`, fails instead of being ignored.
 7. **Every marketplace describes itself in `data/marketplace.toml`,** CECH included: its namespace, description, owner and maintainer team, the categories it adds and the roles it defines.
    An extension's file also names the one CECH release it builds on ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 6), and that key is what marks the file as an extension's.
