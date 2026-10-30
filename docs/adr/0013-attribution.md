@@ -35,7 +35,7 @@ Checked on 2026-10-17 (Claude Code 2.1.302), and, where a line says so, on 2026-
    It counts as an asset of the skill under [ADR 11](0011-one-plugin-one-skill.md).
    Credits are for people, not agents, so `SKILL.md` does not link to the file.
 4. **Generated code owners.**
-   `cech build` generates the code owners file from the manifests and the marketplace's maintainer team, offline, so each plugin's folder is owned by the people its manifest names, and the rest by the team.
+   `cech build` generates the code owners file from the manifests and the marketplace's maintainer team, offline, so each plugin's folder and its eval folder are owned by the people its manifest names, and the rest by the team.
 5. **Git history is separate.**
    Commit authors and `Co-authored-by:` trailers ([ADR 6](0006-change-record.md)) record who changed what.
    The fields above record who answers for a plugin now.

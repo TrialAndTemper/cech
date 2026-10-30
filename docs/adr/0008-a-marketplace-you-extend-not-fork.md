@@ -23,9 +23,9 @@ These ADRs call Claude Code and Codex harnesses: the programs that run an agent,
 3. **Skills compose through roles.**
    A skill asks for "the issue tracker", and the project binds that role to a skill from any marketplace.
 4. **Extensions reuse CECH's tooling** by installing the `cech` CLI, not by copying scripts.
-   It validates a marketplace on top of the harnesses' own validation, runs evals on both harnesses, since Codex has no eval command of its own (checked on 2026-10-16, Codex CLI 0.162.1), and checks a project across its enabled marketplaces.
-5. **CECH does not build** a package manager, a multi-harness installer, an eval runner where a harness has one, or an `AGENTS.md` sync tool.
-   CECH keeps to formats that the harnesses and existing tools read.
+   It validates a marketplace on top of the harnesses' own validation, runs evals on both harnesses, since Codex has no eval command and `claude plugin eval` loads no project instructions (checked on 2026-10-29, Claude Code 2.1.312, Codex CLI 0.165.0), and checks a project across its enabled marketplaces.
+5. **CECH does not build** a package manager, a multi-harness installer, an eval runner where a harness's own does the job, or an `AGENTS.md` sync tool.
+   CECH keeps to formats that the harnesses and existing tools read, where one fits what CECH does.
 6. **CECH versions its plugins and roles by marketplace release, and its layout rules by CLI release.**
    Each extension release names the one CECH release it builds on.
 
