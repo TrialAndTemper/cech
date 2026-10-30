@@ -1,5 +1,6 @@
 # Term check, tier 1: rules for commit and tag messages and ref names only
-# (ADR 3). CECH refers to its own issues as #N.
+# (ADR 3), in Betterleaks v1's format. CECH refers to its own issues as
+# #N.
 
 [[rules]]
 id = "tracker-key"

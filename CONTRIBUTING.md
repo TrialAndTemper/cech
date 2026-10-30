@@ -162,7 +162,7 @@ Either set your email for this repository to your GitHub no-reply address:
 git config user.email "<id>+<user>@users.noreply.github.com"
 ```
 
-or add each such address, in the same pull request, to the allowlist of authors and sign-offs under the `email` rule in `checks/terms/rules.toml`.
+or add each such address, in the same pull request, to the allowlist of authors, sign-offs and contacts in `checks/terms/rules.toml`.
 Please use a personal address, not one from your employer.
 
 ## Issues
@@ -220,8 +220,8 @@ A vulnerability report itself goes through [SECURITY.md](SECURITY.md), not an is
 CECH holds nothing specific to a private organisation: no internal names, hosts, emails, products, ids or quotes in files, commit messages, or branch and tag names ([ADR 3](docs/adr/0003-vendor-neutrality.md)).
 Examples use invented data such as `example.com`, `*.example`, `*.test` and the company `acme`.
 
-The term check enforces this with rules in `checks/terms/`.
-For a false positive from a public rule, add an allowlist entry there, or put `cech-terms: allow <reason>` on the same line.
+The term check enforces this with Betterleaks ([ADR 24](docs/adr/0024-the-term-check-engine.md)): the generic rules in `cli/internal/terms/generic.toml`, which `cech check` also runs in extensions, and CECH's own additions in `checks/terms/`.
+For a false positive from a public rule, add an allowlist entry in `checks/terms/rules.toml`, or put `cech-terms: allow <reason>` on the same line; change `generic.toml` only for a false positive that every extension would meet.
 
 ### A private term list
 
