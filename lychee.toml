@@ -13,9 +13,10 @@ include_fragments = "anchor-only"
 # template and the issue forms. lychee still skips git-ignored files. With
 # hidden on, lychee would walk into .git/ as well, at any depth, so
 # exclude_path keeps it out, with either separator, since the link check
-# also runs on Windows.
+# also runs on Windows. It also leaves out the recorded runs of eval cases,
+# which hold what a model wrote, links included (ADR 25).
 hidden = true
-exclude_path = ['(^|[/\\])\.git[/\\]']
+exclude_path = ['(^|[/\\])\.git[/\\]', '(^|[/\\])evals[/\\](.*[/\\])?recordings[/\\]']
 
 # lychee 0.24.2's default file types, plus YAML for the issue forms and
 # workflows. It reads YAML as plain text, so it finds full URLs only.
