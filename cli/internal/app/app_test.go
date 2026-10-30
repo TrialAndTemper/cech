@@ -56,6 +56,9 @@ func TestRun(t *testing.T) {
 		{"build --release with another pre-release", []string{"build", "--release", "0.1.0-beta.1"}, ExitUsage, "", `build --release takes X.Y.Z or X.Y.Z-rc.N, got "0.1.0-beta.1"`},
 		{"build --json -C empty", []string{"build", "--json", "-C", ""}, ExitUsage, "", `build -C takes a directory, got ""`},
 		{"build --release empty", []string{"build", "--release", ""}, ExitUsage, "", `build --release takes X.Y.Z or X.Y.Z-rc.N, got ""`},
+		{"eval --json without --check", []string{"eval", "--json"}, ExitUsage, "", "eval runs only with --check"},
+		{"eval --check --json with an argument", []string{"eval", "--check", "--json", "extra"}, ExitUsage, "", `eval takes no arguments, got "extra"`},
+		{"eval --check --json -C empty", []string{"eval", "--check", "--json", "-C", ""}, ExitUsage, "", `eval -C takes a directory, got ""`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

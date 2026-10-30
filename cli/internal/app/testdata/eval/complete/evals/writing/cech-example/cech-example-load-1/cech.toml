@@ -1,0 +1,11 @@
+family = "trigger"
+expect = "load"
+wording = "matched"
+
+[recordings.claude-code]
+pass = ["loaded"]
+fail = ["not-loaded", "unknown-skill"]
+
+[recordings.codex]
+pass = ["loaded", "real-run"]
+fail = ["not-loaded"]

@@ -1,0 +1,6 @@
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_1","name":"Skill","input":{"skill":"cech-example:cech-example"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_1"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"toolu_2","name":"Write","input":{"file_path":"/cech/workspace/COMMIT_MSG","content":"Fix the last page of the pager\n\nThe page loop stopped one item early, so a last page of one item was lost.\n"}}]}}
+{"type":"user","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"toolu_2"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Fix the last page of the pager\n\nThe page loop stopped one item early, so a last page of one item was lost."}]}}
+{"type":"result","subtype":"success","is_error":false,"result":"Fix the last page of the pager\n\nThe page loop stopped one item early, so a last page of one item was lost."}

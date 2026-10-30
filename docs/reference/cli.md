@@ -9,6 +9,7 @@ The golden files in `cli/internal/app/testdata/` hold the exact output of each c
 | --- | --- |
 | `cech version` | Prints `cech <version>`; with `--json`, one object with `version`, `go`, `os` and `arch` |
 | `cech build` | Writes the files generated from a marketplace's sources ([Generated files](generated-files.md)) |
+| `cech eval --check` | Checks a marketplace's eval cases without a model ([Evals](evals.md)) |
 | `cech completion <shell>` | Prints a completion script for the shell to source |
 | `cech help [command]` | Prints the help of `cech` or of a command |
 
@@ -22,6 +23,23 @@ The golden files in `cli/internal/app/testdata/` hold the exact output of each c
 | `--release V` | Builds a catalogue release ([A marketplace](marketplace.md#release-builds)) |
 | `-C DIR` | Runs in `DIR`, the marketplace's root, instead of the current directory |
 | `--json` | Prints one object with `mode`, `ok`, `files`, `skipped` and `errors`; each entry in `files` and `skipped` has a `path` and a `change` |
+
+### `cech eval`
+
+`cech eval` needs `--check`; without it, the command line is wrong.
+
+| Flag | Effect |
+| --- | --- |
+| `--check` | Checks the eval folders, and prints each finding on stdout as `<path>: <problem>`, with the path from the marketplace root, in path order; with any finding, it fails and says on stderr how many |
+| `-C DIR` | Runs in `DIR`, the marketplace's root, instead of the current directory; an empty `DIR` is a wrong command line |
+| `--json` | Prints one object with `ok`, `cases` (the number of case folders found), `recordings` (the number of recordings read), `findings`, each with a `path` and a `message`, and `errors` |
+
+It reads the marketplace as `cech build` does.
+When `cech build` would reject a source, it reports that as an error and checks no eval folder; with no `plugins/` and no `evals/`, it passes with nothing checked, and says so on stderr, or with `--json` reports no cases.
+A denied read skips the rest of its case or folder.
+It also skips the check of minimum cases for the plugin it affects, or for every plugin when it is above the cases.
+An error says what was skipped.
+The command then exits 3, unless a finding or another error makes it exit 1.
 
 ## Output
 
