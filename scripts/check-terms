@@ -19,17 +19,19 @@
 # The options pick one mode each, so they are parsed by hand; a parser
 # would be one more dependency for five options.
 #
-# Requires: git, gitleaks (pinned in mise.toml; `mise run` puts it on
-# PATH), and the POSIX awk, sed, tr and mktemp.
+# Requires: git, betterleaks (pinned in mise.toml at the version in
+# cli/go.mod, ADR 24; `mise run` puts it on PATH), and the POSIX awk,
+# sed, tr and mktemp.
 #
-# Tiers 1 and 2 come from checks/terms/. Tier 3 reads the file named by
-# CECH_PRIVATE_TERMS (default .private/denylist.txt): one case-insensitive
-# regex per line, `#` for comments. Without it tier 3 is skipped, unless
-# CECH_REQUIRE_PRIVATE_TERMS=1. A tier-3 hit prints file, line and the
-# term's line number in the list, never the term. If a file path holds a
-# private term, later tier-3 hits print only their rule and commit. While
-# tier 3 has hits, public hits print only their rule, since their text or
-# path could hold a private term.
+# Tiers 1 and 2 come from checks/terms/, whose rules.toml extends the
+# generic rules in cli/internal/terms/generic.toml. Tier 3 reads the
+# file named by CECH_PRIVATE_TERMS (default .private/denylist.txt): one
+# case-insensitive regex per line, `#` for comments. Without it tier 3
+# is skipped, unless CECH_REQUIRE_PRIVATE_TERMS=1. A tier-3 hit prints
+# file, line and the term's line number in the list, never the term. If
+# a file path holds a private term, later tier-3 hits print only their
+# rule and commit. While tier 3 has hits, public hits print only their
+# rule, since their text or path could hold a private term.
 #
 # Exit status: 0 clean, 1 hits found, 2 the check could not run.
 
@@ -125,9 +127,23 @@ parse_args() {
   fi
 }
 
-check_gitleaks() {
-  command -v gitleaks > /dev/null 2>&1 ||
-    die "gitleaks not found; run the check as \`mise run terms\`, which puts the pinned gitleaks on PATH"
+# The gate and `cech check` must match the same way (ADR 24), so the
+# pinned CLI must be the module version in cli/go.mod.
+check_betterleaks() {
+  local have want
+  command -v betterleaks > /dev/null 2>&1 ||
+    die "betterleaks not found; run the check as \`mise run terms\`, which puts the pinned betterleaks on PATH"
+  have=$(betterleaks version 2> /dev/null) || die "cannot run betterleaks version"
+  have=$(printf '%s\n' "${have}" | tr -d '\r')
+  have=${have#v}
+  # The block form of require, or a one-line require.
+  want=$(awk '$1 == "github.com/betterleaks/betterleaks" { print $2; exit }
+    $1 == "require" && $2 == "github.com/betterleaks/betterleaks" { print $3; exit }' \
+    "${ROOT}/cli/go.mod" | tr -d '\r')
+  want=${want#v}
+  [ -n "${want}" ] || die "cli/go.mod does not require github.com/betterleaks/betterleaks"
+  [ "${have}" = "${want}" ] ||
+    die "betterleaks ${have} on PATH, but cli/go.mod requires ${want}; pin the same version in mise.toml"
 }
 
 # Read the environment once: the private list, and the branch name that
@@ -143,13 +159,27 @@ read_env() {
   fi
 }
 
-# gitleaks drops any finding listed in a .gitleaksignore file. Exceptions
-# belong in checks/terms/ or the private list, so refuse to run with one.
+# betterleaks drops any finding listed in a .betterleaksignore or
+# .gitleaksignore file. Exceptions belong in checks/terms/ or the private
+# list, so refuse to run with either.
 refuse_ignore_file() {
-  local tracked
-  tracked=$(git -C "${ROOT}" ls-files -- .gitleaksignore '*/.gitleaksignore')
-  if [ -e "${ROOT}/.gitleaksignore" ] || [ -n "${tracked}" ]; then
-    die "remove .gitleaksignore; put exceptions in checks/terms/ or the private list"
+  local name tracked
+  for name in .betterleaksignore .gitleaksignore; do
+    tracked=$(git -C "${ROOT}" ls-files -- "${name}" "*/${name}")
+    if [ -e "${ROOT}/${name}" ] || [ -n "${tracked}" ]; then
+      die "remove ${name}; put exceptions in checks/terms/ or the private list"
+    fi
+  done
+}
+
+# native_path <path>: the path as a native program reads it. Under Git
+# Bash on Windows, betterleaks cannot open a /c/... path written into a
+# file, since only arguments are converted.
+native_path() {
+  if command -v cygpath > /dev/null 2>&1; then
+    cygpath -m -- "$1"
+  else
+    printf '%s\n' "$1"
   fi
 }
 
@@ -157,8 +187,18 @@ refuse_ignore_file() {
 # `-` and `_` between words match each other or nothing, and require a
 # word boundary at each end that is a word character.
 write_public_config() {
-  local n line name words re start end
-  cat "${TERMS_DIR}/rules.toml"
+  local n line name words re start end generic
+  # betterleaks resolves an extend path against the working directory,
+  # and each scan runs from a scratch directory, so make it absolute.
+  generic=$(native_path "${ROOT}/cli/internal/terms/generic.toml")
+  case "${generic}" in
+    *"'"* | *'"'* | *\\* | *'&'* | *'|'*)
+      die "cannot use a repository path that holds a quote, a backslash, & or |: ${generic}"
+      ;;
+    *) ;;
+  esac
+  sed -e "s|^path = \"cli/internal/terms/generic\.toml\"\$|path = \"${generic}\"|" \
+    "${TERMS_DIR}/rules.toml"
   n=0
   while IFS= read -r line || [ -n "${line}" ]; do
     n=$((n + 1))
@@ -218,14 +258,16 @@ write_templates() {
     > "${SCRATCH}/private-hidden.tmpl"
 }
 
-# scan <template> <config> <tree | paths | meta | git>: run one gitleaks
+# scan <template> <config> <tree | paths | meta | git>: run one betterleaks
 # scan over that directory under SCRATCH, or over history, and print its
-# hits. Private runs hide gitleaks' own messages, which could quote a
+# hits. Private runs hide betterleaks' own messages, which could quote a
 # term.
 scan() {
   local template config target out status
   template=$1 config=$2 target=$3
-  set -- -c "${config}" --no-banner --exit-code 3 --ignore-gitleaks-allow \
+  # The stdlib engine is the one `cech check` uses (ADR 24 item 4); the
+  # CLI's default is go-re2.
+  set -- -c "${config}" --no-banner --exit-code 3 --ignore-gitleaks-allow --regex-engine stdlib \
     -i "${SCRATCH}/empty" -f template --report-template "${SCRATCH}/${template}.tmpl" -r -
   if [ "${target}" = git ]; then
     set -- git "$@" --log-opts="${REVS}" .
@@ -237,10 +279,10 @@ scan() {
   status=0
   case "${template}" in
     public | hidden)
-      out=$(cd -- "${target}" && gitleaks "$@" -l error) || status=$?
+      out=$(cd -- "${target}" && betterleaks "$@" -l error) || status=$?
       ;;
     *)
-      out=$(cd -- "${target}" && gitleaks "$@" -l fatal 2> /dev/null) || status=$?
+      out=$(cd -- "${target}" && betterleaks "$@" -l fatal 2> /dev/null) || status=$?
       ;;
   esac
   if [ -n "${out}" ]; then printf '%s\n' "${out}"; fi
@@ -248,7 +290,7 @@ scan() {
     0) ;;
     3) HITS=1 ;;
     *)
-      printf 'terms: gitleaks failed (%s, exit %s)\n' "${template}" "${status}" >&2
+      printf 'terms: betterleaks failed (%s, exit %s)\n' "${template}" "${status}" >&2
       BROKEN=1
       ;;
   esac
@@ -316,7 +358,7 @@ main() {
   local targets template t private_hits
 
   parse_args "$@"
-  check_gitleaks
+  check_betterleaks
   read_env
   refuse_ignore_file
 

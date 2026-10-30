@@ -1,7 +1,7 @@
 # Term tiers in `cech check` and in CECH's gate
 
 The rule files, the engine settings, the private list and the scan scope that [ADR 24](../../../docs/adr/0024-the-term-check-engine.md) decides, for the term tiers of `cech check` and for CECH's own term gate.
-The package `cli/internal/terms` follows these rules; the next change moves CECH's gate onto them (items 1 to 8 and 33 to 35).
+The package `cli/internal/terms` and CECH's gate follow these rules.
 The change that adds the `cech check` command calls the package, and builds what the package leaves to it: reading the environment for items 19 and 22; the output of items 22 and 24 on stderr and in `--json`; item 25; the exit statuses of items 24, 27, 29 and 32, exit 2 for `--range` outside an extension included; item 30's `--json` field names; and the tests of items 36 to 44.
 [research.md](research.md) holds the measurements behind the decision.
 
@@ -110,9 +110,11 @@ The items are numbered; "item N" below means one of them, never a term rule.
 
 ## CECH's gate
 
-33. `scripts/check-terms` runs `betterleaks` with the options it gives gitleaks today, and needs `betterleaks` on `PATH`.
+33. `scripts/check-terms` runs `betterleaks` with the options it gave gitleaks, plus `--regex-engine stdlib`, and needs `betterleaks` on `PATH`.
+    The Betterleaks CLI matches with `go-re2` by default and the module with Go's `regexp`, so without that option the two could match differently.
+    The gate keeps its own exit statuses (ADR 4): 0 clean, 1 hits, 2 could not run, an unresolvable range included, where `cech check` exits 3.
 34. Each config it writes copies `checks/terms/rules.toml` with the `[extend] path` made absolute, since Betterleaks resolves it against the working directory and the script runs each scan from a scratch directory.
-    On Windows it writes the path in the form native programs read, as `cygpath -m` or `pwd -W` gives it under Git Bash; the pull request records that check, done by hand, since bats does not run there (ADR 4 item 5).
+    On Windows it writes the path in the form native programs read, as `cygpath -m` gives it under Git Bash; CI's Windows leg runs the gate, which checks it, since bats does not run there (ADR 4 item 5).
 35. `test/terms.bats` keeps its guards, now named for Betterleaks, and adds a case for item 6.
 
 ## Tests for `cech check`
