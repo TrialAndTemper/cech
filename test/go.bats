@@ -27,6 +27,11 @@ setup_file() {
       cp -p -- "${SRC}/${f}" "${TEMPLATE}/${f}"
     fi
   done < "${BATS_FILE_TMPDIR}/tracked"
+  # Fetch the go.mod files that `go mod tidy` reads, such as those of a
+  # dependency's own test requirements, which no build has fetched: the
+  # cases run with the network off. Best effort: a module still missing
+  # fails the lint case, and an untidy cli/go.mod fails lint:go.
+  GOTOOLCHAIN=local GOWORK=off go -C "${TEMPLATE}/cli" mod tidy -diff > /dev/null || :
 }
 
 setup() {
@@ -64,12 +69,17 @@ func Bad() { fmt.Printf("%d\n", "x") }
 // Remove drops its error.
 func Remove() { os.Remove("x") }
 '
-  printf '\nrequire example.com/unused v1.0.0\n' >> "${REPO}/cli/go.mod"
+  # Untidy in a way go can settle offline (GOPROXY=off): a direct
+  # requirement marked indirect.
+  local toml
+  toml=$(awk '$1 == "github.com/BurntSushi/toml" { print $2 }' "${SRC}/cli/go.mod")
+  sed -e 's|^\(.github.com/BurntSushi/toml v[^ ]*\)$|\1 // indirect|' \
+    "${SRC}/cli/go.mod" > "${REPO}/cli/go.mod"
   run_go lint
   assert_status 1
   assert_output_has "fmt.Printf format %d has arg"
   assert_output_has "(errcheck)"
-  assert_output_has "-require example.com/unused v1.0.0"
+  assert_output_has "toml ${toml} // indirect"
 }
 
 # Format

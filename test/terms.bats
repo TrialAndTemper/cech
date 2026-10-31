@@ -27,6 +27,9 @@ setup_file() {
   cp -- "${SRC}/scripts/check-terms" "${REPO}/scripts/"
   cp -R -- "${SRC}/scripts/lib" "${REPO}/scripts/"
   cp -R -- "${SRC}/checks" "${REPO}/"
+  mkdir -p "${REPO}/cli/internal/terms"
+  cp -- "${SRC}/cli/go.mod" "${REPO}/cli/"
+  cp -- "${SRC}/cli/internal/terms/generic.toml" "${REPO}/cli/internal/terms/"
   printf 'Quuxly Cloud\nZorp++\n' >> "${REPO}/checks/terms/names.txt"
   commit_template
 }
@@ -53,8 +56,8 @@ plant() {
 
 # Public tiers
 
-# Guards a gitleaks bump that changes how keywords or allowlists match,
-# so that a rule in checks/terms/rules.toml stops reporting its shape,
+# Guards a betterleaks bump that changes how keywords, allowlists or the
+# extend path match, so that a generic rule stops reporting its shape,
 # an allowlisted address hides another on its line, or the inline
 # marker hides a hit on another line.
 @test "every rule of the file tier reports its shape" {
@@ -79,6 +82,17 @@ plant() {
   done
 }
 
+# Guards Betterleaks' default rules dropped through the chain of extends
+# (checks/terms/rules.toml, then generic.toml, then the defaults), which
+# is at Betterleaks' depth limit: past it, an extend is skipped with no
+# error. The token is built in pieces, so this file passes the check.
+@test "the default rules run through the extends" {
+  plant "key ghp_""aB3dE5fG7hI9jK1mN3pQ5rS7tU9vW1xY3zA5"
+  run_terms --staged
+  assert_status 1
+  assert_output_has "planted.md:1: github-pat:"
+}
+
 # Guards BSD sed on macOS building a name rule that misses a spelling or
 # a name that ends in punctuation.
 @test "names in every spelling" {
@@ -98,18 +112,38 @@ plant() {
   done
 }
 
-# Private tier
-
-# Guards a gitleaks bump after which --ignore-gitleaks-allow no longer
-# makes it ignore the gitleaks:allow marker.
-@test "the gitleaks marker hides nothing" {
-  plant "see ${SECRET} here gitleaks"":allow"
+# Guards a mise pin bumped without cli/go.mod, or the reverse: the gate
+# and `cech check` would then match differently (ADR 24) while both pass.
+@test "a pin that differs from cli/go.mod stops the check" {
+  sed -e 's|^\(.*github.com/betterleaks/betterleaks\) v.*|\1 v0.0.1|' \
+    "${SRC}/cli/go.mod" > "${REPO}/cli/go.mod"
   run_terms --staged
-  assert_status 1
-  assert_output_has "planted.md:1: private-term-2"
+  assert_status 2
+  assert_output_has "cli/go.mod requires 0.0.1"
 }
 
-# Guards a gitleaks bump that changes how the private tier reports a hit,
+# Private tier
+
+# Guards a betterleaks bump after which --ignore-gitleaks-allow no longer
+# makes it ignore both of its allow markers.
+@test "the engine's markers hide nothing" {
+  local m
+  for m in betterleaks gitleaks; do
+    plant "see ${SECRET} here ${m}"":allow"
+    run_terms --staged
+    # Name the marker that broke.
+    assert_status 1 || {
+      echo "marker: ${m}"
+      return 1
+    }
+    assert_output_has "planted.md:1: private-term-2" || {
+      echo "marker: ${m}"
+      return 1
+    }
+  done
+}
+
+# Guards a betterleaks bump that changes how the private tier reports a hit,
 # so that the public hit around the term shows the term or its location.
 @test "private term inside a public hit" {
   plant "Write to jane@${SECRET}.com."
@@ -128,7 +162,7 @@ plant() {
   assert_output_has "planted.md:1: private-term-2"
 }
 
-# Guards a gitleaks bump that skips a rule it cannot compile instead of
+# Guards a betterleaks bump that skips a rule it cannot compile instead of
 # failing, which would drop the private tier unseen.
 @test "a broken private list stops the check" {
   printf '%s\na++\n' "${SECRET}" > "${BATS_TEST_TMPDIR}/broken.txt"
@@ -173,7 +207,7 @@ plant() {
 
 # History
 
-# Guards a gitleaks bump after which its git scan reads --log-opts
+# Guards a betterleaks bump after which its git scan reads --log-opts
 # differently or no longer scans removed lines.
 @test "private term added then removed" {
   commit_and_drop gone.md "note ${SECRET}"
