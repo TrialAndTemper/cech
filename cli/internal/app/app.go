@@ -4,7 +4,8 @@
 package app
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"flag"
 	"fmt"
@@ -133,13 +134,22 @@ func runVersion(args []string, stdout, stderr io.Writer, info version.Info) int 
 	if !*asJSON {
 		return write(stdout, stderr, "cech "+info.Version+"\n")
 	}
-	out, err := json.Marshal(info)
+	out, err := json.Marshal(info, jsonOptions)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "cech: %v\n", err)
 		return ExitFailure
 	}
 	return write(stdout, stderr, string(out)+"\n")
 }
+
+// jsonOptions keep --json output as encoding/json wrote it, so the
+// output contract holds byte for byte (ADR 15 item 5): <, >, &, U+2028
+// and U+2029 escaped, and invalid UTF-8 as U+FFFD.
+var jsonOptions = json.JoinOptions(
+	jsontext.EscapeForHTML(true),
+	jsontext.EscapeForJS(true),
+	jsontext.AllowInvalidUTF8(true),
+)
 
 // usageError reports a wrong command line on stderr.
 func usageError(stderr io.Writer, msg string) int {

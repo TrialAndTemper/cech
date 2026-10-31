@@ -2,7 +2,7 @@ package app
 
 import (
 	"bytes"
-	"encoding/json"
+	"encoding/json/v2"
 	"io/fs"
 	"maps"
 	"os"
@@ -116,13 +116,17 @@ func TestBuildRelease(t *testing.T) {
 	if code, _, stderr := runIn(t, "build", "--release", "0.2.0-rc.1", "-C", dir); code != ExitOK {
 		t.Fatalf("build --release: exit code %d; stderr:\n%s", code, stderr)
 	}
-	var catalogue struct{ Name string }
+	var catalogue struct {
+		Name string `json:"name"`
+	}
 	readJSON(t, filepath.Join(dir, ".claude-plugin", "marketplace.json"), &catalogue)
 	if catalogue.Name != "acme-0-2-0-rc-1" {
 		t.Errorf("catalogue name %q, want acme-0-2-0-rc-1", catalogue.Name)
 	}
 	for _, p := range strings.Split(strings.TrimSpace(want), "\n")[1:] {
-		var manifest struct{ Version string }
+		var manifest struct {
+			Version string `json:"version"`
+		}
 		readJSON(t, filepath.Join(dir, filepath.FromSlash(strings.TrimPrefix(p, "update "))), &manifest)
 		if manifest.Version != "0.2.0-rc.1" {
 			t.Errorf("%s: version %q, want 0.2.0-rc.1", p, manifest.Version)
@@ -970,5 +974,37 @@ func move(from, to string) func(*testing.T, string) {
 		if err := os.Rename(filepath.Join(dir, filepath.FromSlash(from)), filepath.Join(dir, filepath.FromSlash(to))); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+// TestBuildJSONEscapes checks that build --json escapes <, > and & in
+// an error as encoding/json did.
+func TestBuildJSONEscapes(t *testing.T) {
+	dir := t.TempDir()
+	copyTree(t, filepath.Join("testdata", "build", "acme", "out"), dir, nil)
+	manifest := "plugins/writing/acme-prose/.claude-plugin/plugin.json"
+	replaceIn(manifest, `"name": "acme-prose"`, `"name": "<a&b>"`)(t, dir)
+	code, stdout, _ := runIn(t, "build", "--check", "--json", "-C", dir)
+	if code != ExitFailure {
+		t.Errorf("exit code %d, want %d", code, ExitFailure)
+	}
+	want := manifest + `: name is \"\u003ca\u0026b\u003e\", not the folder's name`
+	if !strings.Contains(stdout, want) {
+		t.Errorf("stdout %s, want it to hold %s", stdout, want)
+	}
+}
+
+// TestBuildInvalidUTF8 checks that a plugin.json with invalid UTF-8 in
+// its strings builds, as with encoding/json, and that --check finds
+// nothing to rewrite.
+func TestBuildInvalidUTF8(t *testing.T) {
+	dir := t.TempDir()
+	copyTree(t, filepath.Join("testdata", "build", "acme", "out"), dir, nil)
+	manifest := "plugins/writing/acme-prose/.claude-plugin/plugin.json"
+	replaceIn(manifest, `"name": "Alice Example"`, "\"name\": \"Alice \xff\"")(t, dir)
+	replaceIn(manifest, `"license": "MIT"`, "\"license\": \"MIT \xff\"")(t, dir)
+	replaceIn(manifest, `"maintainers"`, "\"note\": \"\xff\", \"maintainers\"")(t, dir)
+	if code, stdout, stderr := runIn(t, "build", "--check", "-C", dir); code != ExitOK {
+		t.Errorf("--check: exit code %d; stdout:\n%s\nstderr:\n%s", code, stdout, stderr)
 	}
 }

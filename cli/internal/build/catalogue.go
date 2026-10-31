@@ -1,8 +1,8 @@
 package build
 
 import (
-	"bytes"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 
 	"github.com/TrialAndTemper/cech/cli/internal/marketplace"
 )
@@ -42,11 +42,13 @@ func Catalogue(m *marketplace.Marketplace, name string) []byte {
 			Category:    p.Category,
 		})
 	}
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "  ")
-	// Strings, and a struct of them, always encode.
-	_ = enc.Encode(c)
-	return buf.Bytes()
+	// The catalogue is laid out and escaped as encoding/json wrote it:
+	// <, > and & as they are, and U+2028 and U+2029 escaped. Invalid
+	// UTF-8 becomes U+FFFD, so the encode cannot fail.
+	out, _ := json.Marshal(c,
+		jsontext.WithIndent("  "),
+		jsontext.EscapeForJS(true),
+		jsontext.AllowInvalidUTF8(true),
+	)
+	return append(out, '\n')
 }

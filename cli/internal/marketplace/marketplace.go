@@ -6,7 +6,8 @@ package marketplace
 
 import (
 	_ "embed"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -537,6 +538,10 @@ func readFile(fsys fs.FS, p string) ([]byte, error) {
 	return data, nil
 }
 
+// readOptions read plugin.json as encoding/json did: invalid UTF-8 in
+// a string reads as U+FFFD rather than failing.
+var readOptions = jsontext.AllowInvalidUTF8(true)
+
 func (p *Plugin) readManifest(src []byte) error {
 	name, ok, err := jsonedit.String(src, "name")
 	switch {
@@ -547,10 +552,8 @@ func (p *Plugin) readManifest(src []byte) error {
 	case name != p.Name:
 		return fmt.Errorf("name is %q, not the folder's name %q", name, p.Name)
 	}
-	// A map, not a struct, since encoding/json matches struct fields
-	// without regard to case, and the harnesses read only "author".
-	var top map[string]json.RawMessage
-	if err := json.Unmarshal(src, &top); err != nil {
+	var top map[string]jsontext.Value
+	if err := json.Unmarshal(src, &top, readOptions); err != nil {
 		return err
 	}
 	if author, ok := top["author"]; ok {
@@ -571,9 +574,9 @@ func (p *Plugin) readManifest(src []byte) error {
 
 // readMaintainers reads the maintainers in the manifest's metadata, an
 // object the harnesses leave to the plugin.
-func (p *Plugin) readMaintainers(meta json.RawMessage) error {
-	var fields map[string]json.RawMessage
-	if err := json.Unmarshal(meta, &fields); err != nil || fields == nil {
+func (p *Plugin) readMaintainers(meta jsontext.Value) error {
+	var fields map[string]jsontext.Value
+	if err := json.Unmarshal(meta, &fields, readOptions); err != nil || fields == nil {
 		return errors.New("not an object")
 	}
 	list, ok := fields["maintainers"]
@@ -581,7 +584,7 @@ func (p *Plugin) readMaintainers(meta json.RawMessage) error {
 		return nil
 	}
 	var users []string
-	if err := json.Unmarshal(list, &users); err != nil || users == nil {
+	if err := json.Unmarshal(list, &users, readOptions); err != nil || users == nil {
 		return errors.New("maintainers is not an array of strings")
 	}
 	for _, user := range users {
