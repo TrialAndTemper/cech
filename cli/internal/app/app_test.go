@@ -259,3 +259,17 @@ func checkGolden(t *testing.T, name string, got []byte) {
 		t.Errorf("stdout differs from %s\ngot:\n%s\nwant:\n%s", path, got, want)
 	}
 }
+
+// TestVersionJSONInvalidUTF8 checks that --json still prints one JSON
+// object when a string holds invalid UTF-8, writing it as U+FFFD.
+func TestVersionJSONInvalidUTF8(t *testing.T) {
+	odd := version.Info{Version: "1.0\xff", Go: "go", OS: "os", Arch: "arch"}
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"version", "--json"}, &stdout, &stderr, odd); code != ExitOK {
+		t.Fatalf("exit code %d; stderr:\n%s", code, stderr.String())
+	}
+	want := `{"version":"1.0` + "\uFFFD" + `","go":"go","os":"os","arch":"arch"}` + "\n"
+	if got := stdout.String(); got != want {
+		t.Errorf("got %s, want %s", got, want)
+	}
+}

@@ -1,7 +1,7 @@
 package app
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -125,7 +125,7 @@ func runBuild(opts buildOptions, stdout, stderr io.Writer) int {
 		code = ExitFailure
 	}
 	if opts.asJSON {
-		out, err := json.Marshal(res)
+		out, err := json.Marshal(res, jsonOptions)
 		if err != nil {
 			_, _ = fmt.Fprintf(stderr, "cech: %v\n", err)
 			return ExitFailure

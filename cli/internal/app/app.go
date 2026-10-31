@@ -4,7 +4,8 @@
 package app
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
@@ -23,6 +24,11 @@ const (
 	ExitUsage       = 2 // the command line is wrong
 	ExitUnreachable = 3 // it could not reach what it needs
 )
+
+// jsonOptions write invalid UTF-8 as U+FFFD rather than failing, so
+// --json prints one JSON object even when a string holds bytes from
+// outside cech, such as a path in an error (ADR 15 item 5).
+var jsonOptions = jsontext.AllowInvalidUTF8(true)
 
 // Run runs the command line args, without the program name, and returns
 // the exit code.
@@ -169,7 +175,7 @@ func runVersion(asJSON bool, stdout, stderr io.Writer, info version.Info) int {
 	if !asJSON {
 		return write(stdout, stderr, "cech "+info.Version+"\n")
 	}
-	out, err := json.Marshal(info)
+	out, err := json.Marshal(info, jsonOptions)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "cech: %v\n", err)
 		return ExitFailure

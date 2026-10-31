@@ -6,7 +6,8 @@ package marketplace
 
 import (
 	_ "embed"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -547,9 +548,7 @@ func (p *Plugin) readManifest(src []byte) error {
 	case name != p.Name:
 		return fmt.Errorf("name is %q, not the folder's name %q", name, p.Name)
 	}
-	// A map, not a struct, since encoding/json matches struct fields
-	// without regard to case, and the harnesses read only "author".
-	var top map[string]json.RawMessage
+	var top map[string]jsontext.Value
 	if err := json.Unmarshal(src, &top); err != nil {
 		return err
 	}
@@ -571,8 +570,8 @@ func (p *Plugin) readManifest(src []byte) error {
 
 // readMaintainers reads the maintainers in the manifest's metadata, an
 // object the harnesses leave to the plugin.
-func (p *Plugin) readMaintainers(meta json.RawMessage) error {
-	var fields map[string]json.RawMessage
+func (p *Plugin) readMaintainers(meta jsontext.Value) error {
+	var fields map[string]jsontext.Value
 	if err := json.Unmarshal(meta, &fields); err != nil || fields == nil {
 		return errors.New("not an object")
 	}
