@@ -6,11 +6,12 @@ package app
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"runtime/debug"
 	"strings"
+
+	"github.com/spf13/cobra"
 
 	"github.com/TrialAndTemper/cech/cli/internal/version"
 )
@@ -23,57 +24,15 @@ const (
 	ExitUnreachable = 3 // it could not reach what it needs
 )
 
-// command is one cech command. The table of them drives dispatch, the
-// usage list and cech help <command>.
-type command struct {
-	name    string
-	summary string // one line for the usage list
-	help    string // the text of cech help <command> and cech <command> -h
-	run     func(args []string, stdout, stderr io.Writer, info version.Info) int
-}
-
-// commands lists every command but help, sorted by name.
-var commands = []command{
-	{"build", "write the files generated from a marketplace's sources", buildHelp, runBuild},
-	{"version", "print the version of cech", versionHelp, runVersion},
-}
-
-// lookup returns the command named name.
-func lookup(name string) (command, bool) {
-	for _, c := range commands {
-		if c.name == name {
-			return c, true
-		}
-	}
-	return command{}, false
-}
-
-// usage returns the usage text, with a line for each command.
-func usage() string {
-	var b strings.Builder
-	b.WriteString("Usage: cech <command> [flags]\n\nCommands:\n")
-	for _, c := range commands {
-		fmt.Fprintf(&b, "  %-9s %s\n", c.name, c.summary)
-	}
-	b.WriteString("\nRun cech help <command>, or cech <command> -h, for the flags of a command.\n")
-	return b.String()
-}
-
-const versionHelp = `Usage: cech version [--json]
-
-Print the version of cech.
-
-Flags:
-  --json    print one JSON object with the version, the Go release
-            that built cech, and the OS and architecture it was built for
-`
-
 // Run runs the command line args, without the program name, and returns
 // the exit code.
 func Run(args []string, stdout, stderr io.Writer) int {
 	return run(args, stdout, stderr, version.Current())
 }
 
+// run runs the command line args, with output on stdout and stderr and
+// info as the version that cech version prints, and returns the exit
+// code.
 func run(args []string, stdout, stderr io.Writer, info version.Info) (code int) {
 	// Go exits 2 after a panic, ADR 15's code for a wrong command line, so
 	// a panic is reported as the failure it is. This catches panics in
@@ -88,49 +47,126 @@ func run(args []string, stdout, stderr io.Writer, info version.Info) (code int) 
 	if len(args) == 0 {
 		return usageError(stderr, "no command given")
 	}
-	if args[0] == "help" || isHelpFlag(args[0]) {
-		return runHelp(args[1:], stdout, stderr)
-	}
-	c, ok := lookup(args[0])
-	if !ok {
-		return usageError(stderr, fmt.Sprintf("unknown command %q", args[0]))
-	}
-	return c.run(args[1:], stdout, stderr, info)
-}
-
-// runHelp prints the usage, or with a command name that command's help.
-func runHelp(args []string, stdout, stderr io.Writer) int {
+	out := &outWriter{w: stdout}
+	root := newRoot(out, stdout, stderr, info, &code)
+	root.SetArgs(args)
+	// Commands report results through code and return an error only for a
+	// wrong command line, so every error here is one.
+	err := root.Execute()
 	switch {
-	case len(args) == 0, len(args) == 1 && (isHelpFlag(args[0]) || args[0] == "help"):
-		return write(stdout, stderr, usage())
-	case len(args) > 1:
-		return usageError(stderr, "help takes at most one command")
+	case out.err != nil:
+		_, _ = fmt.Fprintf(stderr, "cech: cannot write the output: %v\n", out.err)
+		return ExitFailure
+	case err != nil:
+		return usageError(stderr, strings.TrimRight(err.Error(), "\n"))
 	}
-	c, ok := lookup(args[0])
-	if !ok {
-		return usageError(stderr, fmt.Sprintf("no help for %q: unknown command", args[0]))
-	}
-	return write(stdout, stderr, c.help)
+	return code
 }
 
-func isHelpFlag(arg string) bool {
-	return arg == "-h" || arg == "-help" || arg == "--help"
-}
-
-func runVersion(args []string, stdout, stderr io.Writer, info version.Info) int {
-	flags := flag.NewFlagSet("version", flag.ContinueOnError)
-	flags.SetOutput(io.Discard)
-	asJSON := flags.Bool("json", false, "")
-	if err := flags.Parse(args); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			return write(stdout, stderr, versionHelp)
+// newRoot returns the command tree of cech. Cobra prints help and
+// completion scripts on out; the commands print their results on stdout
+// and their messages on stderr, and set *code to their exit code. info
+// is the version that cech version prints.
+func newRoot(out, stdout, stderr io.Writer, info version.Info, code *int) *cobra.Command {
+	root := &cobra.Command{
+		Use:   "cech",
+		Short: "cech is the command-line tool of CECH, a marketplace of agent skills",
+		// Cobra checks for an unknown command only when an argument
+		// starts the command line; this catches the rest, as cech -- or
+		// cech --help=false, which would otherwise print help and exit 0.
+		RunE: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return errors.New("no command given")
+			}
+			return fmt.Errorf("unknown command %q for \"cech\"", args[0])
+		},
+		// run prints errors on stderr and exits 2 (ADR 15 item 5).
+		SilenceErrors: true,
+		SilenceUsage:  true,
+	}
+	root.SetOut(out)
+	root.SetErr(stderr)
+	// cech and cech completion run only to refuse a missing command, so
+	// their usage shows the form with a command alone.
+	root.SetUsageTemplate(strings.Replace(root.UsageTemplate(),
+		"{{if .Runnable}}", "{{if and .Runnable (not .HasAvailableSubCommands)}}", 1))
+	root.AddCommand(
+		newBuildCommand(stdout, stderr, code),
+		newVersionCommand(stdout, stderr, info, code),
+	)
+	// Cobra adds the help flag, help and completion when the command line
+	// runs. Adding the flag here lets cech --help build find build; adding
+	// help and completion here lets them refuse a wrong command line and
+	// use cech's help text in place of Cobra's; adding all of them lets
+	// the tests walk the whole tree.
+	root.InitDefaultHelpFlag()
+	root.InitDefaultHelpCmd()
+	root.InitDefaultCompletionCmd()
+	for _, c := range root.Commands() {
+		switch c.Name() {
+		case "help":
+			// Keep Cobra's help, which completes a command's path, but give
+			// it cech's wording and refuse a command it does not know,
+			// where Cobra's prints the usage and exits 0.
+			c.Short = "print the help of cech or of a command"
+			c.Long = "Print the help of cech, or of the command named, as cech help completion bash."
+			c.Run = nil
+			c.RunE = func(c *cobra.Command, args []string) error {
+				target, rest, err := c.Root().Find(args)
+				if err != nil || len(rest) > 0 {
+					return fmt.Errorf("no help for %q: unknown command", strings.Join(args, " "))
+				}
+				target.InitDefaultHelpFlag()
+				return target.Help()
+			}
+		case "completion":
+			c.Short = "print the completion script of a shell"
+			c.Long = "Print the completion script of a shell, for the shell to source.\n" +
+				"Run cech completion <shell> --help for how to load it."
+			c.RunE = func(*cobra.Command, []string) error {
+				return errors.New("completion takes a shell: bash, zsh, fish or powershell")
+			}
+			for _, shell := range c.Commands() {
+				shell.Short = "print the completion script of " + shell.Name()
+			}
 		}
-		return usageError(stderr, err.Error())
 	}
-	if flags.NArg() > 0 {
-		return usageError(stderr, fmt.Sprintf("version takes no arguments, got %q", flags.Arg(0)))
+	return root
+}
+
+// noArgs refuses any argument to the command c, naming the first of args.
+func noArgs(c *cobra.Command, args []string) error {
+	if len(args) > 0 {
+		return fmt.Errorf("%s takes no arguments, got %q", c.Name(), args[0])
 	}
-	if !*asJSON {
+	return nil
+}
+
+// newVersionCommand returns cech version, which prints info on stdout,
+// any error on stderr, and sets *code to its exit code.
+func newVersionCommand(stdout, stderr io.Writer, info version.Info, code *int) *cobra.Command {
+	var asJSON bool
+	c := &cobra.Command{
+		Use:   "version",
+		Short: "print the version of cech",
+		Long:  "Print the version of cech.",
+		Args:  noArgs,
+		// No argument, so no file names to offer.
+		ValidArgsFunction: cobra.NoFileCompletions,
+		RunE: func(*cobra.Command, []string) error {
+			*code = runVersion(asJSON, stdout, stderr, info)
+			return nil
+		},
+	}
+	c.Flags().BoolVar(&asJSON, "json", false,
+		"print one JSON object with the version, the Go release that built cech, and the OS and architecture it was built for")
+	return c
+}
+
+// runVersion prints info on stdout, as JSON when asJSON is set, and any
+// error on stderr, and returns the exit code.
+func runVersion(asJSON bool, stdout, stderr io.Writer, info version.Info) int {
+	if !asJSON {
 		return write(stdout, stderr, "cech "+info.Version+"\n")
 	}
 	out, err := json.Marshal(info)
@@ -139,6 +175,22 @@ func runVersion(args []string, stdout, stderr io.Writer, info version.Info) int 
 		return ExitFailure
 	}
 	return write(stdout, stderr, string(out)+"\n")
+}
+
+// outWriter is Cobra's stdout. Cobra ignores a failed write of help, so
+// outWriter keeps the first error in err for run to report.
+type outWriter struct {
+	w   io.Writer
+	err error
+}
+
+// Write writes p to the wrapped writer and keeps the first error.
+func (o *outWriter) Write(p []byte) (int, error) {
+	n, err := o.w.Write(p)
+	if err != nil && o.err == nil {
+		o.err = err
+	}
+	return n, err
 }
 
 // usageError reports a wrong command line on stderr.
