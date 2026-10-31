@@ -32,7 +32,7 @@ Checked on 2026-10-27 with Go 1.27.3:
    Every command that writes takes `--dry-run`, which reports the changes and writes nothing.
 5. **Output is a contract.**
    - Results go to stdout, and messages and errors to stderr.
-   - Every command except `help` takes `--json` and then prints one JSON object on stdout, even when it fails after parsing its arguments; after an internal error, such as a panic, stdout holds no valid JSON, and the command exits 1.
+   - Every command except `help` and `completion`, whose output is help for people or a script for a shell, takes `--json` and then prints one JSON object on stdout, even when it fails after parsing its arguments; after an internal error, such as a panic, stdout holds no valid JSON, and the command exits 1.
      A minor release may add fields; removing a field, renaming it or changing its meaning is a breaking change.
    - Exit status: 0 done; 1 the command ran and met a failure, including a partial success; 2 a wrong command line; 3 something it needs could not be reached, so it could not decide.
      When a command both meets a failure and cannot decide something else, it exits 1, since a retry cannot fix the failure, and its output names both.
