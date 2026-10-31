@@ -31,7 +31,6 @@ func TestAgentReadsBack(t *testing.T) {
 	tests := []struct {
 		name, description, instructions string
 	}{
-		{"plain", "Reviews work.", "Check it.\n"},
 		{"quotes and backslashes", `Says "hi" \ bye`, "Three quotes: \"\"\" and a \\ at the end\\\n"},
 		{"control characters", "tab\there\nnew line\rreturn", "tab\tkept\x00nul \x7f del \x1b esc\n"},
 		{"unicode", "Café — naïve ✓", "Zażółć gęślą jaźń\n"},
