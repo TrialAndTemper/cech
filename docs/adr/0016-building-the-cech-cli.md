@@ -15,6 +15,7 @@ Checked on 2026-10-27 with Go 1.27.3: a module in a subdirectory takes its versi
 
 Checked on 2026-10-28: `go.yaml.in/yaml/v3` v3.0.5 (MIT and Apache-2.0) requires no other module.
 Checked on 2026-10-29: neither does `github.com/BurntSushi/toml` v1.6.0 (MIT).
+Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1.10.2 (Apache-2.0) requires, only two are built into the CLI: `github.com/spf13/pflag` (BSD-3-Clause), at its newest release v1.0.10, and `github.com/inconshreveable/mousetrap` v1.1.0 (Apache-2.0), which only Windows builds use.
 
 ## Decision
 
@@ -26,6 +27,7 @@ Checked on 2026-10-29: neither does `github.com/BurntSushi/toml` v1.6.0 (MIT).
    The list:
    - `github.com/BurntSushi/toml`: the harness data file is TOML ([ADR 9](0009-native-harness-features-first.md) item 5), as are `data/marketplace.toml` and CECH's categories file, and the standard library reads no TOML.
    - `go.yaml.in/yaml/v3`, the YAML project's maintained YAML package: `SKILL.md` and agent frontmatter are YAML, which the standard library does not read, and a parser of our own could read a description differently from the harnesses.
+   - `github.com/spf13/cobra`, with the `github.com/spf13/pflag` and `github.com/inconshreveable/mousetrap` it requires: the standard `flag` package has no command tree, generated help or shell completion.
 2. **Versions.**
    The CLI has its own SemVer versions, on the `cli/` tags of [ADR 14](0014-releases-and-versions.md) item 2.
    `cech version` prints `cech` and the version, and with `--json` also the Go release that built it and the OS and architecture it was built for.
@@ -43,6 +45,6 @@ Checked on 2026-10-29: neither does `github.com/BurntSushi/toml` v1.6.0 (MIT).
 
 ## Options considered
 
-- **A command-line framework:** a dependency for flags that the standard `flag` package handles.
+- **The standard `flag` package and a command table of our own:** no new modules, but each command adds its own parsing and help code, and shell completion is ours to write.
 - **govulncheck as a `tool` in `go.mod`:** puts its modules into `go.mod` and `go.sum`, among the binary's own dependencies.
 - **govulncheck as a merge gate:** a new report would block every pull request until Go is upgraded.
