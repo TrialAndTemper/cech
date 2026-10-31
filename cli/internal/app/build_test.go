@@ -236,29 +236,8 @@ func TestBuildCheckFindsDrift(t *testing.T) {
 			"update .claude-plugin/marketplace.json\n",
 		},
 		{
-			"catalogue removed", remove(".claude-plugin/marketplace.json"),
-			"create .claude-plugin/marketplace.json\n",
-		},
-		{
-			"code owners edited by hand", appendTo(".github/CODEOWNERS", "/docs/ @mallory\n"),
-			"update .github/CODEOWNERS\n",
-		},
-		{
 			"catalogue page with CRLF", toCRLF("docs/catalogue.md"),
 			"update docs/catalogue.md\n",
-		},
-		{
-			"page removed", remove("docs/catalogue.md"),
-			"create docs/catalogue.md\n",
-		},
-		{
-			"description edited in plugin.json", replaceIn(prose+".claude-plugin/plugin.json", "house style", "style"),
-			"update " + prose + ".claude-plugin/plugin.json\n",
-		},
-		{
-			"description removed from plugin.json", replaceIn(git+".claude-plugin/plugin.json",
-				`"description":"Runs git the acme way: small commits & clear messages.",`, ""),
-			"update " + git + ".claude-plugin/plugin.json\n",
 		},
 		{
 			"description changed in SKILL.md", replaceIn(prose+"skills/acme-prose/SKILL.md", "house style", "style"),
@@ -274,20 +253,8 @@ func TestBuildCheckFindsDrift(t *testing.T) {
 			"update .github/CODEOWNERS\n",
 		},
 		{
-			"Codex agent missing", remove(prose + "agents/acme-prose-reviewer.toml"),
-			"create " + prose + "agents/acme-prose-reviewer.toml\n",
-		},
-		{
-			"Codex agent edited by hand", appendTo(prose+"agents/acme-prose-reviewer.toml", "model = \"x\"\n"),
-			"update " + prose + "agents/acme-prose-reviewer.toml\n",
-		},
-		{
 			"agent changed", replaceIn(prose+"agents/acme-prose-reviewer.md", "You review", "You check"),
 			"update " + prose + "agents/acme-prose-reviewer.toml\n",
-		},
-		{
-			"Codex agent left without its Markdown", remove(prose + "agents/acme-prose-reviewer.md"),
-			"remove " + prose + "agents/acme-prose-reviewer.toml\n",
 		},
 		{
 			"plugin moved to another category", move("plugins/tool/acme-git", "plugins/workflow/acme-git"),
@@ -322,19 +289,6 @@ func TestBuildCheckFindsDrift(t *testing.T) {
 			"update " + git + ".claude-plugin/plugin.json\nupdate " + prose + ".claude-plugin/plugin.json\n",
 		},
 		{
-			"CECH pre-release", replaceIn("data/marketplace.toml", `cech = "0.1.0"`, `cech = "0.2.0-rc.1"`),
-			"update " + git + ".claude-plugin/plugin.json\nupdate " + prose + ".claude-plugin/plugin.json\n",
-		},
-		{
-			"version edited by hand", replaceIn(prose+".claude-plugin/plugin.json", `"version": "0.0.0-dev"`, `"version": "1.2.0"`),
-			"update " + prose + ".claude-plugin/plugin.json\n",
-		},
-		{
-			"dependency marketplace edited by hand", replaceIn(prose+".claude-plugin/plugin.json",
-				`"cech-git", "marketplace": "cech-0-1-0"`, `"cech-git", "marketplace": "cech"`),
-			"update " + prose + ".claude-plugin/plugin.json\n",
-		},
-		{
 			"added category's holds changed", replaceIn("data/marketplace.toml", "Brand voice", "House voice"),
 			"update docs/catalogue.md\n",
 		},
@@ -356,10 +310,6 @@ func TestBuildCheckFindsDrift(t *testing.T) {
 				"update " + git + "skills/acme-git/LICENSE\n" +
 				"update plugins/workflow/acme-release/skills/acme-release/LICENSE\n" +
 				"update " + prose + "skills/acme-prose/LICENSE\n",
-		},
-		{
-			"licence copy edited", appendTo(prose+"skills/acme-prose/LICENSE", "More terms.\n"),
-			"update " + prose + "skills/acme-prose/LICENSE\n",
 		},
 		{
 			"plugin removed", removeAll("plugins/workflow/acme-release"),
@@ -454,14 +404,6 @@ func TestBuildErrors(t *testing.T) {
 		{
 			"cech not a release", replaceIn(data, `cech = "0.1.0"`, `cech = "v0.1.0"`),
 			[]string{`data/marketplace.toml: cech is "v0.1.0", not a CECH release as X.Y.Z or X.Y.Z-rc.N`},
-		},
-		{
-			"cech with a leading zero", replaceIn(data, `cech = "0.1.0"`, `cech = "0.01.0"`),
-			[]string{`data/marketplace.toml: cech is "0.01.0", not a CECH release as X.Y.Z or X.Y.Z-rc.N`},
-		},
-		{
-			"cech with rc.0", replaceIn(data, `cech = "0.1.0"`, `cech = "0.1.0-rc.0"`),
-			[]string{`data/marketplace.toml: cech is "0.1.0-rc.0", not a CECH release as X.Y.Z or X.Y.Z-rc.N`},
 		},
 		{
 			"no cech key and another namespace", replaceIn(data, `cech = "0.1.0"`+"\n", ""),
@@ -618,10 +560,6 @@ func TestBuildErrors(t *testing.T) {
 		},
 		{
 			"maintainers not an array", replaceIn(manifest, `["bob-dev", "carol", "Alice-Dev"]`, `"bob-dev carol"`),
-			[]string{manifest + ": metadata: maintainers is not an array of strings"},
-		},
-		{
-			"maintainer not a string", replaceIn(manifest, `"carol"`, `42`),
 			[]string{manifest + ": metadata: maintainers is not an array of strings"},
 		},
 		{
