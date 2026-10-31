@@ -1,5 +1,7 @@
 # The cech command line on Cobra
 
+Implemented 2026-10-31; not maintained: the code and its tests are current.
+
 How `cech` parses its command line, prints help and completion scripts, and reports a wrong command line, once it runs on Cobra.
 The ADRs behind it are ADR 15 item 5 and ADR 16 items 1 and 3; what `cech build` does is in the spec of `cech build` under `done/`.
 
