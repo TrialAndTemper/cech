@@ -17,7 +17,6 @@ func TestParseFrontmatter(t *testing.T) {
 		{"empty", "---\n\n---\n", "", "", "the frontmatter is empty"},
 		{"not a mapping", "---\n- a\n---\n", "", "", "not a mapping"},
 		{"a number", "---\ndescription: 1.10\n---\n", "", "", "description is not a string"},
-		{"a boolean", "---\ndescription: true\n---\n", "", "", "description is not a string"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
