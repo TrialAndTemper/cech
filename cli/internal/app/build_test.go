@@ -509,6 +509,10 @@ func TestBuildErrors(t *testing.T) {
 			[]string{manifest + ": not valid JSON"},
 		},
 		{
+			"invalid UTF-8 in plugin.json", replaceIn(manifest, `"license": "MIT"`, "\"license\": \"MIT \xff\""),
+			[]string{manifest + ": not valid JSON: invalid UTF-8"},
+		},
+		{
 			"duplicate key in plugin.json", replaceIn(manifest, `"license": "MIT"`, `"license": "MIT", "license": "ISC"`),
 			[]string{manifest + `: duplicate key "license"`},
 		},
