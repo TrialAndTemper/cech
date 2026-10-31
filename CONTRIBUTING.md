@@ -123,7 +123,13 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
   "Tool" means something else: a tool pinned in `mise.toml`, the `tool` plugin category, a tool an agent calls, or a command-line program.
 - Shell scripts are POSIX sh that runs under dash, macOS sh and Git Bash, and pass shellcheck and shfmt.
   A change to a script comes with a test in `test/` for each way it could let a gate pass when it should fail, where review would likely miss it, such as after a tool bump, on another platform or on the staged tree; a comment on each case names the way it guards ([ADR 4](docs/adr/0004-gates-and-ci.md) item 5).
+  Such a case runs the script, task or config file that could let the gate pass, not the tool on its own.
   Check any other way by hand, and say so in the pull request.
+- A test in `test/` or `cli/` checks CECH's own code: a script, a task, a config or data file, the CLI's logic, or an option CECH chooses for a tool or library.
+  A case that guards how that code handles a difference between shells or platforms checks CECH's code too.
+  A case that only a change in Go, the shell, a tool or a library could break stays out.
+  Where CECH relies on a tool or library feature, one case that runs CECH's code shows that the feature still works.
+  A case that takes the same branch of CECH's code as another, with no new kind of input, stays out too.
 - Keep an ADR under 800 words of prose outside fenced code blocks ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 6); `mise run lint:adr` counts them.
 - Until the first plugin merges, an accepted ADR is edited in place, and the commit says why.
   From then on, it is not rewritten, apart from typo and link fixes: a refinement goes in a dated amendment note, and a different choice in a new ADR that supersedes it ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
