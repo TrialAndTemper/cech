@@ -1,14 +1,15 @@
 #!/usr/bin/env bats
 # shellcheck shell=bats
-# shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
+# shellcheck disable=SC2154 # bats sets BATS_*, status, output and lines; helpers.bash sets SRC
 # Tests of the mise tasks and the git hooks (ADR 4). As ADR 4 asks of
 # gate tests, each case guards a way `mise run check` or a hook could
 # pass when it should fail, where review would likely miss it, and says
 # which: most are a tool bump that changes what a gate sees, or a hook,
 # which checks the staged tree. The other ways, such as a task whose
 # command changes in mise.toml, show in the diff and were checked by
-# hand when their cases were dropped. The vuln task never blocks a merge
-# (ADR 16 item 3), so it has no case.
+# hand when their cases were dropped; the one exception is the line in
+# ci.yml that runs check, which the case that guards mise also runs. The
+# vuln task never blocks a merge (ADR 16 item 3), so it has no case.
 #
 # Requires: mise and bats (run it with `mise run test`), git >= 2.28
 # (init -b), and what the gates require.
@@ -148,18 +149,32 @@ commit_with_hooks() {
   assert_output_has "note.md"
 }
 
-# Guards a mise bump after which --continue-on-error, as CI runs check,
-# exits 0 when a gate fails.
+# Guards a mise bump after which --continue-on-error exits 0 when a
+# gate fails, or stops the other gates, and a change to the line in
+# ci.yml that runs check, such as a flag that hides a failure or a
+# dropped --continue-on-error. That line shows in the diff, but the
+# case runs it, as CI's bash does, on a check of its own: good waits for
+# bad, which fails.
 @test "check fails in CI when a gate fails" {
-  local dir="${BATS_TEST_TMPDIR}/ci"
+  local dir="${BATS_TEST_TMPDIR}/ci" line
+  line=$(sed -n 's/^ *run: \(mise run\( [^ ]*\)* check\)$/\1/p' .github/workflows/ci.yml)
+  # Exactly one line, so that the case runs CI's check command and
+  # nothing else.
+  run printf '%s\n' "${line}"
+  assert_output_has "mise run "
+  [ "${#lines[@]}" -eq 1 ] || {
+    printf 'want one line, got:\n%s\n' "${output}"
+    return 1
+  }
   mkdir -p "${dir}"
   printf '%s\n' '[task_config]' 'shell = "sh -o errexit -c"' '[tasks.bad]' \
-    'run = "exit 1"' '[tasks.good]' 'run = "true"' '[tasks.check]' \
-    'depends = ["bad", "good"]' > "${dir}/mise.toml"
+    'run = "exit 1"' '[tasks.good]' 'wait_for = ["bad"]' 'run = "echo good-ran"' \
+    '[tasks.check]' 'depends = ["bad", "good"]' > "${dir}/mise.toml"
   cd -- "${dir}" || return
-  run mise run --continue-on-error --output prefix check
+  run bash --noprofile --norc -eo pipefail -c "${line}"
   assert_status 1
   assert_output_has "[bad] exited with status 1"
+  assert_output_has "good-ran"
 }
 
 # Guards a suite run from a hook or rebase --exec, whose git variables
