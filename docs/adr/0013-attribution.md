@@ -62,3 +62,5 @@ Checked on 2026-10-17 (Claude Code 2.1.302), and, where a line says so, on 2026-
 - **`metadata.maintainers` in `SKILL.md`:** it passes too, but splits who answers for a plugin over two files, and the Agent Skills `metadata` map holds only strings, so the names would need a separator.
 - **A hand-written maintainers file or code owners file:** drifts from the manifests.
 - **Owners derived from git history:** commits show who changed a plugin, not who answers for it now, and some come from bots or tools.
+- **Hosts other than GitHub, such as GitLab:** GitLab reads its code owners file from the root, `docs/` or `.gitlab/` ([GitLab docs](https://docs.gitlab.com/user/project/codeowners/), read on 2026-10-31), and each host names its users and groups in its own way, so each needs its own design.
+  Supporting one is an addition, which nothing in this record rules out.
