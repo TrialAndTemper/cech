@@ -55,8 +55,10 @@ staged_tree() {
   assert_output_has "new.txt"
 }
 
-# Guards a shell, such as dash or macOS sh, whose EXIT trap replaces
-# the check's exit status with the cleanup's.
+# Guards staged-tree returning a status other than the command's, such
+# as its own 2, or 0 from a swallowed failure, which would let a failing
+# check pass. test/lib.bats guards the EXIT trap that could also replace
+# it.
 @test "the command's exit status is kept" {
   staged_tree sh -c 'exit 3'
   assert_status 3
