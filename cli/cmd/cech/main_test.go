@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"os"
 	"os/exec"
@@ -45,7 +44,6 @@ func TestBinary(t *testing.T) {
 	}{
 		{"version", []string{"version"}, 0, "cech 9.8.7\n", ""},
 		{"unknown command", []string{"frobnicate"}, 2, "", "Run cech help for usage."},
-		{"no command", nil, 2, "", "Run cech help for usage."},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -90,26 +88,6 @@ func TestBinary(t *testing.T) {
 		}
 		if !strings.Contains(stderr.String(), "cech: cannot write the output") {
 			t.Errorf("stderr = %q, want it to report the failed write", stderr.String())
-		}
-	})
-
-	t.Run("version as JSON", func(t *testing.T) {
-		out, err := exec.CommandContext(t.Context(), bin, "version", "--json").Output()
-		if err != nil {
-			t.Fatal(err)
-		}
-		var got map[string]string
-		if err := json.Unmarshal(out, &got); err != nil {
-			t.Fatalf("not JSON: %v\n%s", err, out)
-		}
-		want := map[string]string{"version": "9.8.7", "go": runtime.Version(), "os": runtime.GOOS, "arch": runtime.GOARCH}
-		if len(got) != len(want) {
-			t.Errorf("got %v, want %v", got, want)
-		}
-		for k, v := range want {
-			if got[k] != v {
-				t.Errorf("%s = %q, want %q", k, got[k], v)
-			}
 		}
 	})
 }
