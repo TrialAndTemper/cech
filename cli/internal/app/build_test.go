@@ -40,7 +40,8 @@ func TestBuild(t *testing.T) {
 			if !strings.HasSuffix(stderr, " from their sources; run cech build\n") {
 				t.Errorf("--check: stderr = %q, want the count of files that differ", stderr)
 			}
-			code, stdout, _ = runIn(t, "build", "--check", "--json", "-C", dir)
+			// --directory is the long form of -C.
+			code, stdout, _ = runIn(t, "build", "--check", "--json", "--directory", dir)
 			if code != ExitFailure {
 				t.Errorf("--check --json: exit code %d, want %d", code, ExitFailure)
 			}
