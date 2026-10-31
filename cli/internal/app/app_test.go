@@ -144,3 +144,18 @@ func checkGolden(t *testing.T, name string, got []byte) {
 		t.Errorf("stdout differs from %s\ngot:\n%s\nwant:\n%s", path, got, want)
 	}
 }
+
+// TestVersionJSONEscapes checks that version --json escapes strings as
+// encoding/json did: <, >, &, U+2028 and U+2029 escaped, and invalid
+// UTF-8 as U+FFFD.
+func TestVersionJSONEscapes(t *testing.T) {
+	odd := version.Info{Version: "1<2>&3\u2028\u2029\xff", Go: "go", OS: "os", Arch: "arch"}
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"version", "--json"}, &stdout, &stderr, odd); code != ExitOK {
+		t.Fatalf("exit code %d; stderr:\n%s", code, stderr.String())
+	}
+	want := `{"version":"1\u003c2\u003e\u00263\u2028\u2029` + "\uFFFD" + `","go":"go","os":"os","arch":"arch"}` + "\n"
+	if got := stdout.String(); got != want {
+		t.Errorf("got %s, want %s", got, want)
+	}
+}
