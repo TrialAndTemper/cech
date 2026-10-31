@@ -1,5 +1,7 @@
 # Evals and the eval gate
 
+Implemented 2026-11-18; not maintained: the code and its tests are current.
+
 What a plugin's eval folder holds, what `cech eval --check` checks, and how the eval gate runs it.
 The ADRs behind it are ADR 5 item 5, ADR 13 item 4, ADR 15 item 5, ADR 16 item 1 and ADR 25.
 It builds on the change that added `cech build` (ADR 18 items 3 and 7), which reads the plugins under `plugins/`; that change also added the YAML module.
@@ -172,3 +174,45 @@ The format of a case is CECH's own (ADR 25 item 2).
     - the trace formats: trim a live trace of each harness under rule 21 and check that it gives no finding;
     - detection: run on each harness a prompt that names the skill and asks for its first rule, and one about an unrelated subject, and check that the detector reads a load in the first and none in the second, allowing one rerun of a miss;
     - the gaps: look in `claude plugin eval --help` and its docs for a way to grade a saved transcript; run `claude plugin eval` on a case whose project's `AGENTS.md` holds a marker, with a prompt that asks the model to repeat any marker in its project instructions, and check that no run repeats it; check that `codex exec --json` has no item type for a skill; run a Codex prompt that reads a file outside the workspace.
+
+## Tests
+
+The Go tests are in `cli/internal/app/eval_test.go` unless named otherwise; `Findings/"x"` is a case of `TestEvalCheckFindings`, and `Passes/"x"` one of `TestEvalCheckPasses`.
+
+| Rule | Test |
+| --- | --- |
+| 1 | `Findings/"file loose in a plugin's eval folder"` |
+| 2 | `cli/internal/evals/check_test.go` `TestCheckResultsCategory`; `Findings/"file loose in evals"`, `/"eval folder without a plugin"`, `/"eval folder in another category"`; `Passes/"results of a run"` |
+| 3 | `Findings/"no project"` |
+| 4 | `Findings/"no routing table"`, `/"AGENTS.md names the skill"`, `/"CLAUDE.md in the project"` |
+| 5 | `Findings/"local path in the project"`, `/"local path in a staged change"` |
+| 6 | `Findings/"an escaped bar"`, `/"a header in routing.md"`, `/"no row names the skill"` |
+| 7 | `Findings/"no prompt.md"`, `/"no cech.toml"`, `/"file loose in a case folder"`; `TestEvalCheckKeepsChecking/"a file where recordings/ belongs"` |
+| 8 | `Findings/"case names repeat across plugins"` |
+| 9 | `Findings/"prompt.md with frontmatter"`, `/"prompt.md without a prompt"` |
+| 10 | `Findings/"grader without a name"`, `/"a grader name not in its form"`, `/"grader without a type"`, `/"unknown grader type"`, `/"regex without a pattern"`, `/"file_exists without a path"`, `/"bad weight"`, `/"an infinite weight"`, `/"unknown arm"`, `/"unknown match"`, `/"count of no number"`, `/"unknown target"`; `TestEvalCheckOneFinding` |
+| 11 | `Findings/"target file without a path"`, `/"absolute glob"`, `/"a drive letter in a file target"`, `/"a backslash in a glob"`, `/"glob with braces"`, `/"a .. part in a glob"`; `cli/internal/evals/check_test.go` `TestGlobRegexp` |
+| 12 | `Findings/"a grader name used twice"`; `TestEvalCheck`, whose recordings of both harnesses pass under the same graders |
+| 13 | `Findings/"no graders"`, `/"a trigger case with a grader"` |
+| 14 | `Findings/"pattern that does not compile"`, `TestEvalCheckOneFinding/"a table in a grader key"` |
+| 15 | `Findings/"placeholder in a pattern"` |
+| 16 | `Findings/"unknown grader key"`, `/"count without match count"`, `/"path without target file"` |
+| 17 | `Findings/"graders in a folder"`, `/"case.yaml in a case"` |
+| 18 | `Findings/"unknown cech.toml key"`, `/"wording not for the expect"`, `/"claim on a control"` |
+| 19 | `Findings/"too few load cases"`, `/"no oblique prompt"`, `/"no near miss"` |
+| 20 | `Findings/"recording not declared"`, `/"declared recording missing"`, `/"recording named twice"` |
+| 21 | `Findings/"untrimmed line"`, `/"result line not last"`, `/"untrimmed Codex item"`; strict reading is the JSON library's own, so no test |
+| 22 | `cli/internal/evals/check_test.go` `TestLocalPath`; `Findings/"local path"`, `/"local path in created.txt"` |
+| 23 | `Findings/"grader always passes"`, `/"count counts"`, `/"not_contains negates"`, `/"exists = false is graded"`; `Passes/"files sorted"`, `/"file_exists globs"`; `TestEvalCheckOneFinding`, which grades no recording of a case with an invalid grader |
+| 24 | `Findings/"an errored Skill call is no load"`, `/"a grep prefix still loads"`, `/"Codex name line as SKILL.md writes it"`; `Passes/"trailing whitespace in Codex output"`, `/"quoted name key"`; `cli/internal/evals/check_test.go` `TestSkillLines` |
+| 25 | `Findings/"a pass recording names the detector"`, `/"grader always passes"` |
+| 26 | `TestEvalCheckInCurrentFolder`; `cli/internal/app/app_test.go` `TestRun/"eval --json without --check"`, `/"eval --check --json -C empty"` |
+| 27 | `TestEvalCheckRejectedSource`, `TestEvalCheckEmpty`; `cli/cmd/cech/main_test.go` `TestBinary/"eval --check outside a marketplace"` |
+| 28 | `TestEvalCheckPathOrder`, `TestEvalCheckFindingsInOneFile`, `TestEvalCheckKeepsChecking` |
+| 29 | `TestEvalCheckJSONFindings`, `TestEvalCheckEmpty`; `TestEvalCheck` with `eval-check-json.golden` |
+| 30 | `TestEvalCheckNoRoot`, `TestEvalCheckUnreadable` |
+| 31 | `test/tasks.bats` "check:os runs every gate task but commits", ".gitignore keeps eval results out at any depth"; `test/go.bats` "evals runs the cech built from the checkout, not one on PATH" |
+| 32 | `test/tasks.bats` "Markdown checks leave out eval recordings and routing rows", "docs:check task leaves out eval recordings"; the term check's scope is unchanged |
+| 33 | `cli/internal/build/codeowners_test.go` `TestCodeOwners` |
+| 34 | `TestEvalCheck`; `Findings/"grader always passes"`, `/"Codex needs the description line"` |
+| 35 | `cli/internal/harnessdata/harnessdata_test.go` `TestFile`, which reads every entry and its probe; each probe was run on the version its `verified` key names |
