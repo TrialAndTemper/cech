@@ -1,0 +1,69 @@
+=== cech
+cech is the command-line tool of CECH, a marketplace of agent skills
+
+Usage:
+  cech [command]
+
+Available Commands:
+  build       write the files generated from a marketplace's sources
+  completion  print the completion script of a shell
+  help        print the help of cech or of a command
+  version     print the version of cech
+
+Flags:
+  -h, --help   help for cech
+
+Use "cech [command] --help" for more information about a command.
+=== cech build
+Write the files generated from the hand-written sources of a
+marketplace with CECH's layout: the catalogue
+.claude-plugin/marketplace.json, Codex TOML for each reviewer agent, a
+copy of the root LICENSE in each skill folder, .github/CODEOWNERS and
+docs/catalogue.md. In each plugin.json it sets the description, the
+version and, in an extension, each CECH dependency's marketplace. It
+prints each file it creates, updates or removes.
+
+Usage:
+  cech build [flags]
+
+Flags:
+      --check              write nothing; list each file that differs from what the build would write, and fail if there is one
+  -C, --directory string   run in this directory, the marketplace's root, instead of the current one (default ".")
+      --dry-run            write nothing, and list the files the build would change
+  -h, --help               help for build
+      --json               print one JSON object with the mode, whether it passed, the files, any changes a failed build did not make, and any errors
+      --release string     build this release, as X.Y.Z or X.Y.Z-rc.N: the catalogue is named after the namespace and the release, and every plugin's version is the release; without it, the version is 0.0.0-dev
+=== cech completion
+Print the completion script of a shell, for the shell to source.
+Run cech completion <shell> --help for how to load it.
+
+Usage:
+  cech completion [command]
+
+Available Commands:
+  bash        print the completion script of bash
+  fish        print the completion script of fish
+  powershell  print the completion script of powershell
+  zsh         print the completion script of zsh
+
+Flags:
+  -h, --help   help for completion
+
+Use "cech completion [command] --help" for more information about a command.
+=== cech help
+Print the help of cech, or of the command named, as cech help completion bash.
+
+Usage:
+  cech help [command] [flags]
+
+Flags:
+  -h, --help   help for help
+=== cech version
+Print the version of cech.
+
+Usage:
+  cech version [flags]
+
+Flags:
+  -h, --help   help for version
+      --json   print one JSON object with the version, the Go release that built cech, and the OS and architecture it was built for

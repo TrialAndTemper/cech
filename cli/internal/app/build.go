@@ -3,42 +3,25 @@ package app
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"os"
 	"slices"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/TrialAndTemper/cech/cli/internal/build"
 	"github.com/TrialAndTemper/cech/cli/internal/marketplace"
-	"github.com/TrialAndTemper/cech/cli/internal/version"
 )
 
-const buildHelp = `Usage: cech build [--check | --dry-run] [--release V] [--json] [-C dir]
-
-Write the files generated from the hand-written sources of a
+const buildLong = `Write the files generated from the hand-written sources of a
 marketplace with CECH's layout: the catalogue
 .claude-plugin/marketplace.json, Codex TOML for each reviewer agent, a
 copy of the root LICENSE in each skill folder, .github/CODEOWNERS and
-docs/catalogue.md. In each plugin.json it sets
-the description, the version and, in an extension, each CECH
-dependency's marketplace. It prints each file it creates, updates or
-removes.
-
-Flags:
-  --check     write nothing; list each file that differs from what
-              the build would write, and fail if there is one
-  --dry-run   write nothing, and list the files the build would change
-  --release V build release V, as X.Y.Z or X.Y.Z-rc.N: the catalogue
-              is named after the namespace and V, and every plugin's
-              version is V; without it, the version is 0.0.0-dev
-  --json      print one JSON object with the mode, whether it passed,
-              the files, any changes a failed build did not make, and
-              any errors
-  -C dir      run in dir, the marketplace's root, instead of the
-              current directory
-`
+docs/catalogue.md. In each plugin.json it sets the description, the
+version and, in an extension, each CECH dependency's marketplace. It
+prints each file it creates, updates or removes.`
 
 // The modes of cech build.
 const (
@@ -58,41 +41,65 @@ type buildResult struct {
 	Errors  []string     `json:"errors"`
 }
 
-func runBuild(args []string, stdout, stderr io.Writer, _ version.Info) int {
-	flags := flag.NewFlagSet("build", flag.ContinueOnError)
-	flags.SetOutput(io.Discard)
-	check := flags.Bool("check", false, "")
-	dryRun := flags.Bool("dry-run", false, "")
-	release := flags.String("release", "", "")
-	asJSON := flags.Bool("json", false, "")
-	dir := flags.String("C", ".", "")
-	if err := flags.Parse(args); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			return write(stdout, stderr, buildHelp)
-		}
-		return usageError(stderr, err.Error())
+// buildOptions are the flags of cech build.
+type buildOptions struct {
+	check, dryRun, asJSON bool
+	release, dir          string
+}
+
+// newBuildCommand returns cech build, which prints its results on stdout
+// and its messages on stderr, and sets *code to its exit code.
+func newBuildCommand(stdout, stderr io.Writer, code *int) *cobra.Command {
+	var opts buildOptions
+	c := &cobra.Command{
+		Use:   "build",
+		Short: "write the files generated from a marketplace's sources",
+		Long:  buildLong,
+		Args:  noArgs,
+		// No argument, so no file names to offer.
+		ValidArgsFunction: cobra.NoFileCompletions,
+		RunE: func(c *cobra.Command, _ []string) error {
+			// Changed sees only the flags given, so --release "" is refused too.
+			if c.Flags().Changed("release") && !marketplace.IsRelease(opts.release) {
+				return fmt.Errorf("build --release takes X.Y.Z or X.Y.Z-rc.N, got %q", opts.release)
+			}
+			if opts.dir == "" {
+				return errors.New("build -C takes a directory, got \"\"")
+			}
+			if opts.check && opts.dryRun {
+				return errors.New("build takes --check or --dry-run, not both")
+			}
+			*code = runBuild(opts, stdout, stderr)
+			return nil
+		},
 	}
-	if flags.NArg() > 0 {
-		return usageError(stderr, fmt.Sprintf("build takes no arguments, got %q", flags.Arg(0)))
-	}
-	// Visit sees only the flags given, so --release "" is refused too.
-	given := false
-	flags.Visit(func(f *flag.Flag) { given = given || f.Name == "release" })
-	if given && !marketplace.IsRelease(*release) {
-		return usageError(stderr, fmt.Sprintf("build --release takes X.Y.Z or X.Y.Z-rc.N, got %q", *release))
-	}
+	f := c.Flags()
+	f.BoolVar(&opts.check, "check", false,
+		"write nothing; list each file that differs from what the build would write, and fail if there is one")
+	f.BoolVar(&opts.dryRun, "dry-run", false, "write nothing, and list the files the build would change")
+	f.StringVar(&opts.release, "release", "",
+		"build this release, as X.Y.Z or X.Y.Z-rc.N: the catalogue is named after the namespace and the release, "+
+			"and every plugin's version is the release; without it, the version is 0.0.0-dev")
+	f.BoolVar(&opts.asJSON, "json", false,
+		"print one JSON object with the mode, whether it passed, the files, any changes a failed build did not make, and any errors")
+	f.StringVarP(&opts.dir, "directory", "C", ".", "run in this directory, the marketplace's root, instead of the current one")
+	_ = c.MarkFlagDirname("directory") // fails only for a flag that does not exist
+	return c
+}
+
+// runBuild runs cech build with the flags in opts, its results on stdout
+// and its messages on stderr, and returns the exit code.
+func runBuild(opts buildOptions, stdout, stderr io.Writer) int {
 	mode := modeBuild
 	switch {
-	case *check && *dryRun:
-		return usageError(stderr, "build takes --check or --dry-run, not both")
-	case *check:
+	case opts.check:
 		mode = modeCheck
-	case *dryRun:
+	case opts.dryRun:
 		mode = modeDryRun
 	}
 
 	res := buildResult{Mode: mode, Files: []build.Diff{}, Skipped: []build.Diff{}, Errors: []string{}}
-	files, skipped, err := buildIn(*dir, mode, *release)
+	files, skipped, err := buildIn(opts.dir, mode, opts.release)
 	if files != nil {
 		res.Files = files
 	}
@@ -117,7 +124,7 @@ func runBuild(args []string, stdout, stderr io.Writer, _ version.Info) int {
 	default:
 		code = ExitFailure
 	}
-	if *asJSON {
+	if opts.asJSON {
 		out, err := json.Marshal(res)
 		if err != nil {
 			_, _ = fmt.Fprintf(stderr, "cech: %v\n", err)
