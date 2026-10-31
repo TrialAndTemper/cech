@@ -2,7 +2,7 @@ package app
 
 import (
 	"bytes"
-	"encoding/json"
+	"encoding/json/v2"
 	"io/fs"
 	"maps"
 	"os"
@@ -117,13 +117,17 @@ func TestBuildRelease(t *testing.T) {
 	if code, _, stderr := runIn(t, "build", "--release", "0.2.0-rc.1", "-C", dir); code != ExitOK {
 		t.Fatalf("build --release: exit code %d; stderr:\n%s", code, stderr)
 	}
-	var catalogue struct{ Name string }
+	var catalogue struct {
+		Name string `json:"name"`
+	}
 	readJSON(t, filepath.Join(dir, ".claude-plugin", "marketplace.json"), &catalogue)
 	if catalogue.Name != "acme-0-2-0-rc-1" {
 		t.Errorf("catalogue name %q, want acme-0-2-0-rc-1", catalogue.Name)
 	}
 	for _, p := range strings.Split(strings.TrimSpace(want), "\n")[1:] {
-		var manifest struct{ Version string }
+		var manifest struct {
+			Version string `json:"version"`
+		}
 		readJSON(t, filepath.Join(dir, filepath.FromSlash(strings.TrimPrefix(p, "update "))), &manifest)
 		if manifest.Version != "0.2.0-rc.1" {
 			t.Errorf("%s: version %q, want 0.2.0-rc.1", p, manifest.Version)

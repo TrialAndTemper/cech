@@ -1,8 +1,8 @@
 package build
 
 import (
-	"bytes"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 
 	"github.com/TrialAndTemper/cech/cli/internal/marketplace"
 )
@@ -42,11 +42,11 @@ func Catalogue(m *marketplace.Marketplace, name string) []byte {
 			Category:    p.Category,
 		})
 	}
-	var buf bytes.Buffer
-	enc := json.NewEncoder(&buf)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "  ")
-	// Strings, and a struct of them, always encode.
-	_ = enc.Encode(c)
-	return buf.Bytes()
+	// Every string comes from TOML, YAML or a checked name, which hold
+	// only valid UTF-8, so the encode cannot fail.
+	out, err := json.Marshal(c, jsontext.WithIndent("  "))
+	if err != nil {
+		panic(err)
+	}
+	return append(out, '\n')
 }
