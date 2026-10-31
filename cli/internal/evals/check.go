@@ -3,7 +3,7 @@
 // test the cases' graders and the load detectors. Grading a recorded run
 // works around the harness gap claude-code-eval-offline-grading.
 // docs/reference/evals.md describes what it checks, and the rules as
-// specified are in changes/2026-10-29-evals/spec.md.
+// specified are in changes/done/2026-10-29-evals/spec.md.
 package evals
 
 import (
