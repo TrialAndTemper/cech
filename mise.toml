@@ -24,6 +24,7 @@ go = "1.27.3"
 # the module against the Go checksum database; mise.lock records the
 # version only, with no download or checksum.
 "go:golang.org/x/vuln/cmd/govulncheck" = "1.9.0"
+"go:github.com/google/go-licenses/v2" = "2.0.1"
 golangci-lint = "2.14.0"
 lychee = "0.24.2"
 rumdl = "0.2.79"
@@ -97,6 +98,10 @@ run = "scripts/check-adr"
 [tasks."lint:go"]
 description = "go vet, golangci-lint and go mod tidy -diff on the CLI"
 run = "scripts/check-go lint"
+
+[tasks."lint:licenses"]
+description = "Check the CLI's dependencies for forbidden and unknown licenses"
+run = "scripts/check-go licenses"
 
 [tasks."lint:markdown"]
 description = "Lint the Markdown files"
