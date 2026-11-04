@@ -1,6 +1,7 @@
 package terms
 
 import (
+	"context"
 	"errors"
 	"maps"
 	"os"
@@ -177,6 +178,21 @@ func TestProject(t *testing.T) {
 				t.Fatalf("want one generic finding in %s:\n%s", name, render(res))
 			}
 		})
+	}
+}
+
+// TestCancelledScan guards a cancelled scan, which the engine ends
+// without an error, passing as a scan that found nothing.
+func TestCancelledScan(t *testing.T) {
+	dir := newRepo(t, map[string]string{".cech/config.toml": "key = \"" + token + "\"\n"})
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	res, err := CheckProject(ctx, dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Findings) != 0 || !slices.ContainsFunc(res.Undecided, func(n Note) bool { return n.Kind == NoteProjectUndecided && n.Detail == "the scan failed" }) {
+		t.Fatalf("want the scan reported as not run:\n%s", render(res))
 	}
 }
 

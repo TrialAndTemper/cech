@@ -196,6 +196,11 @@ func scan(ctx context.Context, cfg *config.Config, frags []fragment) ([]hit, err
 			match:  r.Finding.Match,
 		})
 	}
+	// A cancelled run ends early without reporting an error, so its hits
+	// would pass for a full scan.
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("term scan: %w", err)
+	}
 	return hits, nil
 }
 
