@@ -41,11 +41,13 @@ type indexEntry struct {
 
 // git runs git in root. It drops every GIT_ variable, such as those a
 // git hook sets to point git at another repository, so that a check run
-// from a hook reads root. Its error holds git's stderr, which can quote
-// a path or ref name: callers report a fixed message instead.
+// from a hook reads root, and it ignores replace refs, which would show
+// other commits than the ones the range holds. Its error holds git's
+// stderr, which can quote a path or ref name: callers report a fixed
+// message instead.
 func git(ctx context.Context, root string, args ...string) ([]byte, error) {
 	//nolint:gosec // The arguments are this package's own git commands.
-	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", root, "-c", "core.quotePath=false"}, args...)...)
+	cmd := exec.CommandContext(ctx, "git", append([]string{"--no-replace-objects", "-C", root, "-c", "core.quotePath=false"}, args...)...)
 	cmd.Env = slices.DeleteFunc(os.Environ(), func(kv string) bool {
 		return strings.HasPrefix(kv, "GIT_")
 	})
@@ -214,12 +216,14 @@ func (r *repo) history(ctx context.Context, commits []string) (fragments, []stri
 	seen := map[string]bool{}
 	for _, c := range commits {
 		short := c[:min(len(c), shortCommit)]
-		msg, err := git(ctx, r.root, "log", "-1", "--no-show-signature", "--format=%B", c)
+		msg, err := git(ctx, r.root, "log", "-1", "--no-show-signature", "--encoding=UTF-8", "--format=%B", c)
 		if err != nil {
 			return nil, nil, err
 		}
 		frags = append(frags, fragment{where: WhereMessage, commit: short, text: string(msg)})
-		names, err := git(ctx, r.root, "show", "-m", "--format=", "--name-only", "-z", "--no-renames", c)
+		// diff-tree, git's plumbing, ignores the log settings that change
+		// what git show prints, such as how merges and root commits show.
+		names, err := git(ctx, r.root, "diff-tree", "-m", "-r", "--root", "--no-commit-id", "--name-only", "-z", "--no-renames", c)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -229,9 +233,13 @@ func (r *repo) history(ctx context.Context, commits []string) (fragments, []stri
 				touched = append(touched, p)
 			}
 		}
+		// --text overrides attributes that would hide a text file's lines;
+		// a binary file is then dropped below. --indent-heuristic overrides
+		// a setting diff-tree reads; --no-textconv and the algorithm make
+		// its defaults explicit.
 		//nolint:misspell // git's own option.
-		diff, err := git(ctx, r.root, "show", "-m", "--format=", "--unified=0", "--no-color", "--no-ext-diff",
-			"--no-renames", "--src-prefix=a/", "--dst-prefix=b/", c)
+		diff, err := git(ctx, r.root, "diff-tree", "-m", "-r", "--root", "--no-commit-id", "-p", "--unified=0", "--no-color",
+			"--no-ext-diff", "--no-textconv", "--text", "--diff-algorithm=myers", "--indent-heuristic", "--no-renames", "--src-prefix=a/", "--dst-prefix=b/", c)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -240,6 +248,15 @@ func (r *repo) history(ctx context.Context, commits []string) (fragments, []stri
 			return nil, nil, err
 		}
 		for _, f := range added {
+			// A file is binary as the working-tree scan judges one: by a
+			// NUL in the first bytes of the file as committed.
+			blob, err := git(ctx, r.root, "cat-file", "blob", c+":"+f.file)
+			if err != nil {
+				return nil, nil, err
+			}
+			if bytes.IndexByte(blob[:min(len(blob), binaryPeek)], 0) >= 0 {
+				continue
+			}
 			f.commit = short
 			frags = append(frags, f)
 		}
@@ -247,9 +264,14 @@ func (r *repo) history(ctx context.Context, commits []string) (fragments, []stri
 	return frags, touched, nil
 }
 
+// gitlink is the mode of a submodule's entry, which names a commit in
+// another repository.
+const gitlink = 0o160000
+
 // addedLines turns a diff into one fragment per file, holding its added
 // lines at their line numbers and blank lines elsewhere. A deleted or
-// binary file, or one whose mode alone changed, adds nothing.
+// binary file, a submodule, or a file whose mode alone changed adds
+// nothing.
 func addedLines(diff string) (fragments, error) {
 	files, err := gitdiff.Parse(strings.NewReader(diff))
 	if err != nil {
@@ -264,7 +286,7 @@ func addedLines(diff string) (fragments, error) {
 	read := 0
 	for f := range files {
 		read++
-		if f.IsDelete || f.IsBinary || len(f.TextFragments) == 0 {
+		if f.IsDelete || f.IsBinary || f.NewMode == gitlink || len(f.TextFragments) == 0 {
 			continue
 		}
 		lines, ok := byFile[f.NewName]

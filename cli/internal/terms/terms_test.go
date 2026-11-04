@@ -639,6 +639,30 @@ func TestRange(t *testing.T) {
 			t.Errorf("want the hit in notes space.md:\n%s", render(res))
 		}
 	})
+	// Guards diff.indentHeuristic, which diff-tree reads: turned off, it
+	// shifts which of two equal blocks counts as added, so a hit would
+	// name another line on that machine.
+	t.Run("a diff setting does not move added lines", func(t *testing.T) {
+		d := newRepo(t, map[string]string{"a.c": "  a\n\nMail " + outer + "\n  a\n  }\n}\n"})
+		write(t, d, map[string]string{"a.c": "  a\n\nMail " + outer + "\n  a\n  }\n\nMail " + outer + "\n  a\n  }\n}\n"})
+		gitIn(t, d, "commit", "-q", "-am", "edit")
+		gitIn(t, d, "config", "diff.indentHeuristic", "false")
+		res := check(t, d, Extension{Range: "HEAD~1..HEAD"})
+		if !has(res, "a.c:3: email in commit") {
+			t.Errorf("want the added block at line 3, as git's default puts it:\n%s", render(res))
+		}
+	})
+	// Guards a submodule in a commit, whose entry names a commit, not a
+	// file, so reading it as a file would stop the scan.
+	t.Run("a submodule in the range is skipped", func(t *testing.T) {
+		d := newRepo(t, map[string]string{"a.md": "ok\n"})
+		gitIn(t, d, "update-index", "--add", "--cacheinfo", "160000,"+strings.TrimSpace(gitIn(t, d, "rev-parse", "HEAD"))+",sub")
+		gitIn(t, d, "commit", "-q", "-m", "sub")
+		res := check(t, d, Extension{Range: "HEAD~1..HEAD"})
+		if res.Failed() {
+			t.Errorf("want a pass:\n%s", render(res))
+		}
+	})
 	t.Run("a range that looks like an option is a usage error", func(t *testing.T) {
 		_, err := CheckExtension(t.Context(), dir, Extension{Range: "--all"})
 		if ue := (*UsageError)(nil); !errors.As(err, &ue) {
@@ -698,5 +722,108 @@ func TestAddedLines(t *testing.T) {
 		"diff --git a/b.md b/b.md\nindex 1111111..2222222 100644\n--- a/b.md\n+++ b/b.md\n@@ -0,0 +1 @@\n+" + secret + "\n")
 	if err == nil {
 		t.Fatal("want an error for a diff the parser could not read whole")
+	}
+}
+
+// TestSignedCommitPaths guards log.showSignature set in the user's git
+// config, which puts a signature check before a signed commit's message,
+// and before its paths and diff were they read with git show again.
+func TestSignedCommitPaths(t *testing.T) {
+	if _, err := exec.LookPath("ssh-keygen"); err != nil {
+		t.Skip("ssh-keygen not found")
+	}
+	dir := newRepo(t, map[string]string{"a.md": "ok\n"})
+	key := filepath.Join(t.TempDir(), "key")
+	if out, err := exec.CommandContext(t.Context(), "ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", "test@example.com", "-f", key).CombinedOutput(); err != nil {
+		t.Fatalf("ssh-keygen: %v: %s", err, out)
+	}
+	pub, err := os.ReadFile(key + ".pub")
+	if err != nil {
+		t.Fatal(err)
+	}
+	signers := filepath.Join(t.TempDir(), "signers")
+	write(t, filepath.Dir(signers), map[string]string{"signers": "test@example.com " + string(pub)})
+	gitIn(t, dir, "config", "gpg.format", "ssh")
+	gitIn(t, dir, "config", "user.signingkey", key)
+	gitIn(t, dir, "config", "gpg.ssh.allowedSignersFile", signers)
+	gitIn(t, dir, "config", "log.showSignature", "true")
+	write(t, dir, map[string]string{"b.md": "Mail " + outer + "\n"})
+	gitIn(t, dir, "add", "-A")
+	gitIn(t, dir, "commit", "-q", "-S", "-m", "signed")
+	res := check(t, dir, Extension{Range: "HEAD~1..HEAD"})
+	// One hit in the file and one in the commit's diff, and none in the
+	// signature's text.
+	if len(res.Findings) != 2 || !has(res, "b.md:1: email: ") || !has(res, "b.md:1: email in commit") {
+		t.Fatalf("want b.md's hit in the file and the commit only:\n%s", render(res))
+	}
+}
+
+// TestHistorySettings guards what on one machine would change what
+// history reads there: git settings that hide a merge's own lines, a
+// root commit's lines or a text file's lines, and replace refs that
+// swap a commit. Each run must find the same hits, and none in a file
+// that is binary as committed, as the working-tree scan judges files.
+func TestHistorySettings(t *testing.T) {
+	config := func(key, value string) func(*testing.T, string) {
+		return func(t *testing.T, dir string) { gitIn(t, dir, "config", key, value) }
+	}
+	tests := []struct {
+		name  string
+		setup func(*testing.T, string)
+	}{
+		{"none", func(*testing.T, string) {}},
+		{"merges shown combined", config("log.diffMerges", "combined")},
+		{"root commits hidden", config("log.showRoot", "false")},
+		// diff-tree applies no textconv; this guards a move back to git show.
+		{"a textconv driver", config("diff.hide.textconv", "true")},
+		{"text files marked binary", func(t *testing.T, dir string) {
+			write(t, dir, map[string]string{".git/info/attributes": "* -diff\n"})
+		}},
+		{"the merge replaced", func(t *testing.T, dir string) {
+			gitIn(t, dir, "replace", strings.TrimSpace(gitIn(t, dir, "rev-parse", "HEAD~1")), strings.TrimSpace(gitIn(t, dir, "rev-parse", "side")))
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// The files are removed at the end, so only history holds them.
+			// bin.dat is binary by a NUL its first commit adds, not by the
+			// later line that holds the address.
+			dir := newRepo(t, map[string]string{"root.md": "Mail " + outer + "\n", ".gitattributes": "*.md diff=hide\n", "bin.dat": "\x00\n"})
+			gitIn(t, dir, "checkout", "-q", "-b", "side")
+			write(t, dir, map[string]string{"side.md": "ok\n"})
+			gitIn(t, dir, "add", "-A")
+			gitIn(t, dir, "commit", "-q", "-m", "side")
+			gitIn(t, dir, "checkout", "-q", "main")
+			write(t, dir, map[string]string{"bin.dat": "\x00\nMail " + outer + "\n"})
+			gitIn(t, dir, "add", "-A")
+			gitIn(t, dir, "commit", "-q", "-m", "main")
+			gitIn(t, dir, "merge", "-q", "--no-ff", "--no-commit", "side")
+			write(t, dir, map[string]string{"merge.md": "Mail " + outer + "\n"})
+			gitIn(t, dir, "add", "-A")
+			gitIn(t, dir, "commit", "-q", "-m", "merge")
+			gitIn(t, dir, "rm", "-q", "root.md", "merge.md", "bin.dat")
+			gitIn(t, dir, "commit", "-q", "-m", "drop")
+			tt.setup(t, dir)
+			res := check(t, dir, Extension{Range: "HEAD"})
+			if !has(res, "root.md:1: email in commit") || !has(res, "merge.md:1: email in commit") || has(res, "bin.dat") {
+				t.Fatalf("want hits in root.md and merge.md, none in bin.dat:\n%s", render(res))
+			}
+		})
+	}
+}
+
+// TestMessageEncoding guards a log output encoding set on one machine,
+// which would re-encode commit messages so a term with letters outside
+// ASCII no longer matches there.
+func TestMessageEncoding(t *testing.T) {
+	dir := newRepo(t, map[string]string{"a.md": "ok\n"})
+	gitIn(t, dir, "commit", "-q", "--allow-empty", "-m", "Asked by Zażółć Cloud.")
+	gitIn(t, dir, "config", "i18n.logOutputEncoding", "ISO-8859-2")
+	write(t, dir, map[string]string{"n.txt": "Zażółć Cloud\n"})
+	gitIn(t, dir, "add", "n.txt")
+	gitIn(t, dir, "commit", "-q", "-m", "names")
+	res := check(t, dir, Extension{Names: []string{"n.txt"}, Range: "HEAD~2..HEAD"})
+	if !has(res, "commit message:1: name-1-1") {
+		t.Fatalf("want the name found in the message:\n%s", render(res))
 	}
 }

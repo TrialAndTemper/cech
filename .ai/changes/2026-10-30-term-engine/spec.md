@@ -88,6 +88,7 @@ The items are numbered; "item N" below means one of them, never a term rule.
     The working tree is scanned, not the index as in CECH's gate, since `cech check` checks what CI checks out.
 28. In a repository that is both, a hit in `.cech/` that items 26 and 27 both find is reported once.
 29. `--range <revision range>` adds, for each commit in the range: its message, the lines its diff adds against each parent, and the paths it touches.
+    Messages are read in UTF-8 and lines with git's plumbing, `--text` and fixed diff options, ignoring replace refs, so no setting, attribute or replace ref on one machine changes what it scans; a file that is binary as committed, by item 27's test, or a submodule adds nothing.
     It also adds the names of local branches, tags and remote-tracking refs, and the messages of annotated tags.
     A value that starts with `-` exits 2, and the message does not repeat it; a range git cannot resolve, such as one cut off by a shallow clone, exits 3 and names the range, unless the private rules match the range text or item 24 or 31 hides details, in which case it says only that the range could not be resolved; an empty range adds no commits and says so.
     `--range` in a repository that is not an extension exits 2.
