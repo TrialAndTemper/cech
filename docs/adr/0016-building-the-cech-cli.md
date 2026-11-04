@@ -17,6 +17,7 @@ Checked on 2026-10-28: `go.yaml.in/yaml/v3` v3.0.5 (MIT and Apache-2.0) requires
 Checked on 2026-10-29: neither does `github.com/BurntSushi/toml` v1.6.0 (MIT).
 Checked on 2026-10-30 with Go 1.27.3: `github.com/betterleaks/betterleaks` v1.9.0 (MIT) links 48 other modules, under MIT, BSD, ISC, Apache-2.0 and MPL-2.0.
 Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1.10.2 (Apache-2.0) requires, only two are built into the CLI: `github.com/spf13/pflag` (BSD-3-Clause), at its newest release v1.0.10, and `github.com/inconshreveable/mousetrap` v1.1.0 (Apache-2.0), which only Windows builds use.
+Checked on 2026-11-04 with Go 1.27.3: `github.com/gitleaks/go-gitdiff` v0.9.1 (MIT), which Betterleaks v1.9.0 already links, requires no other module.
 
 ## Decision
 
@@ -29,6 +30,7 @@ Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1
    The list:
    - `github.com/BurntSushi/toml`: the harness data file is TOML ([ADR 9](0009-native-harness-features-first.md) item 5), as are `data/marketplace.toml` and CECH's categories file, and the standard library reads no TOML.
    - `github.com/betterleaks/betterleaks`, v1: the term check's engine ([ADR 3](0003-vendor-neutrality.md) item 4), whose maintained rules also find leaked credentials.
+   - `github.com/gitleaks/go-gitdiff`, v0, the diff parser Betterleaks uses, so it adds no module: the term check reads the lines a commit adds from git's diffs, whose paths git quotes and pads in ways a parser of our own could misread.
    - `go.yaml.in/yaml/v3`, the YAML project's maintained YAML package: `SKILL.md` and agent frontmatter are YAML, which the standard library does not read, and a parser of our own could read a description differently from the harnesses.
    - `github.com/spf13/cobra`, with the `github.com/spf13/pflag` and `github.com/inconshreveable/mousetrap` it requires: the standard `flag` package has no command tree, generated help or shell completion.
 2. **Versions.**

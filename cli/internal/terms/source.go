@@ -12,6 +12,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/gitleaks/go-gitdiff/gitdiff"
 )
 
 // binaryPeek is how many leading bytes are searched for a NUL, as git
@@ -233,7 +235,11 @@ func (r *repo) history(ctx context.Context, commits []string) (fragments, []stri
 		if err != nil {
 			return nil, nil, err
 		}
-		for _, f := range addedLines(string(diff)) {
+		added, err := addedLines(string(diff))
+		if err != nil {
+			return nil, nil, err
+		}
+		for _, f := range added {
 			f.commit = short
 			frags = append(frags, f)
 		}
@@ -242,70 +248,54 @@ func (r *repo) history(ctx context.Context, commits []string) (fragments, []stri
 }
 
 // addedLines turns a diff into one fragment per file, holding its added
-// lines at their line numbers and blank lines elsewhere. A file's header
-// lines are read only before its first hunk, so an added line that
-// starts with "++ " is content.
-func addedLines(diff string) fragments {
+// lines at their line numbers and blank lines elsewhere. A deleted or
+// binary file, or one whose mode alone changed, adds nothing.
+func addedLines(diff string) (fragments, error) {
+	files, err := gitdiff.Parse(strings.NewReader(diff))
+	if err != nil {
+		return nil, err
+	}
+	// The parser drops a file it cannot read, and every file after a hunk
+	// it cannot read, without an error; so every file header must yield a
+	// file. With no context lines, only a header starts with "diff --git ".
+	headers := strings.Count("\n"+diff, "\ndiff --git ")
 	var order []string
 	byFile := map[string][]string{}
-	file, line, header := "", 0, false
-	for l := range strings.SplitSeq(diff, "\n") {
-		switch {
-		case strings.HasPrefix(l, "diff "):
-			file, line, header = "", 0, true
-		case header && strings.HasPrefix(l, "+++ "):
-			file = diffPath(strings.TrimPrefix(l, "+++ "))
-		case strings.HasPrefix(l, "@@ "):
-			line, header = hunkStart(l), false
-		case header:
-		case strings.HasPrefix(l, "+") && file != "" && line > 0:
-			lines, ok := byFile[file]
-			if !ok {
-				order = append(order, file)
-			}
-			for len(lines) < line {
-				lines = append(lines, "")
-			}
-			lines[line-1] = l[1:]
-			byFile[file] = lines
-			line++
+	read := 0
+	for f := range files {
+		read++
+		if f.IsDelete || f.IsBinary || len(f.TextFragments) == 0 {
+			continue
 		}
+		lines, ok := byFile[f.NewName]
+		if !ok {
+			order = append(order, f.NewName)
+		}
+		for _, tf := range f.TextFragments {
+			line := int(tf.NewPosition)
+			for _, l := range tf.Lines {
+				if l.Op == gitdiff.OpDelete {
+					continue
+				}
+				for len(lines) < line {
+					lines = append(lines, "")
+				}
+				if l.Op == gitdiff.OpAdd {
+					lines[line-1] = strings.TrimSuffix(l.Line, "\n")
+				}
+				line++
+			}
+		}
+		byFile[f.NewName] = lines
+	}
+	if read != headers {
+		return nil, fmt.Errorf("diff: read %d of %d files", read, headers)
 	}
 	var frags fragments
 	for _, f := range order {
 		frags = append(frags, fragment{where: f, file: f, text: strings.Join(byFile[f], "\n")})
 	}
-	return frags
-}
-
-// diffPath reads the new path from a "+++ " line: b/<path>, quoted as
-// git quotes a path with special characters, or /dev/null for none.
-func diffPath(s string) string {
-	if strings.HasPrefix(s, `"`) {
-		if u, err := strconv.Unquote(s); err == nil {
-			s = u
-		}
-	}
-	p, ok := strings.CutPrefix(s, "b/")
-	if !ok {
-		return ""
-	}
-	return p
-}
-
-// hunkStart reads c from a hunk header "@@ -a,b +c,d @@".
-func hunkStart(header string) int {
-	_, rest, ok := strings.Cut(header, " +")
-	if !ok {
-		return 0
-	}
-	num, _, _ := strings.Cut(rest, ",")
-	num, _, _ = strings.Cut(num, " ")
-	n, err := strconv.Atoi(num)
-	if err != nil {
-		return 0
-	}
-	return n
+	return frags, nil
 }
 
 // refs reads the names of local branches, tags and remote-tracking refs,

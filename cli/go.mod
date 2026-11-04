@@ -5,6 +5,7 @@ go 1.27.0
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/betterleaks/betterleaks v1.9.0
+	github.com/gitleaks/go-gitdiff v0.9.1
 	github.com/spf13/cobra v1.10.2
 	go.yaml.in/yaml/v3 v3.0.5
 )
@@ -22,7 +23,6 @@ require (
 	github.com/dsnet/compress v0.0.2-0.20230904184137-39efe44ab707 // indirect
 	github.com/expr-lang/expr v1.17.8 // indirect
 	github.com/fatih/semgroup v1.2.0 // indirect
-	github.com/gitleaks/go-gitdiff v0.9.1 // indirect
 	github.com/go-sprout/sprout v1.0.3 // indirect
 	github.com/google/go-github/v72 v72.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect

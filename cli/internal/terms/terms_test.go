@@ -627,6 +627,18 @@ func TestRange(t *testing.T) {
 			t.Errorf("want the added line's private hit:\n%s", render(res))
 		}
 	})
+	// Guards a path with a space, which git ends with a tab in a diff:
+	// kept, the hit would be reported, and allowlisted, under a wrong path.
+	t.Run("a path with a space is read whole", func(t *testing.T) {
+		d := newRepo(t, map[string]string{"a.md": "ok\n"})
+		write(t, d, map[string]string{"notes space.md": "Mail " + outer + "\n"})
+		gitIn(t, d, "add", "-A")
+		gitIn(t, d, "commit", "-q", "-m", "add")
+		res := check(t, d, Extension{Range: "HEAD~1..HEAD"})
+		if !slices.ContainsFunc(res.Findings, func(f Finding) bool { return f.Where == "notes space.md" && f.Commit != "" }) {
+			t.Errorf("want the hit in notes space.md:\n%s", render(res))
+		}
+	})
 	t.Run("a range that looks like an option is a usage error", func(t *testing.T) {
 		_, err := CheckExtension(t.Context(), dir, Extension{Range: "--all"})
 		if ue := (*UsageError)(nil); !errors.As(err, &ue) {
@@ -665,5 +677,26 @@ func TestNameRegex(t *testing.T) {
 	}
 	if regexp.MustCompile(nameRegex("Quuxly")).MatchString("Quuxlyish") {
 		t.Error("a name matches inside a longer word")
+	}
+}
+
+// TestAddedLines guards the reading of a commit's diff: added lines stay
+// at their line numbers, so a hit names the right line, and a file the
+// parser drops is an error, not a scan that passes.
+func TestAddedLines(t *testing.T) {
+	const header = "diff --git a/a.md b/a.md\nindex 1111111..2222222 100644\n--- a/a.md\n+++ b/a.md\n"
+	frags, err := addedLines(header + "@@ -0,0 +2 @@\n+two\n@@ -3 +4,0 @@\n-gone\n@@ -5,0 +5 @@\n+five\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(frags) != 1 || frags[0].text != "\ntwo\n\n\nfive" {
+		t.Fatalf("want two at line 2 and five at line 5, got %q", frags)
+	}
+	// The first hunk claims two added lines but holds one, so the parser
+	// stops there and never reads b.md.
+	_, err = addedLines(header + "@@ -0,0 +1,2 @@\n+one\n" +
+		"diff --git a/b.md b/b.md\nindex 1111111..2222222 100644\n--- a/b.md\n+++ b/b.md\n@@ -0,0 +1 @@\n+" + secret + "\n")
+	if err == nil {
+		t.Fatal("want an error for a diff the parser could not read whole")
 	}
 }
