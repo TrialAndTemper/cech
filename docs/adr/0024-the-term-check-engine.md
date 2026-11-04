@@ -61,6 +61,7 @@ Checked on 2026-10-29 and 2026-10-30 with Go 1.27.3:
 - **Betterleaks 2:** still a release candidate.
 - **A standard-library matcher with gitleaks' rules:** CECH would own leak detection.
 - **A scanner the user installs:** a second tool for every user.
+- **Each extension running Betterleaks with shared rules:** an extension's own config could weaken the scan or print a private term, and projects have no scanner.
 - **Two copies of the generic rules with a gate that compares them:** drift is found, not prevented.
 - **Replacing or disabling generic rules:** a pass would say less.
 - **A blank private list shipped with each extension:** it passes while checking nothing; once filled, it is committed, leaking the terms, or git-ignored and missing from fresh clones.
