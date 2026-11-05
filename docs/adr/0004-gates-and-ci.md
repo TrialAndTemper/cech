@@ -47,7 +47,8 @@ A movable action tag, or a secret given to fork code, can leak secrets or change
    - `cech build --check` and `cech validate`;
    - code owners errors that GitHub reports;
    - eval case lint and grader tests;
-   - CLI tests on Linux, macOS and Windows.
+   - CLI tests on Linux, macOS and Windows;
+   - CLI dependency licence check.
 
    A gate script has a test for each way the gate could pass when it should fail, such as a lost finding or a skipped check, where review would likely miss it.
    Most such faults lie outside the diff: in a bumped tool pin, on a platform the reviewer does not run, or on the staged tree.

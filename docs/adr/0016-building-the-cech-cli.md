@@ -33,7 +33,7 @@ Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1
    `cech version` prints `cech` and the version, and with `--json` also the Go release that built it and the OS and architecture it was built for.
    The CLI's release pipeline is outside this ADR.
 3. **Gates.**
-   The CLI's gates are tasks of [ADR 4](0004-gates-and-ci.md), run on Linux, macOS and Windows: `go vet`, golangci-lint, a format check, a tidy `go.mod`, and `go test` with the race detector where the platform allows.
+   The CLI's gates are tasks of [ADR 4](0004-gates-and-ci.md), run on Linux, macOS and Windows: `go vet`, golangci-lint, a format check, a tidy `go.mod`, license check and `go test` with the race detector where the platform allows.
    govulncheck is not a merge gate, extending [ADR 4](0004-gates-and-ci.md) item 7: it reports on pull requests without blocking them, and a failure on `main` opens an issue.
    Tests are table-driven, and output that is a contract has golden files.
 
