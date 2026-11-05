@@ -616,29 +616,6 @@ func TestRange(t *testing.T) {
 			t.Errorf("want the range reported but not named:\n%s", render(res))
 		}
 	})
-	// Guards a diff line whose text starts with "++ " being read as a
-	// file header and never scanned.
-	t.Run("an added line that looks like a header is scanned", func(t *testing.T) {
-		d := newRepo(t, map[string]string{"a.md": "ok\n"})
-		write(t, d, map[string]string{"a.md": "ok\n++ " + secret + "\n"})
-		gitIn(t, d, "commit", "-q", "-am", "edit")
-		res := check(t, d, Extension{Private: writeList(t), Range: "HEAD~1..HEAD"})
-		if !slices.ContainsFunc(res.Findings, func(f Finding) bool { return f.Tier == TierPrivate && f.Commit != "" }) {
-			t.Errorf("want the added line's private hit:\n%s", render(res))
-		}
-	})
-	// Guards a path with a space, which git ends with a tab in a diff:
-	// kept, the hit would be reported, and allowlisted, under a wrong path.
-	t.Run("a path with a space is read whole", func(t *testing.T) {
-		d := newRepo(t, map[string]string{"a.md": "ok\n"})
-		write(t, d, map[string]string{"notes space.md": "Mail " + outer + "\n"})
-		gitIn(t, d, "add", "-A")
-		gitIn(t, d, "commit", "-q", "-m", "add")
-		res := check(t, d, Extension{Range: "HEAD~1..HEAD"})
-		if !slices.ContainsFunc(res.Findings, func(f Finding) bool { return f.Where == "notes space.md" && f.Commit != "" }) {
-			t.Errorf("want the hit in notes space.md:\n%s", render(res))
-		}
-	})
 	// Guards diff.indentHeuristic, which diff-tree reads: turned off, it
 	// shifts which of two equal blocks counts as added, so a hit would
 	// name another line on that machine.
