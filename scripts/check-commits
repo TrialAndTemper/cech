@@ -105,7 +105,7 @@ parse_args() {
   if [ "${MODE}" = message ] && [ ! -r "${ARG}" ]; then
     die "cannot read message file: ${ARG}"
   fi
-  # CI sets the range once for every gate that `mise run check` runs.
+  # CI sets the range once per job, for every gate there that reads it.
   if [ "${MODE}" = default ] && [ -n "${CECH_RANGE:-}" ]; then
     case "${CECH_RANGE}" in
       -*) die "CECH_RANGE must not start with -: ${CECH_RANGE}" ;;

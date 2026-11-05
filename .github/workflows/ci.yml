@@ -1,6 +1,9 @@
 # The gates of ADR 4, run with the tools pinned in mise.toml. CI runs
-# `mise run check`, as a contributor does, so there is no second list of
-# gates to keep in step; only the private term tier has its own step.
+# the two tasks that `mise run check` runs for a contributor: commits
+# once, on Linux, since commit messages are the same on every system, and
+# check:os, every other gate, on each system (ADR 4 item 2). So there is
+# no second list of gates to keep in step; only the private term tier has
+# its own step.
 name: CI
 
 on:
@@ -24,23 +27,20 @@ env:
   MISE_LOCKED: "1"
 
 jobs:
-  check:
-    name: check (${{ matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, macos-15, windows-2025]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+  # The commit gate, in its own job, so that fixup commits left
+  # for review fail this job alone and leave the checks of each system
+  # green. Its first three steps copy the check job's, which explains
+  # them; keep the copies in step.
+  commits:
+    name: commits
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     defaults:
       run:
-        # bash on every runner; on Windows that is Git Bash, which also
-        # gives the tasks their sh.
         shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          # The term and commit gates read every commit in CECH_RANGE.
           fetch-depth: 0
           persist-credentials: false
 
@@ -48,10 +48,6 @@ jobs:
         with:
           version: 2026.10.3
 
-      # The commits under check: the pull request's own, or the push's.
-      # A push whose old tip is unknown, as on the first push or after a
-      # force push, checks every commit on main. The commit and term gates
-      # read CECH_RANGE when no mode is given.
       - name: range
         id: range
         env:
@@ -70,16 +66,68 @@ jobs:
           fi
           echo "CECH_RANGE=${range}" >> "${GITHUB_ENV}"
 
-      # Every gate keeps running after another fails, so one run reports
-      # every failing gate, each line prefixed with its task. The token is
-      # for lychee, in docs:check: it sends the token only to GitHub, which
-      # rate-limits calls with a token less than anonymous calls from shared
-      # runners. Every gate sees it, but the job's read-only permission lets
-      # it only read the repository, and it expires with the job.
+      - name: commits
+        run: mise run --output prefix commits
+
+  check:
+    name: check (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-15, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    defaults:
+      run:
+        # bash on every runner; on Windows that is Git Bash, which also
+        # gives the tasks their sh.
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The term gate, and the commit gate in the commits job, read
+          # every commit in CECH_RANGE.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+        with:
+          version: 2026.10.3
+
+      # The commits under check: the pull request's own, or the push's.
+      # A push whose old tip is unknown, as on the first push or after a
+      # force push, checks every commit on main. The term gate, and the
+      # commit gate in the commits job, read CECH_RANGE when no mode is
+      # given.
+      - name: range
+        id: range
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "${EVENT}" = pull_request ]; then
+            range="${BASE_SHA}..${HEAD_SHA}"
+          elif git cat-file -e "${BEFORE}^{commit}" 2> /dev/null; then
+            range="${BEFORE}..${GITHUB_SHA}"
+          else
+            echo "::warning::old tip of main unknown; checking every commit"
+            range=${GITHUB_SHA}
+          fi
+          echo "CECH_RANGE=${range}" >> "${GITHUB_ENV}"
+
+      # Each gate in check:os keeps running after another fails, so one run
+      # reports every failing gate, each line prefixed with its task.
+      # The token is for lychee, in docs:check: it sends the token only to
+      # GitHub, which rate-limits calls with a token less than anonymous
+      # calls from shared runners. Every gate sees it, but the job's
+      # read-only permission lets it only read the repository, and it
+      # expires with the job.
       - name: check
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: mise run --continue-on-error --output prefix check
+        run: mise run --continue-on-error --output prefix check:os
 
       # check ran the public term tiers. This step runs the term gate again
       # with the private tier (ADR 3), which runs, and must run, only where

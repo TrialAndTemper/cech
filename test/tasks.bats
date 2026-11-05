@@ -2,14 +2,15 @@
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status, output and lines; helpers.bash sets SRC
 # Tests of the mise tasks and the git hooks (ADR 4). As ADR 4 asks of
-# gate tests, each case guards a way `mise run check` or a hook could
-# pass when it should fail, where review would likely miss it, and says
+# gate tests, each case guards a way a gate task or a hook could pass
+# when it should fail, where review would likely miss it, and says
 # which: most are a tool bump that changes what a gate sees, or a hook,
 # which checks the staged tree. The other ways, such as a task whose
-# command changes in mise.toml, show in the diff and were checked by
-# hand when their cases were dropped; the one exception is the line in
-# ci.yml that runs check, which the case that guards mise also runs. The
-# vuln task never blocks a merge (ADR 16 item 3), so it has no case.
+# command changes in mise.toml, or the line in ci.yml that runs
+# commits, show in the diff and were checked by hand; the one exception
+# is the line in ci.yml that runs check:os, which the case that guards
+# mise also runs. The vuln task never blocks a merge (ADR 16 item 3), so
+# it has no case.
 #
 # Requires: mise and bats (run it with `mise run test`), git >= 2.28
 # (init -b), and what the gates require.
@@ -71,20 +72,21 @@ commit_with_hooks() {
   refute_output_has "${SECRET}"
 }
 
-# Guards a gate dropped from check's depends, and a mise bump after
-# which a pattern in depends, such as lint:*, matches fewer tasks, so
-# that check skips a gate.
-@test "check runs every gate task" {
+# Guards a gate dropped from check:os's depends, and a mise bump after
+# which a pattern there, such as lint:*, matches fewer tasks, so that
+# CI's check jobs skip a gate. check itself depends only on check:os
+# and commits, which CI runs in a job of its own.
+@test "check:os runs every gate task but commits" {
   local tasks task
   tasks=$(mise tasks ls --name-only --hidden) || return
   # An empty list would let the loop check nothing.
   run printf '%s\n' "${tasks}"
   assert_output_has "lint:shell"
-  run mise run -n check
+  run mise run -n check:os
   assert_status 0
   for task in ${tasks}; do
     case "${task}" in
-      commits | terms | docs:check | build:check | lint:* | format:check:* | test:*)
+      terms | docs:check | build:check | lint:* | format:check:* | test:*)
         assert_output_has "[${task}] \$"
         ;;
       *) ;;
@@ -151,13 +153,13 @@ commit_with_hooks() {
 
 # Guards a mise bump after which --continue-on-error exits 0 when a
 # gate fails, or stops the other gates, and a change to the line in
-# ci.yml that runs check, such as a flag that hides a failure or a
+# ci.yml that runs check:os, such as a flag that hides a failure or a
 # dropped --continue-on-error. That line shows in the diff, but the
-# case runs it, as CI's bash does, on a check of its own: good waits for
-# bad, which fails.
+# case runs it, as CI's bash does, on a check:os of its own: good waits
+# for bad, which fails.
 @test "check fails in CI when a gate fails" {
   local dir="${BATS_TEST_TMPDIR}/ci" line
-  line=$(sed -n 's/^ *run: \(mise run\( [^ ]*\)* check\)$/\1/p' .github/workflows/ci.yml)
+  line=$(sed -n 's/^ *run: \(mise run\( [^ ]*\)* check:os\)$/\1/p' .github/workflows/ci.yml)
   # Exactly one line, so that the case runs CI's check command and
   # nothing else.
   run printf '%s\n' "${line}"
@@ -169,7 +171,7 @@ commit_with_hooks() {
   mkdir -p "${dir}"
   printf '%s\n' '[task_config]' 'shell = "sh -o errexit -c"' '[tasks.bad]' \
     'run = "exit 1"' '[tasks.good]' 'wait_for = ["bad"]' 'run = "echo good-ran"' \
-    '[tasks.check]' 'depends = ["bad", "good"]' > "${dir}/mise.toml"
+    '[tasks."check:os"]' 'depends = ["bad", "good"]' > "${dir}/mise.toml"
   cd -- "${dir}" || return
   run bash --noprofile --norc -eo pipefail -c "${line}"
   assert_status 1
