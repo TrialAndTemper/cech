@@ -8,7 +8,6 @@
 
 ADRs promise checks, such as ADR numbering ([ADR 1](0001-record-architecture-decisions.md)) and the term check ([ADR 3](0003-vendor-neutrality.md)).
 A check that runs only on some machines, or differently on each, lets breakage through.
-Git hooks can be skipped, and do not run on web edits.
 A broken gate on `main` blocks every merge, even the one that would fix it.
 
 Probed with mise 2026.10.3 on 2026-10-19:
@@ -28,9 +27,9 @@ A movable action tag, or a secret given to fork code, can leak secrets or change
    Each gate is a task in `mise.toml` that runs a pinned tool, CECH's CLI, or a POSIX shell script under `scripts/`, so contributors and CI run the same thing.
    On Windows a script task runs through Git Bash's `sh`, and bats, which has no Windows build, does not run.
 2. **CI is the authority.**
-   A GitHub Actions workflow runs `mise run check` on every pull request and push to `main`, on Linux, macOS and Windows, and holds no second list of gates.
+   On every pull request and push to `main`, a GitHub Actions workflow runs `check:os`, every gate but the commit message gate, on Linux, macOS and Windows, and that gate once, in its own job, so review fixups fail only that job; the workflow holds no second list.
    A ruleset on `main` requires the gates to pass before merge.
-   A gate that needs a secret, such as the private term tier ([ADR 3](0003-vendor-neutrality.md)), is required only where the secret reaches, never on fork pull requests, and is skipped locally without it.
+   A gate that needs a secret, such as the private term tier ([ADR 3](0003-vendor-neutrality.md)), is required only where the secret reaches, and is skipped locally without it.
    A rule CI cannot check is guidance in the contributing guide, not described as enforced.
 3. **Bypass.**
    Organisation owners may bypass the ruleset only to repair `main` or a gate.
@@ -39,8 +38,7 @@ A movable action tag, or a secret given to fork code, can leak secrets or change
    Optional `pre-commit` and `commit-msg` hooks run some of the gates through `mise run`, on the staged tree or on the message; no rule exists only in a hook.
 5. **The gates**, each added when the thing it checks first exists:
    - term check, all public tiers; private tier as in [ADR 3](0003-vendor-neutrality.md);
-   - DCO sign-off on every commit in the pull request;
-   - commit message format;
+   - commit message format and DCO sign-off on every commit in the pull request;
    - Markdown lint and link check;
    - shell lint and format check of the gate scripts;
    - tests of the gate scripts;
