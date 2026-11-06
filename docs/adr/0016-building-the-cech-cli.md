@@ -30,12 +30,11 @@ Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1
    - `github.com/spf13/cobra`, with the `github.com/spf13/pflag` and `github.com/inconshreveable/mousetrap` it requires: the standard `flag` package has no command tree, generated help or shell completion.
 2. **Versions.**
    The CLI has its own SemVer versions, on the `cli/` tags of [ADR 14](0014-releases-and-versions.md) item 2.
-   `cech version` prints `cech` and the version, and with `--json` also the Go release that built it and the OS and architecture it was built for.
+   `cech version` reports the CLI's version, so users and scripts can tell which layout rules they run.
    The CLI's release pipeline is outside this ADR.
 3. **Gates.**
-   The CLI's gates are tasks of [ADR 4](0004-gates-and-ci.md), run on Linux, macOS and Windows: `go vet`, golangci-lint, a format check, a tidy `go.mod`, and `go test` with the race detector where the platform allows.
-   govulncheck is not a merge gate, extending [ADR 4](0004-gates-and-ci.md) item 7: it reports on pull requests without blocking them, and a failure on `main` opens an issue.
-   Tests are table-driven, and output that is a contract has golden files.
+   govulncheck is not a gate, extending [ADR 4](0004-gates-and-ci.md) item 7: it reports on pull requests without blocking them, and a failure on `main` opens an issue.
+   Output that is a contract has golden files.
 
 ## Consequences
 
@@ -47,4 +46,4 @@ Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1
 
 - **The standard `flag` package and a command table of our own:** no new modules, but each command adds its own parsing and help code, and shell completion is ours to write.
 - **govulncheck as a `tool` in `go.mod`:** puts its modules into `go.mod` and `go.sum`, among the binary's own dependencies.
-- **govulncheck as a merge gate:** a new report would block every pull request until Go is upgraded.
+- **govulncheck as a gate:** a new report would block every pull request until Go is upgraded.

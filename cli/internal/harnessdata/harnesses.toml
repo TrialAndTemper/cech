@@ -1,11 +1,12 @@
 # The harness data file: the harness behaviours CECH relies on, and the
-# workarounds for harness gaps (ADR 9 items 2 and 3), in the format ADR
-# 9 item 5 sets. The cech CLI builds it in. Code that works around a gap
-# names its entry. Re-run an entry's probe on a new harness release; on
-# the result in expect, update verified, and on any other, open an
-# issue. scripts/probes/<entry> runs the probe of an entry marked
-# unattended = true, and mise run probes runs them all; a scheduled job
-# runs them on the newest releases (ADR 9 item 4).
+# workarounds for harness gaps (ADR 9 items 2 and 3), in the format of
+# ADR 9 item 5 that internal/harnessdata spells out. The cech CLI builds
+# it in. Code that works around a gap names its entry. Re-run an
+# entry's probe on a new harness release; on the result in expect,
+# update verified, and on any other, open an issue.
+# scripts/probes/<entry> runs the probe of an entry marked unattended =
+# true, and mise run probes runs them all; a scheduled job runs them on
+# the newest releases (ADR 9 item 4).
 
 [codex-plugin-agents]
 harness = "codex"

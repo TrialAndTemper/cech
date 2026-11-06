@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// TestFile holds the committed harnesses.toml to ADR 9 item 5, so the
+// TestFile holds the committed harnesses.toml to the format, so the
 // merge gate fails on a wrong entry. The file is built in, so go test's
 // cache sees a change to it.
 func TestFile(t *testing.T) {
