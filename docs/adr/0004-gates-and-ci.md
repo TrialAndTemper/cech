@@ -37,9 +37,9 @@ A movable action tag, or a secret given to fork code, can leak secrets or change
 4. **Hooks are a convenience.**
    Optional `pre-commit` and `commit-msg` hooks run some of the gates through `mise run`, on the staged tree or on the message; no rule exists only in a hook.
 5. **The gates.**
-   Every check that an ADR assigns to CI or the merge gate is a gate, added when the thing it checks first exists.
-   This ADR makes a gate of each check on CECH's own tooling: its scripts, workflows and links.
-   The `check` task in `mise.toml` is the list of gates.
+   A gate is a check that must pass before a change merges.
+   Each check an ADR asks for becomes one once the thing it checks exists, and this ADR adds the checks on CECH's own tooling: its scripts, workflows and links.
+   The `check` task in `mise.toml` lists them.
    A gate script has a test for each way the gate could pass when it should fail, such as a lost finding or a skipped check, where review would likely miss it.
    Most such faults lie outside the diff: in a bumped tool pin, on a platform the reviewer does not run, or on the staged tree.
    Each case says in a comment which way it guards.
