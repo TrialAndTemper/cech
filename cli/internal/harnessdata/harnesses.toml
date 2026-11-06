@@ -136,3 +136,34 @@ list and codex debug prompt-input hi."""
 expect = "The first codex plugin list fails; after the first upgrade, hello@core is installed and enabled and kit@core is not installed; after kit@core is enabled and the upgrade runs again, kit@core is still not installed, and only hello's word is in the prompt."
 unattended = true
 verified = { version = "0.166.0", date = 2026-11-06 }
+
+[codex-project-skill-switch]
+harness = "codex"
+kind = "gap"
+summary = "Codex loads a personal copy of a plugin's skill beside the plugin's own, and a [[skills.config]] entry that turns the copy off, by name or path, works in the user's config.toml but is ignored in a trusted project's .codex/config.toml. A name entry in the user's config leaves the plugin's skill, which Codex names plugin:skill, loaded."
+workaround = """
+None on Codex: cech never writes the user's config (ADR 19 item 6), so \
+a personal copy loads beside the plugin, which ADR 22 item 6 accepts. \
+Once a project's config can turn the copy off, cech can do so there, as \
+it does for Claude Code with skillOverrides."""
+decision = "ADR 22 item 6"
+probe = """
+With an empty CODEX_HOME, make a local marketplace probe-mkt whose \
+plugin probe holds skills/probe/SKILL.md, and add it with codex plugin \
+marketplace add <dir> and codex plugin add probe@probe-mkt. Put a \
+personal copy, a skill named probe, in $HOME/.agents/skills/probe/. \
+Give the plugin's skill and the copy each a description holding a word \
+found nowhere else. In a project that $CODEX_HOME/config.toml marks \
+with [projects."<path>"] trust_level = "trusted", put two \
+[[skills.config]] entries with enabled = false in .codex/config.toml, \
+one with name = "probe" and one with the copy's SKILL.md as path, and \
+run codex debug prompt-input hi. Then move the two entries to the end \
+of $CODEX_HOME/config.toml, empty .codex/config.toml, and run it again."""
+expect = "With the entries in the project's config, both words are in the prompt; with them in the user's config, only the plugin's word is."
+unattended = true
+verified = { version = "0.166.0", date = 2026-11-06 }
+
+[[codex-project-skill-switch.sources]]
+source = "https://learn.chatgpt.com/docs/build-skills"
+read = 2026-11-06
+version = "0.166.0"

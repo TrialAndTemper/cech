@@ -1,0 +1,67 @@
+#!/bin/sh
+# Probe of the harness data entry codex-project-skill-switch (ADR 9
+# item 4): Codex loads a personal copy of a plugin's skill beside the
+# plugin's own, and a [[skills.config]] entry turns the copy off from
+# the user's config.toml but not from a trusted project's (ADR 22 item
+# 6). The steps are the entry's probe; no session starts, so no model is
+# called.
+#
+# Usage: scripts/probes/codex-project-skill-switch
+#
+# Requires: codex, git.
+#
+# Exit status: 0 the expected result, 1 another, 2 the probe could not
+# run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
+readonly ROOT
+[ -r "${ROOT}/scripts/lib/common.sh" ] && [ -r "${ROOT}/scripts/lib/probe.sh" ] || {
+  printf 'codex-project-skill-switch: cannot read scripts/lib/common.sh or probe.sh\n' >&2
+  exit 2
+}
+# shellcheck source=../lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+# shellcheck source=../lib/probe.sh
+. "${ROOT}/scripts/lib/probe.sh"
+PROG=codex-project-skill-switch
+readonly PROG
+
+# switch_off <file>: add to file the [[skills.config]] entries that turn
+# off the skill named probe and the personal copy at its path.
+switch_off() {
+  printf '\n[[skills.config]]\nname = "probe"\nenabled = false\n\n[[skills.config]]\npath = "%s"\nenabled = false\n' \
+    "${copy}/SKILL.md" >> "$1" || die "cannot write $1"
+}
+
+probe_start codex
+write_marketplace "${SCRATCH}/mkt" probe-mkt probe
+write_plugin "${SCRATCH}/mkt/plugins/probe" probe quillfeather
+copy=${PROBE_HOME}/.agents/skills/probe
+mkdir -p -- "${copy}" "${PROBE_HOME}/.codex" || die "cannot create the personal copy"
+printf -- '---\nname: probe\ndescription: Use when the user asks about tidewater.\n---\n\nAnswer briefly.\n' \
+  > "${copy}/SKILL.md" || die "cannot write the personal copy"
+new_project "${SCRATCH}/project"
+mkdir -p -- .codex || die "cannot create .codex"
+project=$(pwd -P) || die "cannot read the project's path"
+printf '[projects."%s"]\ntrust_level = "trusted"\n' "${project}" > "${PROBE_HOME}/.codex/config.toml" ||
+  die "cannot write config.toml"
+
+must "codex plugin marketplace add failed" codex plugin marketplace add "${SCRATCH}/mkt"
+must "codex plugin add failed" codex plugin add probe@probe-mkt
+cp -- "${PROBE_HOME}/.codex/config.toml" "${SCRATCH}/user.toml" || die "cannot keep config.toml"
+
+: > .codex/config.toml || die "cannot write .codex/config.toml"
+switch_off .codex/config.toml
+must "codex debug prompt-input failed" codex debug prompt-input hi
+expect_out quillfeather "the plugin's word is not in the prompt"
+expect_out tidewater "the personal copy's word is not in the prompt, so the project's config turned it off"
+
+: > .codex/config.toml || die "cannot empty .codex/config.toml"
+cp -- "${SCRATCH}/user.toml" "${PROBE_HOME}/.codex/config.toml" || die "cannot write config.toml"
+switch_off "${PROBE_HOME}/.codex/config.toml"
+must "codex debug prompt-input failed" codex debug prompt-input hi
+expect_out quillfeather "the plugin's word is not in the prompt with the user's switch"
+refuse_out tidewater "the user's config does not turn off the personal copy"
+probe_ok
