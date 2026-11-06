@@ -105,7 +105,7 @@ CI runs `vuln` on pull requests that touch the CLI or its tools, without blockin
 It fails when a generated file differs from its sources: `data/marketplace.toml` ([ADR 17](docs/adr/0017-repository-data-and-state.md) item 7), CECH's categories in `cli/internal/marketplace/categories.toml`, the root `LICENSE`, and each plugin's `plugin.json`, `SKILL.md` and reviewer agents.
 Change the source, then let `mise run build:fix` rewrite the generated files with the same `cech`.
 
-A new Go dependency needs a change to [ADR 16](docs/adr/0016-building-the-cech-cli.md) in the same pull request.
+A new Go dependency says on its line in `cli/go.mod` why it is there, and its commit records its licence ([ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1).
 
 ### Optional git hooks
 
