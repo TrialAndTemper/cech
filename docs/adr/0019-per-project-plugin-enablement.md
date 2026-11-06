@@ -8,7 +8,7 @@
 
 A project enables plugins from CECH and from extensions ([ADR 8](0008-a-marketplace-you-extend-not-fork.md)), each at a version it chooses.
 Claude Code reads them from `.claude/settings.json` and Codex from `.codex/config.toml`, so the two files must agree.
-This ADR covers plugins only; skills installed without their plugins are outside it.
+This ADR covers plugins, not skills installed without them.
 
 Probed on 2026-10-16 (Claude Code 2.1.301) and 2026-10-21 (Claude Code 2.1.303), both with Codex CLI 0.162.1, with local git marketplaces:
 
@@ -68,7 +68,7 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
    - `cech enable` and `cech disable` change the plugin lists, apply item 5, and render again.
    - `cech upgrade` moves a pin, the marketplace's name and its keys together.
    - `cech check`, read-only, fails when the files break this ADR or two enabled plugins share a name ([ADR 12](0012-categories-and-names.md) item 7).
-   - `cech setup`, run in each clone, runs `codex plugin marketplace upgrade` ([ADR 15](0015-the-cech-cli.md) item 2) and syncs the enabled plugins' reviewer agents ([ADR 10](0010-claude-code-and-codex-from-one-source.md) item 3).
+   - `cech setup`, run in each clone, makes Codex install every enabled plugin at its pin, a gap recorded in the harness data file ([ADR 9](0009-native-harness-features-first.md) item 2), and syncs their reviewer agents ([ADR 10](0010-claude-code-and-codex-from-one-source.md) item 3).
 
 ## Consequences
 
