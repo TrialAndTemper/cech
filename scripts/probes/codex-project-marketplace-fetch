@@ -1,0 +1,79 @@
+#!/bin/sh
+# Probe of the harness data entry codex-project-marketplace-fetch (ADR 9
+# item 4): Codex fetches a git marketplace that a trusted project
+# declares only when codex plugin marketplace upgrade runs in the
+# project, and then installs the plugins the project enables, but not
+# one enabled later at an unchanged ref (ADR 19 item 8). The steps are
+# the entry's probe; no session starts, so no model is called.
+#
+# Usage: scripts/probes/codex-project-marketplace-fetch
+#
+# Requires: codex, git.
+#
+# Exit status: 0 the expected result, 1 another, 2 the probe could not
+# run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/../.." && pwd)
+readonly ROOT
+[ -r "${ROOT}/scripts/lib/common.sh" ] && [ -r "${ROOT}/scripts/lib/probe.sh" ] || {
+  printf 'codex-project-marketplace-fetch: cannot read scripts/lib/common.sh or probe.sh\n' >&2
+  exit 2
+}
+# shellcheck source=../lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+# shellcheck source=../lib/probe.sh
+. "${ROOT}/scripts/lib/probe.sh"
+PROG=codex-project-marketplace-fetch
+readonly PROG
+
+# project_config <plugin...>: write the project's .codex/config.toml,
+# which declares the marketplace core at v1.0.0 and enables each plugin.
+project_config() {
+  local p
+  printf '[marketplaces.core]\nsource_type = "git"\nsource = "file://%s"\nref = "v1.0.0"\n' \
+    "${mkt}" > .codex/config.toml || die "cannot write .codex/config.toml"
+  for p in "$@"; do
+    printf '\n[plugins."%s@core"]\nenabled = true\n' "${p}" >> .codex/config.toml ||
+      die "cannot write .codex/config.toml"
+  done
+}
+
+probe_start codex
+mkdir -p -- "${SCRATCH}/mkt" || die "cannot create the marketplace"
+mkt=$(CDPATH='' cd -- "${SCRATCH}/mkt" && pwd -P) || die "cannot read the marketplace's path"
+write_marketplace "${mkt}" core hello kit
+write_plugin "${mkt}/plugins/hello" hello quillfeather
+write_plugin "${mkt}/plugins/kit" kit marrowstone
+git init -q -- "${mkt}" || die "cannot create a git repository in the marketplace"
+git -C "${mkt}" add -A || die "cannot stage the marketplace"
+git -C "${mkt}" -c user.name=Acme -c user.email=probe@example.com -c commit.gpgsign=false \
+  commit -q -m probe || die "cannot commit the marketplace"
+git -C "${mkt}" tag v1.0.0 || die "cannot tag the marketplace"
+
+new_project "${SCRATCH}/project"
+mkdir -p -- .codex "${PROBE_HOME}/.codex" || die "cannot create .codex"
+project=$(pwd -P) || die "cannot read the project's path"
+printf '[projects."%s"]\ntrust_level = "trusted"\n' "${project}" > "${PROBE_HOME}/.codex/config.toml" ||
+  die "cannot write config.toml"
+project_config hello
+
+harness codex plugin list
+[ "${STATUS}" -ne 0 ] || differs "codex plugin list succeeds before anything fetched the marketplace"
+must "codex plugin marketplace upgrade failed" codex plugin marketplace upgrade
+must "codex plugin list failed" codex plugin list
+expect_out '^hello@core  *installed, enabled ' \
+  "codex plugin list does not show hello@core as installed and enabled after the upgrade"
+expect_out '^kit@core  *not installed' \
+  "codex plugin list does not show kit@core as not installed after the upgrade"
+
+project_config hello kit
+must "codex plugin marketplace upgrade failed" codex plugin marketplace upgrade
+must "codex plugin list failed" codex plugin list
+expect_out '^kit@core  *not installed' \
+  "kit@core, enabled at an unchanged ref, is installed after the upgrade"
+must "codex debug prompt-input failed" codex debug prompt-input hi
+expect_out quillfeather "hello's word is not in the prompt"
+refuse_out marrowstone "kit's word is in the prompt"
+probe_ok
