@@ -30,12 +30,12 @@ Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1
    - `github.com/spf13/cobra`, with the `github.com/spf13/pflag` and `github.com/inconshreveable/mousetrap` it requires: the standard `flag` package has no command tree, generated help or shell completion.
 2. **Versions.**
    The CLI has its own SemVer versions, on the `cli/` tags of [ADR 14](0014-releases-and-versions.md) item 2.
-   `cech version` prints `cech` and the version, and with `--json` also the Go release that built it and the OS and architecture it was built for.
+   `cech version` reports the CLI's version, so users and scripts can tell which layout rules they run.
    The CLI's release pipeline is outside this ADR.
 3. **Gates.**
-   The CLI's gates are tasks of [ADR 4](0004-gates-and-ci.md), run on Linux, macOS and Windows: `go vet`, golangci-lint, a format check, a tidy `go.mod`, and `go test` with the race detector where the platform allows.
+   The CLI's gates are tasks of [ADR 4](0004-gates-and-ci.md), run on Linux, macOS and Windows: its lint, format check and tests, and a check that `go.mod` is tidy.
    govulncheck is not a merge gate, extending [ADR 4](0004-gates-and-ci.md) item 7: it reports on pull requests without blocking them, and a failure on `main` opens an issue.
-   Tests are table-driven, and output that is a contract has golden files.
+   Output that is a contract has golden files.
 
 ## Consequences
 

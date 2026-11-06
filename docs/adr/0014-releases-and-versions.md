@@ -26,7 +26,7 @@ Only a plugin with no `version` in a git marketplace takes it from the commit, a
    - A CLI release is tagged `cli/vX.Y.Z` or `cli/vX.Y.Z-rc.N` on a commit of `main`, with version numbers of its own.
 
    `X`, `Y`, `Z` and `N` are decimal with no leading zeros, and `N` starts at 1.
-   A ruleset blocks moving or deleting either kind of tag, and creating a catalogue tag outside the release workflow (item 6).
+   The host refuses moving or deleting either kind of tag, and creating a catalogue tag outside the release workflow (item 6).
 3. **A release build.**
    `cech build --release V` takes `V`, a version as in item 2 without the `v`.
    It names the catalogue `<namespace>-V`, with each `.` in `V` turned into `-`, such as `cech-0-2-0-rc-1`.
@@ -44,7 +44,7 @@ Only a plugin with no `version` in a git marketplace takes it from the commit, a
    A maintainer starts it with `V` and a commit, and it fails unless the commit is on `main` and `V` is above every earlier catalogue release.
    It makes the release commit with `cech build --release V`, runs every gate and the private term tier ([ADR 3](0003-vendor-neutrality.md) item 4) on it, and pushes the tag only when all pass.
 7. **Extensions** follow items 1 to 6 with their own namespace, tags, default branch and private term list, without CLI tags.
-   On a host without rulesets or workflows, a maintainer keeps to them by hand.
+   On a host that cannot enforce them, a maintainer keeps to them by hand.
 
 ## Consequences
 

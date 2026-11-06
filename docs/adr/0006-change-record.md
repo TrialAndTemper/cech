@@ -15,15 +15,14 @@ Release notes need commits they can sort by kind.
 ## Decision
 
 1. **Rebase merge only.**
-   Merge commits and squash merges are turned off in the repository settings, and a ruleset requires linear history on `main`.
-   Force pushes to `main` are blocked.
+   `main` takes only rebase merges, so its history stays linear, and refuses force pushes; the host enforces both.
 2. **Commits are the record.**
    Anything that must last (the reason for a change, evidence, rejected options) goes in a commit message or an ADR.
    The pull request description summarises and links; it is not the only place for any of that.
 3. **Clean before merge.**
    Each commit is one logical change and should leave the tree passing the gates ([ADR 4](0004-gates-and-ci.md)).
    CI runs them on the pull request as a whole, not on each commit, so this is guidance.
-   Review fixes are pushed as `git commit --fixup` commits and folded in with `git rebase --autosquash` before merge, after rebasing on `main`.
+   Review fixes are pushed as fixup commits, so a reviewer sees each one, and are folded into the commits they fix before merge.
    Force pushes to one's own pull request branch are expected.
 4. **Message format:** [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
    - Header `type(scope): summary`, at most 72 characters, imperative, no final full stop.
@@ -40,10 +39,9 @@ Release notes need commits they can sort by kind.
    No other content limits beyond [ADR 3](0003-vendor-neutrality.md).
 6. **Messages stand alone.**
    A link in a commit message points only to a public, durable page: a CECH issue or pull request, a spec, an upstream commit.
-7. **The commit message gate** checks every commit in a pull request for the item 4 header, a blank line after it, and a `Signed-off-by:` trailer that carries the commit author's email, since the DCO is the author's statement.
-   It does not apply the header rule to `fixup!`, `squash!` and `amend!` commits, but fails while any remain, so the pull request cannot merge until they are folded in.
-   It fails a merge commit, which item 1 keeps off `main`.
-   `Co-authored-by:` and item 6 are for reviewers to check.
+7. **The commit message gate** checks every commit in a pull request for item 4's header and item 5's sign-off, which must carry the commit author's email, since the DCO is the author's statement.
+   It fails while a fixup or merge commit remains, so neither reaches `main`.
+   The rest of items 4 to 6 is for reviewers to check.
 
 ## Consequences
 
