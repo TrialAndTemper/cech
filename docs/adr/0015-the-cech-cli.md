@@ -39,15 +39,15 @@ Checked on 2026-10-27 with Go 1.27.3:
      Other codes are not used.
    - A command never reports success for a check it could not run, and after a partial success it says what it skipped.
 6. **Harness quirks stay in one place.**
-   Code that knows one harness's behaviour lives in `internal/harness/claude` or `internal/harness/codex`.
+   Code that knows one harness's behaviour lives in a package for that harness alone.
    Each workaround names its entry in the harness data file ([ADR 9](0009-native-harness-features-first.md)), so it can be deleted when the harness closes the gap.
-   That file, at `internal/harnessdata/harnesses.toml`, and the code that reads it live apart from both packages, since they belong to no one harness.
+   That file and the code that reads it sit in neither harness's package, since they belong to no one harness.
 7. **Works without mise.**
    A user needs neither mise nor Go to run the binary, and it never calls mise.
 
 ## Consequences
 
-- Only `cli/` has a `go.mod`, so Go commands run in `cli/`, or from the root with `-C cli`.
+- Go commands find the module only in `cli/`.
 
 ## Options considered
 

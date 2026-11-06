@@ -36,8 +36,7 @@ The same check fails when the marketplace catalogue has no `description`, and ac
    It works on any marketplace with CECH's layout, so extensions use it too ([ADR 8](0008-a-marketplace-you-extend-not-fork.md)).
 4. Generated files are committed, because both harnesses read the catalogue and manifests straight from git.
    Where the format allows comments, a generated file starts with a line saying it is generated and by what.
-5. Output is deterministic: plugins sorted by category, then name; fixed formatting; LF line ends and a final newline on every OS.
-   Running the build twice changes nothing.
+5. Output is deterministic and byte for byte the same on every OS; running the build twice changes nothing.
 6. Where the build writes a field inside a hand-written file (`plugin.json` `description` or `version`, or a dependency's `marketplace`), it changes only that field and leaves the rest of the file byte for byte as it was.
 7. `cech build --check` regenerates in memory and fails on any difference from the committed files.
    It is part of the merge gate.
