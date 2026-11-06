@@ -1,9 +1,9 @@
 # The gates of ADR 4, run with the tools pinned in mise.toml. CI runs
 # the two tasks that `mise run check` runs for a contributor: commits
 # once, on Linux, since commit messages are the same on every system, and
-# check:os, every other gate, on each system (ADR 4 item 2). So there is
-# no second list of gates to keep in step; only the private term tier has
-# its own step.
+# check:os, every other gate, on each system. So there is no second list
+# of gates to keep in step, and a new gate needs no change here (ADR 4
+# item 2); only the private term tier has its own step.
 name: CI
 
 on:

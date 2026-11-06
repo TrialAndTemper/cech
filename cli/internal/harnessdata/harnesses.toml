@@ -1,11 +1,12 @@
 # The harness data file: the harness behaviours CECH relies on, and the
-# workarounds for harness gaps (ADR 9 items 2 and 3), in the format ADR
-# 9 item 5 sets. The cech CLI builds it in. Code that works around a gap
-# names its entry. Re-run an entry's probe on a new harness release; on
-# the result in expect, update verified, and on any other, open an
-# issue. scripts/probes/<entry> runs the probe of an entry marked
-# unattended = true, and mise run probes runs them all; a scheduled job
-# runs them on the newest releases (ADR 9 item 4).
+# workarounds for harness gaps (ADR 9 items 2 and 3), in the format of
+# ADR 9 item 5 that internal/harnessdata spells out. The cech CLI builds
+# it in. Code that works around a gap names its entry. Re-run an
+# entry's probe on a new harness release; on the result in expect,
+# update verified, and on any other, open an issue.
+# scripts/probes/<entry> runs the probe of an entry marked unattended =
+# true, and mise run probes runs them all; a scheduled job runs them on
+# the newest releases (ADR 9 item 4).
 
 [codex-plugin-agents]
 harness = "codex"
@@ -108,3 +109,61 @@ verified = { version = "2.1.312", date = 2026-10-29 }
 source = "https://code.claude.com/docs/en/plugins/dependencies"
 read = 2026-10-29
 version = "2.1.312"
+
+[codex-project-marketplace-fetch]
+harness = "codex"
+kind = "gap"
+summary = "Codex fetches a git marketplace that a trusted project declares when codex plugin marketplace upgrade runs in the project, and then installs the plugins the project enables; a plugin enabled later at an unchanged ref is never installed, since the upgrade finds the marketplace up to date."
+workaround = """
+cech setup, run in each clone, has Codex fetch the managed marketplaces \
+and install every enabled plugin, one enabled at an unchanged ref \
+included, without writing the user's config.toml. How it makes Codex \
+install that one is for the change that builds cech setup: codex plugin \
+add writes the user's config, and the other ways seen change Codex's \
+own state (ADR 15 item 2)."""
+decision = "ADR 19 item 8"
+probe = """
+With an empty CODEX_HOME, make a local git marketplace core, tagged \
+v1.0.0, listing the plugins hello and kit, each with a skill whose \
+description holds a word found nowhere else. In a project that \
+$CODEX_HOME/config.toml marks with [projects."<path>"] trust_level = \
+"trusted", declare core in .codex/config.toml as [marketplaces.core] \
+with source_type = "git", source = "file://<dir>" and ref = "v1.0.0", \
+and enable hello@core. In the project, run codex plugin list, then \
+codex plugin marketplace upgrade and codex plugin list. Then enable \
+kit@core too, and run codex plugin marketplace upgrade, codex plugin \
+list and codex debug prompt-input hi."""
+expect = "The first codex plugin list fails; after the first upgrade, hello@core is installed and enabled and kit@core is not installed; after kit@core is enabled and the upgrade runs again, kit@core is still not installed, and only hello's word is in the prompt."
+unattended = true
+verified = { version = "0.166.0", date = 2026-11-06 }
+
+[codex-project-skill-switch]
+harness = "codex"
+kind = "gap"
+summary = "Codex loads a personal copy of a plugin's skill beside the plugin's own, and a [[skills.config]] entry that turns the copy off, by name or path, works in the user's config.toml but is ignored in a trusted project's .codex/config.toml. A name entry in the user's config leaves the plugin's skill, which Codex names plugin:skill, loaded."
+workaround = """
+None on Codex: cech never writes the user's config (ADR 19 item 6), so \
+a personal copy loads beside the plugin, which ADR 22 item 6 accepts. \
+Once a project's config can turn the copy off, cech can do so there, as \
+it does for Claude Code with skillOverrides."""
+decision = "ADR 22 item 6"
+probe = """
+With an empty CODEX_HOME, make a local marketplace probe-mkt whose \
+plugin probe holds skills/probe/SKILL.md, and add it with codex plugin \
+marketplace add <dir> and codex plugin add probe@probe-mkt. Put a \
+personal copy, a skill named probe, in $HOME/.agents/skills/probe/. \
+Give the plugin's skill and the copy each a description holding a word \
+found nowhere else. In a project that $CODEX_HOME/config.toml marks \
+with [projects."<path>"] trust_level = "trusted", put two \
+[[skills.config]] entries with enabled = false in .codex/config.toml, \
+one with name = "probe" and one with the copy's SKILL.md as path, and \
+run codex debug prompt-input hi. Then move the two entries to the end \
+of $CODEX_HOME/config.toml, empty .codex/config.toml, and run it again."""
+expect = "With the entries in the project's config, both words are in the prompt; with them in the user's config, only the plugin's word is."
+unattended = true
+verified = { version = "0.166.0", date = 2026-11-06 }
+
+[[codex-project-skill-switch.sources]]
+source = "https://learn.chatgpt.com/docs/build-skills"
+read = 2026-11-06
+version = "0.166.0"

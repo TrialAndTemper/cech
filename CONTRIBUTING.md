@@ -16,7 +16,7 @@ Ask questions in [Discussions](https://github.com/TrialAndTemper/cech/discussion
 
 By contributing you agree that your work is licensed under the licence of the files it adds or changes: MIT unless a file or folder says otherwise ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
 Text copied or adapted from another project needs a compatible licence, its notice and, in a skill, a source note naming the upstream project and the commit it came from; rewrite it where you can.
-[ADR 23](docs/adr/0023-forking-upstream-skills.md) lists the licences a skill may fork, the form of its `NOTICE`, and how a fork takes in upstream changes.
+[ADR 23](docs/adr/0023-forking-upstream-skills.md) lists the licences a skill may fork, what its `NOTICE` records, and how a fork takes in upstream changes.
 The notice for text in a skill goes in the skill folder's `NOTICE`; any other goes in [NOTICE](NOTICE).
 A skill based on a person's unpublished work ships only once they agree; credit published work by citing it.
 
@@ -104,7 +104,7 @@ CI runs `vuln` on pull requests that touch the CLI or its tools, without blockin
 It fails when a generated file differs from its sources: `data/marketplace.toml` ([ADR 17](docs/adr/0017-repository-data-and-state.md) item 7), CECH's categories in `cli/internal/marketplace/categories.toml`, the root `LICENSE`, and each plugin's `plugin.json`, `SKILL.md` and reviewer agents.
 Change the source, then let `mise run build:fix` rewrite the generated files with the same `cech`.
 
-A new Go dependency needs a change to [ADR 16](docs/adr/0016-building-the-cech-cli.md) in the same pull request.
+A new Go dependency says on its line in `cli/go.mod` why it is there, and its commit records its licence ([ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1).
 
 ### Optional git hooks
 

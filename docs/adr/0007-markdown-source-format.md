@@ -24,14 +24,12 @@ It is still at 0.x, so a new release may format files differently.
 2. **One sentence per line.**
    A sentence is never broken across lines.
    A sentence that is too long is shortened by rewriting it, not by wrapping it.
-3. **rumdl checks and fixes it.**
-   `.rumdl.toml` at the repository root turns on sentence-per-line reflow and removes the line-length limit; every other setting is rumdl's default.
-   `rumdl check` is the Markdown lint gate of [ADR 4](0004-gates-and-ci.md), and `rumdl fmt` fixes files.
-   Its version is pinned with the other check tools.
+3. **rumdl checks and fixes it**, set to sentence-per-line reflow with no line-length limit.
+   Its lint and its format check are gates ([ADR 4](0004-gates-and-ci.md)).
 4. **Upgrades are their own commit.**
    An upgrade and the reformat it causes land together in one commit.
 5. **Exceptions.**
-   Text copied verbatim from upstream keeps its own layout: a whole file goes in the exclude list of `.rumdl.toml`, a part of a file sits between block disable comments, and each exception gives its reason next to it.
+   Text copied verbatim from upstream keeps its own layout; the linter exempts it, a whole file or a marked part, and each exception gives its reason next to it.
 6. **Commit messages are separate.**
    Their bodies stay wrapped at 72 characters, as [ADR 6](0006-change-record.md) says; this rule does not change that.
 

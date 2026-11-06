@@ -42,7 +42,7 @@ Read on 2026-10-28, with Claude Code 2.1.312 and Codex CLI 0.165.0 installed:
 5. **No project copies of managed skills.**
    In a project with `.cech/config.toml`, `cech check` fails on a project copy of any skill from a managed marketplace ([ADR 19](0019-per-project-plugin-enablement.md) item 1), enabled or not.
 6. **The plugin wins over personal copies.**
-   For each enabled plugin of a managed marketplace, `cech` writes `"skillOverrides": {"<skill>": "off"}` into `.claude/settings.json`.
+   For each enabled plugin of a managed marketplace, `cech` turns off that skill's name in Claude Code's project-level `skillOverrides`.
    Claude Code then turns off other skills of that name, not the plugin's.
    Hand-written native files ([ADR 19](0019-per-project-plugin-enablement.md) item 7) carry these entries by hand.
    Codex documents no project-level switch, so a personal copy still loads there, a gap recorded in the harness data file ([ADR 9](0009-native-harness-features-first.md) item 2).

@@ -36,7 +36,7 @@ Checked on 2026-10-17 (Claude Code 2.1.302), and, where a line says so, on 2026-
    Credits are for people, not agents, so `SKILL.md` does not link to the file.
 4. **Generated code owners.**
    `cech build` writes `.github/CODEOWNERS`:
-   - first, a catch-all line for the marketplace's maintainer team, the `team` in its `data/marketplace.toml` (for CECH, `@TrialAndTemper/maintainers`);
+   - first, a catch-all line for the marketplace's maintainer team, the `team` in its `data/marketplace.toml`;
    - then, for each plugin, its folder, owned by the owner and the maintainers.
 
    A marketplace with no `team` gets no code owners file.
@@ -44,7 +44,6 @@ Checked on 2026-10-17 (Claude Code 2.1.302), and, where a line says so, on 2026-
 5. Being named an owner or maintainer is a request for write access.
    A CECH maintainer grants it, or the name is removed before merge.
    A gate ([ADR 4](0004-gates-and-ci.md)) fails when GitHub reports code owners errors for the change.
-   It reads them with a token, so it follows ADR 4's rule for gates that need a secret.
 6. Code owner review is requested, not required, until CECH has two maintainers on the team; with one, a required review would block every change they make.
 7. **Git history is separate.**
    Commit authors and `Co-authored-by:` trailers ([ADR 6](0006-change-record.md)) record who changed what.

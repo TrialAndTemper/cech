@@ -19,9 +19,9 @@ Plugins also come from marketplaces that follow no CECH rule, and a skill instal
 
 ## Decision
 
-1. CECH's categories are a closed list, kept with what each holds in [`cli/internal/marketplace/categories.toml`](../../cli/internal/marketplace/categories.toml), which the `cech` CLI builds in.
+1. CECH's categories are a closed list, each with what it holds, built into the `cech` CLI.
    Adding one refines this ADR, with an amendment note under this item naming it; removing or merging one needs a superseding ADR.
-   Until the first plugin merges, either is a change to the file alone ([ADR 1](0001-record-architecture-decisions.md) item 5).
+   Until the first plugin merges, either is a change to the list alone ([ADR 1](0001-record-architecture-decisions.md) item 5).
 2. The category is the plugin's folder (`plugins/<category>/<name>/`).
    The build generates the marketplace catalogue, including its `category` field, from it.
    It is not part of the name.

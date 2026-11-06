@@ -1,6 +1,7 @@
 // Package harnessdata holds the harness data file, harnesses.toml: the
 // harness behaviours CECH relies on, and its workarounds for harness
-// gaps, in the format ADR 9 item 5 sets. Code that knows one harness's
+// gaps. ADR 9 item 5 sets the rules for its entries, and this package
+// spells out the format: Parse and check. Code that knows one harness's
 // behaviour lives in internal/harness instead (ADR 15 item 6).
 package harnessdata
 
@@ -59,7 +60,7 @@ type Entry struct {
 	Probe  string `toml:"probe"`
 	Expect string `toml:"expect"`
 	// Unattended is whether the probe runs with no person, login or key,
-	// as the script scripts/probes/<Name> (ADR 9 item 4).
+	// as the script scripts/probes/<Name> (ADR 9 items 4 and 5).
 	Unattended bool     `toml:"unattended"`
 	Verified   Verified `toml:"verified"`
 	// Sources are decoded one by one, since the TOML package records
@@ -296,7 +297,8 @@ func describe(v any) string {
 	return "an array"
 }
 
-// check applies the rules of ADR 9 item 5 to e.
+// check holds e to the format: the rules of ADR 9 item 5, and the keys
+// and values this package defines.
 func (e Entry) check(meta toml.MetaData) []error {
 	var errs []error
 	add := func(format string, a ...any) { errs = append(errs, fmt.Errorf(format, a...)) }
