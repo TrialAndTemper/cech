@@ -39,7 +39,7 @@ The same check fails when the marketplace catalogue has no `description`, and ac
 5. Output is deterministic and byte for byte the same on every OS; running the build twice changes nothing.
 6. Where the build writes a field inside a hand-written file (`plugin.json` `description` or `version`, or a dependency's `marketplace`), it changes only that field and leaves the rest of the file byte for byte as it was.
 7. `cech build --check` regenerates in memory and fails on any difference from the committed files.
-   It is part of the merge gate.
+   It is a gate.
    A wrong generated file is fixed by changing its source, never by editing the output.
 
 ## Consequences

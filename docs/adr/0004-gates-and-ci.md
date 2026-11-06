@@ -50,7 +50,7 @@ A movable action tag, or a secret given to fork code, can leak secrets or change
    Workflows default to `permissions: contents: read`, widened per job only where needed.
    Pull requests from forks run on `pull_request`, never `pull_request_target`, and never receive secrets.
    Jobs that need secrets run only on branches in the repository, and a secret reaches only the step that needs it.
-7. **Scheduled jobs are not merge gates.**
+7. **Scheduled jobs are not gates.**
    Jobs such as probes of harness behaviour run on a schedule, open an issue on failure, and never block a pull request.
 
 ## Consequences
