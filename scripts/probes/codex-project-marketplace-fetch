@@ -60,7 +60,9 @@ printf '[projects."%s"]\ntrust_level = "trusted"\n' "${project}" > "${PROBE_HOME
 project_config hello
 
 harness codex plugin list
-[ "${STATUS}" -ne 0 ] || differs "codex plugin list succeeds before anything fetched the marketplace"
+[ "${STATUS}" = 1 ] || differs "codex plugin list does not exit 1 before anything fetched the marketplace"
+expect_out '^- .core. at .*does not contain a supported manifest' \
+  "codex plugin list does not report core's snapshot missing before the fetch"
 must "codex plugin marketplace upgrade failed" codex plugin marketplace upgrade
 must "codex plugin list failed" codex plugin list
 expect_out '^hello@core  *installed, enabled ' \
