@@ -33,7 +33,7 @@ The [GitHub CLI manual](https://cli.github.com/manual/gh_skill_update), read on 
    `plugin.json` `license` is an SPDX expression naming every licence in the folder, such as `MIT AND Apache-2.0`.
 4. **Files from `Apache-2.0` upstreams keep upstream's notices in them, and changed ones say so.**
    Each changed file carries a one-line comment naming its upstream and saying CECH changed it; review checks which files need one.
-5. **`cech validate` checks the entries offline**, and that comments match entries marked changed, in the merge gate ([ADR 4](0004-gates-and-ci.md) item 5).
+5. **`cech validate` checks the entries offline**, and that comments match entries marked changed, as a gate ([ADR 4](0004-gates-and-ci.md) item 5).
 6. **A scheduled job checks upstreams** ([ADR 4](0004-gates-and-ci.md) item 7).
    It reports a pinned commit that upstream no longer has, and listed paths that changed upstream after it.
 7. **Updates are diffed and applied by hand.**

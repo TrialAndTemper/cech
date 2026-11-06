@@ -31,7 +31,7 @@ A probe that drives only a harness's plugin and debug commands, such as installi
    Each entry has a unique name, `<harness>-<short-name>`, which code that works around a gap cites.
    An entry is a gap, which also says what CECH does instead, or a behaviour; each gives its probe, the result expected while it holds, and the last harness version that gave it.
    An entry may be marked as one whose probe runs unattended; the scheduled job runs only those.
-   Reading the file fails on any key it does not expect, and the merge gate checks the committed file.
+   Reading the file fails on any key it does not expect, and a gate checks the committed file.
 
 ## Consequences
 
@@ -45,4 +45,4 @@ A probe that drives only a harness's plugin and debug commands, such as installi
 - **A harness-independent layer over both harnesses:** more code, always behind.
 - **Trust docs without probes:** docs can lag behind behaviour.
 - **The file in `data/`, beside other repository data:** the CLI could not build it in without a copy step that can drift, and a local test run could report a cached pass after the file changed.
-- **Every probe a runnable script:** a probe that needs a logged-in harness cannot run in the merge gate or an unattended job, and steps in prose are easier for a person to follow.
+- **Every probe a runnable script:** a probe that needs a logged-in harness cannot run as a gate or in an unattended job, and steps in prose are easier for a person to follow.
