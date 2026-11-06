@@ -13,21 +13,16 @@ A vulnerability database changes on its own, so a check against it can fail a br
 
 Checked on 2026-10-27 with Go 1.27.3: a module in a subdirectory takes its versions from tags prefixed with that directory, so the module in `cli/` is versioned by `cli/vX.Y.Z` tags, and `go install` of a version records it in the binary's build information.
 
-Checked on 2026-10-28: `go.yaml.in/yaml/v3` v3.0.5 (MIT and Apache-2.0) requires no other module.
-Checked on 2026-10-29: neither does `github.com/BurntSushi/toml` v1.6.0 (MIT).
-Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1.10.2 (Apache-2.0) requires, only two are built into the CLI: `github.com/spf13/pflag` (BSD-3-Clause), at its newest release v1.0.10, and `github.com/inconshreveable/mousetrap` v1.1.0 (Apache-2.0), which only Windows builds use.
+Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1.10.2 (Apache-2.0) requires, only two are built into the CLI: `github.com/spf13/pflag` v1.0.10 (BSD-3-Clause) and `github.com/inconshreveable/mousetrap` v1.1.0 (Apache-2.0), which only Windows builds use.
 
 ## Decision
 
 1. **Dependency budget.**
    The standard library comes first.
    A third-party module is added only for a feature the standard library lacks, when writing it would cost more than depending on it.
-   Each module in `go.mod` is listed here with its reason, and adding one changes this ADR in the form [ADR 1](0001-record-architecture-decisions.md) item 5 sets.
+   Each module the CLI requires directly says on its line in `go.mod` why it is there, and the commit that adds it records its licence.
    Tools that only build or check the CLI are pinned in `mise.toml`, not in `go.mod`.
-   The list:
-   - `github.com/BurntSushi/toml`: the harness data file is TOML ([ADR 9](0009-native-harness-features-first.md) item 5), as are `data/marketplace.toml` and CECH's categories file, and the standard library reads no TOML.
-   - `go.yaml.in/yaml/v3`, the YAML project's maintained YAML package: `SKILL.md` and agent frontmatter are YAML, which the standard library does not read, and a parser of our own could read a description differently from the harnesses.
-   - `github.com/spf13/cobra`, with the `github.com/spf13/pflag` and `github.com/inconshreveable/mousetrap` it requires: the standard `flag` package has no command tree, generated help or shell completion.
+   The command line is built on `github.com/spf13/cobra`, since the standard `flag` package has no command tree, generated help or shell completion.
 2. **Versions.**
    The CLI has its own SemVer versions, on the `cli/` tags of [ADR 14](0014-releases-and-versions.md) item 2.
    `cech version` reports the CLI's version, so users and scripts can tell which layout rules they run.
@@ -38,7 +33,7 @@ Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1
 
 ## Consequences
 
-- Every new dependency shows up as a change to this ADR.
+- Every new dependency shows up in `go.mod` with its reason.
 - Release tooling must handle the `cli/` tag prefix.
 - A new vulnerability report never blocks a merge; its issue on `main` asks for a fix.
 

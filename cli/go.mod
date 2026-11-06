@@ -3,9 +3,9 @@ module github.com/TrialAndTemper/cech/cli
 go 1.27.0
 
 require (
-	github.com/BurntSushi/toml v1.6.0
-	github.com/spf13/cobra v1.10.2
-	go.yaml.in/yaml/v3 v3.0.5
+	github.com/BurntSushi/toml v1.6.0 // TOML data files; the standard library reads no TOML
+	github.com/spf13/cobra v1.10.2 // the command tree, help and completion (ADR 16 item 1)
+	go.yaml.in/yaml/v3 v3.0.5 // SKILL.md and agent frontmatter, read as the harnesses read it
 )
 
 require (
