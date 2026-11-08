@@ -2,7 +2,7 @@
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
 # Tests of scripts/check-adr, the gate on ADR numbering, index and
-# length (ADR 1 items 4, 6 and 7). As ADR 4 asks of gate tests, each
+# length (ADR 1 items 4, 6 and 7). As CONTRIBUTING.md asks of gate tests, each
 # case guards a way the gate could pass when it should fail, where
 # review would likely miss it, and says which. The other ways were
 # checked by hand when the gate was added. The pre-commit hook's run
