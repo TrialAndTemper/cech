@@ -33,8 +33,8 @@ Read on 2026-10-28, with Claude Code 2.1.312 and Codex CLI 0.165.0 installed:
    It may still read its facts in `.cech/<namespace>/<plugin>.toml` ([ADR 17](0017-repository-data-and-state.md)).
 3. **Managed-only skills say so.**
    A skill is managed-only when it cannot do what it claims without reviewer agents, hooks, an MCP server, a dependency or a role binding ([ADR 21](0021-roles.md)).
-   Its `SKILL.md` sets `metadata.cech-managed-only: "true"`, and its text says what a copy lacks.
-   `cech validate` requires the key where the plugin's files show a dependency, hooks or an MCP server; for reviewer agents and role bindings, the author decides.
+   Its `SKILL.md` sets `metadata.cech-managed-only`, and its text says what a copy lacks.
+   `cech validate` requires the mark where the plugin's files show the need; for reviewer agents and role bindings, the author decides.
 4. **Licence and notices travel with the folder.**
    Each skill folder holds a copy of the root `LICENSE` when the marketplace has one ([ADR 18](0018-generated-files.md) item 2), and its own `NOTICE` when the skill holds third-party text ([ADR 2](0002-licence-and-contributions.md) item 4).
    Both count as assets of the skill ([ADR 11](0011-one-plugin-one-skill.md) item 2).
@@ -44,14 +44,12 @@ Read on 2026-10-28, with Claude Code 2.1.312 and Codex CLI 0.165.0 installed:
 6. **The plugin wins over personal copies.**
    For each enabled plugin of a managed marketplace, `cech` turns off that skill's name in Claude Code's project-level `skillOverrides`.
    Claude Code then turns off other skills of that name, not the plugin's.
-   Hand-written native files ([ADR 19](0019-per-project-plugin-enablement.md) item 7) carry these entries by hand.
    Codex documents no project-level switch, so a personal copy still loads there, a gap recorded in the harness data file ([ADR 9](0009-native-harness-features-first.md) item 2).
 7. **CECH promises little for installers.**
    It promises only that an installer can copy a portable skill at a release tag.
    Catalogue tags cannot move ([ADR 14](0014-releases-and-versions.md) item 2), so a tag always serves the same files.
    No released installer checks that it got them, so CECH does not treat `skills-lock.json` as a pin, and builds no lockfile or restore tool ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 5).
-8. **Private extensions stay on authenticated git** ([ADR 20](0020-the-extension-model.md) item 6).
-   CECH's docs for extensions advise against skills.sh packs, and advise `DISABLE_TELEMETRY=1` for every installer command on a copy from a private source.
+8. **Private extensions stay on authenticated git** ([ADR 20](0020-the-extension-model.md) item 6), and CECH's docs for extensions advise against installer features that publish or report a private source.
 
 ## Consequences
 

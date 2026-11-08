@@ -9,7 +9,7 @@ Where a page and the code disagree, the code and its tests are right, and the pa
 
 ## Pages
 
-- [A marketplace](marketplace.md): its layout, name rules, categories and release builds.
+- [A marketplace](marketplace.md): its data file, layout, name rules, categories, release builds and advice for a private extension.
 - [Generated files](generated-files.md): what `cech build` writes, and from what.
 - [The harness data file](harness-data.md): its entries, their keys, and how its probes are run.
 - [The term check](term-check.md): the `terms` gate's tiers, what it scans, its exceptions and its output.
