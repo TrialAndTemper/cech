@@ -80,11 +80,12 @@ A skipped test of a gate script leaves a way for that gate to pass when it shoul
 ### The CLI's Go gates
 
 The `cech` CLI is a Go module in `cli/` ([ADR 15](docs/adr/0015-the-cech-cli.md)).
-mise installs the pinned Go, golangci-lint and govulncheck, and `scripts/check-go` runs them in `cli/` with the pinned Go only:
+mise installs the pinned Go, golangci-lint, go-licenses and govulncheck, and `scripts/check-go` runs them in `cli/` with the pinned Go only:
 
 | Task | Runs |
 | --- | --- |
 | `lint:go` | `go vet`, golangci-lint with the linters in `cli/.golangci.yml`, and `go mod tidy -diff` |
+| `lint:licenses` | go-licenses: disallowed or unidentified licences in the CLI command's external dependencies, including transitive imports for the current platform ([ADR 16](docs/adr/0016-building-the-cech-cli.md) item 3) |
 | `format:check:go` | the diff that gofumpt and goimports would apply; `format:fix:go` applies it |
 | `test:go` | `go test`, with the race detector where the platform has one, cgo is on (it needs a C compiler) and the race runtime builds |
 | `vuln` | govulncheck: known vulnerabilities in the CLI and its Go release; needs the network |
