@@ -250,6 +250,9 @@ Without a list this tier is skipped; set `CECH_REQUIRE_PRIVATE_TERMS=1` to make 
 
 Organisation owners may bypass the ruleset on `main` only to repair `main` or a gate, and each bypass gets an issue saying what was done and why.
 
+Being named a plugin's owner or maintainer ([ADR 13](docs/adr/0013-attribution.md)) is a request for write access: a CECH maintainer grants it, or the name is removed before merge.
+Code owner review is requested, not required, until CECH has two maintainers on the team; with one, a required review would block every change they make.
+
 CI reads the private list from the repository secret `PRIVATE_TERMS`, one regular expression per line.
 It uses the secret on pushes to `main` and on pull requests from branches in this repository, and there an empty or missing secret fails the run.
 Pull requests from forks never receive it and run only the public rules.
