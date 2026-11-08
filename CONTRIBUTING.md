@@ -76,7 +76,7 @@ A new gate goes into `check:os` in `mise.toml`; the workflow needs no change.
 A pull request merges only when CI passes.
 
 A test that fails only sometimes is not fixed by a green rerun: open an issue for it, then fix it, or skip it with a reason that names the issue.
-A skipped test of a gate script leaves a way for that gate to pass when it should fail ([ADR 4](docs/adr/0004-gates-and-ci.md) item 5), so fix it before the next change to that gate.
+A skipped test of a gate script leaves a way for that gate to pass when it should fail (see [Writing](#writing)), so fix it before the next change to that gate.
 
 ### The CLI's Go gates
 
@@ -129,9 +129,10 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
   A function or method's comment starts with its name and explains what it returns or does, following [Go Doc Comments](https://go.dev/doc/comment#func).
   Refer to each parameter or named result by name when its meaning is not clear from the signature alone.
 - Shell scripts are POSIX sh that runs under dash, macOS sh and Git Bash, and pass shellcheck and shfmt.
-  A change to a script comes with a test in `test/` for each way it could let a gate pass when it should fail, where review would likely miss it, such as after a tool bump, on another platform or on the staged tree; a comment on each case names the way it guards ([ADR 4](docs/adr/0004-gates-and-ci.md) item 5).
-  Such a case runs the script, task or config file that could let the gate pass, not the tool on its own.
-  Check any other way by hand, and say so in the pull request.
+  A change to a gate script comes with a test in `test/` for each way the gate could pass when it should fail, such as a lost finding or a skipped check, where review would likely miss it: most such faults lie outside the diff, after a tool bump, on another platform or on the staged tree.
+  A comment on each case names the way it guards, and the case runs the script, task or config file that could let the gate pass, not the tool on its own.
+  Check any other way by hand when the gate is added or changed, and say so in the pull request.
+  A gate that fails when it should pass shows itself the first time it runs, and needs no test.
 - A test in `test/` or `cli/` checks CECH's own code: a script, a task, a config or data file, the CLI's logic, or an option CECH chooses for a tool or library.
   A case that guards how that code handles a difference between shells or platforms checks CECH's code too.
   A case that only a change in Go, the shell, a tool or a library could break stays out.
@@ -245,6 +246,10 @@ The allowlists and the inline marker do not apply to this tier: fix a false posi
 Without a list this tier is skipped; set `CECH_REQUIRE_PRIVATE_TERMS=1` to make a missing list an error.
 
 ### For maintainers
+
+Two rulesets guard `main`.
+The gate ruleset holds the gates and branch rules, and nobody bypasses it; to repair `main` or a gate, an organisation owner may lift it for that change and opens an issue saying what was done and why.
+The review ruleset requires a code owner's approval; while the maintainers team has one member, they bypass it on their own pull requests ([ADR 4](docs/adr/0004-gates-and-ci.md) item 3).
 
 CI reads the private list from the secret `PRIVATE_TERMS` in the `private-terms` environment, one regular expression per line.
 The `private terms` job uses it on pushes to `main` and on pull requests from branches in this repository, and there an empty or missing secret fails the run.

@@ -56,7 +56,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | `.claude-plugin/` | The marketplace catalogue `marketplace.json`, which `cech build` generates |
 | `checks/` | Public tiers of the term check; the private tier lives outside git |
 | `cli/` | The `cech` CLI, Go module `github.com/TrialAndTemper/cech/cli`: `cmd/cech` for `main`, `internal/` for the rest, golden files and fixture marketplaces in `testdata/`, linter settings in `.golangci.yml` |
-| `test/` | bats suites for the scripts and tasks; a script change adds the cases, and the hand checks in the pull request, that [CONTRIBUTING.md](CONTRIBUTING.md#writing) and [ADR 4](docs/adr/0004-gates-and-ci.md) item 5 ask for |
+| `test/` | bats suites for the scripts and tasks; a script change adds the cases, and the hand checks in the pull request, that [CONTRIBUTING.md](CONTRIBUTING.md#writing) asks for |
 | `mise.toml` | Exact tool pins and every task; the single entry point for the gates |
 | `mise.lock` | Downloads and checksums for each pin and platform, or only the version of a pin built from source, written by `mise lock` |
 | `.github/` | The CI workflow, the vulnerability check and harness probe workflows, issue forms, pull request template, and the code owners file that `cech build` generates |

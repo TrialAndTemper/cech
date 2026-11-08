@@ -3,7 +3,7 @@
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
 # Tests of the harness probes (ADR 9 item 4): scripts/run-probes,
 # scripts/report-probes and the scripts in scripts/probes/. They never
-# block a merge, so, as ADR 4 asks of gate tests, each case guards a
+# block a merge, so, as CONTRIBUTING.md asks of gate tests, each case guards a
 # way the scheduled job could pass without a probe run, or a differing
 # result unreported, where review would likely miss it, and says
 # which. Each probe's own steps need the real harnesses, so they were
