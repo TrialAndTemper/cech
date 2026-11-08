@@ -27,22 +27,18 @@ The [GitHub CLI manual](https://cli.github.com/manual/gh_skill_update), read on 
 2. **Only licences that [ADR 2](0002-licence-and-contributions.md) item 4 accepts.**
    Text with no licence, or under any other licence, is not taken into a skill.
 3. **The skill's `NOTICE` is the source note**, with one *entry* per upstream.
-   An entry records, in lines a gate can read, upstream's repository URL, the *pinned commit* (the full hash of the last upstream commit taken in), the upstream paths the text came from, the licence's SPDX id and whether CECH changed the text, then upstream's copyright and licence text word for word, and for `Apache-2.0` also upstream's own `NOTICE` text.
-   The notice is never rewritten to pass the term check; a hit goes in its allowlist ([ADR 3](0003-vendor-neutrality.md) item 4).
-   `plugin.json` `license` is an SPDX expression naming every licence in the folder, such as `MIT AND Apache-2.0`.
+   An entry records, in lines a gate can read, where the text came from (the upstream and its paths), the *pinned commit* (the last upstream commit taken in), its licence and whether CECH changed it, then upstream's notices word for word.
+   `plugin.json` `license` names every licence in the folder.
 4. **Files from `Apache-2.0` upstreams keep upstream's notices in them, and changed ones say so.**
    Each changed file carries a one-line comment naming its upstream and saying CECH changed it; review checks which files need one.
 5. **`cech validate` checks the entries offline**, and that comments match entries marked changed, as a gate ([ADR 4](0004-gates-and-ci.md) item 4).
 6. **A scheduled job checks upstreams** ([ADR 4](0004-gates-and-ci.md) item 6).
    It reports a pinned commit that upstream no longer has, and listed paths that changed upstream after it.
 7. **Updates are diffed and applied by hand.**
-   A contributor diffs upstream's paths from the pinned commit to a newer one, and applies only the changes CECH wants, rewritten to its rules.
-   That change moves the pinned commit, updates the entry, and names the old and new upstream commits.
-   The reviewer reads the change beside that upstream range.
+   A contributor applies only the upstream changes CECH wants, rewritten to its rules, and moves the pinned commit; a reviewer reads the change beside that upstream range.
 8. **A fork may diverge without limit.**
    CECH's rules win over upstream wording: a fork drops any name ADR 3 bars and any rule CECH would not keep.
    Its entry stays while any derived text remains.
-   A change may remove an entry only if it says no derived text is left; it then moves upstream's credit to `CREDITS.md`.
 
 ## Consequences
 
