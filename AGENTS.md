@@ -34,7 +34,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | The detail of a file, command or check that users or scripts rely on, in the same commit as the behaviour | `docs/reference/` | [ADR 24](docs/adr/0024-where-each-kind-of-text-lives.md) item 2 |
 | A change's spec, test plan, brief, research or spike results, before or with its code, in a folder `YYYY-MM-DD-short-title/`; moved to `done/` once a test or a recorded check by hand covers each criterion | `changes/` | [changes/README.md](changes/README.md) |
 | A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 4](docs/adr/0004-gates-and-ci.md) |
-| A harness probe that runs unattended, with `unattended = true` on its entry in the harness data file | `scripts/probes/<entry name>` | [ADR 9](docs/adr/0009-native-harness-features-first.md) items 4 and 5 |
+| A harness probe that runs unattended, named after its entry in the harness data file, which has `unattended = true` | `scripts/probes/` | [ADR 9](docs/adr/0009-native-harness-features-first.md) item 4, [harness data file](docs/reference/harness-data.md) |
 | A CLI command or package, with its Go tests | `cli/` | [ADR 15](docs/adr/0015-the-cech-cli.md); [ADR 18](docs/adr/0018-generated-files.md) for what `cech build` reads and writes |
 | The catalogue's namespace, description, owner or code owners team, or the roles it defines, then `mise run build:fix` | `data/marketplace.toml` | [ADR 17](docs/adr/0017-repository-data-and-state.md) item 7 |
 | Adding, removing or merging one of CECH's categories, as ADR 12 item 1 sets, then `mise run build:fix` | `cli/internal/marketplace/categories.toml` | [ADR 12](docs/adr/0012-categories-and-names.md) item 1 |
