@@ -21,6 +21,7 @@ A change also needs a place for its rules before the code exists, for its test p
    - A change to behaviour that a reference page describes edits that page, and the edit is its spec.
    - Any other rule a change adds, such as how a gate behaves or what a command not yet built must do, gets a spec in the folder, reviewed before or with the code.
    - The folder records the test that covers each rule, and may hold briefs, research and spike results.
+   - An ADR states each finding it rests on in one sentence, with its date and the versions checked; the steps and raw results stay in the research.
    - Once a test, or a recorded check by hand, covers every rule, the folder moves to `changes/done/`, where only typos and links change.
 4. An ADR or a reference page never links into `changes/`, since its folders move; it states what it rests on in its own words.
 5. Notes quoting private or unpublished sources stay out of git ([ADR 3](0003-vendor-neutrality.md)).
