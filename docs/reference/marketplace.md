@@ -8,6 +8,25 @@ Each plugin lives in `plugins/<category>/<name>/`, with its skill in `skills/<na
 The plugin folder, the skill folder, the manifest's `name` and the skill's `name` are the same.
 `cech build` rejects, and names, a manifest or skill `name` that differs from its folder, and a plugin whose name another plugin already has, in any category.
 
+## The data file
+
+`data/marketplace.toml` describes the marketplace ([ADR 17](../adr/0017-repository-data-and-state.md) item 7).
+
+| Key | Required | Holds |
+| --- | --- | --- |
+| `namespace` | yes | The catalogue's name outside a release, and the prefix of every plugin name in an extension; a name that does not end in a version such as `-1-4-0` or `-1-4-0-rc-1` |
+| `description` | yes | The catalogue's description |
+| `owner.name`, `owner.email` | `name` only | The catalogue's owner |
+| `team` | no | The maintainer team, as `@org/team`, which owns every path the code owners file gives no plugin line; without it there is no code owners file |
+| `cech` | in an extension only | The CECH release the extension builds on, as `X.Y.Z` or `X.Y.Z-rc.N` |
+| `categories` | no; an extension only | The categories it adds: `[[categories]]` tables with `name` and `holds` |
+| `roles` | no | The roles it defines: `[[roles]]` tables with `name`, `means` and an optional `many`, a bool |
+| `terms.rules`, `terms.names` | no; an extension only | Paths from the repository root to its own term rule and name files |
+
+- A file without `cech` is CECH's own: its namespace is `cech`, and it has no `categories` or `terms`.
+- An extension's namespace is not `cech` and does not start with `cech-`.
+- The build rejects, and names, an unknown, misplaced, missing or invalid key.
+
 ## Names
 
 A plugin, skill, category, role or namespace name:
