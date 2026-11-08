@@ -39,3 +39,14 @@ Adding a category is a reviewed change to that file.
 Removing or merging one is a breaking change of the CLI, since an extension or a plugin may use it.
 
 An extension may add categories of its own in its data file; each has a `name` following the name rules, not one of CECH's, and a `holds`.
+
+## Release builds
+
+`cech build --release V` builds a catalogue release ([ADR 14](../adr/0014-releases-and-versions.md)).
+
+- `V` is `X.Y.Z` or `X.Y.Z-rc.N`, with no `v`: each part decimal with no leading zeros, and `N` from 1.
+- The catalogue is named `<namespace>-V` with each `.` turned into `-`, such as `cech-0-2-0-rc-1`, and has no `version`.
+- Every `plugin.json` gets `V` as its `version`.
+- An extension's final release must build on a final CECH release: with a `V` that has no `-rc.N`, the build fails when the `cech` key names a pre-release.
+
+Without `--release`, the catalogue is named after the namespace and every `plugin.json` has the `version` `0.0.0-dev`.
