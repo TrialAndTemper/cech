@@ -11,9 +11,9 @@ CECH ships every third-party module the CLI uses, and every module those need, a
 CECH releases its layout rules with each CLI release, separately from its catalogue releases ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 6), so users and scripts need to know which CLI they run.
 A vulnerability database changes on its own, so a check against it can fail a branch that has not changed.
 
-Checked on 2026-10-27 with Go 1.27.3: a module in a subdirectory takes its versions from tags prefixed with that directory, so the module in `cli/` is versioned by `cli/vX.Y.Z` tags, and `go install` of a version records it in the binary's build information.
+Checked on 2026-10-27 with Go 1.27.3: the module in `cli/` is versioned by `cli/` tags, and `go install` records the version in the binary.
 
-Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1.10.2 (Apache-2.0) requires, only two are built into the CLI: `github.com/spf13/pflag` v1.0.10 (BSD-3-Clause) and `github.com/inconshreveable/mousetrap` v1.1.0 (Apache-2.0), which only Windows builds use.
+Checked on 2026-10-31 with Go 1.27.3: cobra v1.10.2 builds two more modules into the CLI, one only on Windows, all under permissive licences.
 
 ## Decision
 
