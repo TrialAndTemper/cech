@@ -1,5 +1,6 @@
 # CECH's categories, the closed list of ADR 12 item 1, which the cech CLI
-# builds in. Adding, removing or merging one follows that item.
+# builds in. Adding one is a reviewed change here; removing or merging one
+# is a breaking change of the CLI (docs/reference/marketplace.md).
 
 [[categories]]
 name = "practice"

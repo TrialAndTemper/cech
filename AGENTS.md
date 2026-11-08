@@ -37,7 +37,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | A harness probe that runs unattended, named after its entry in the harness data file, which has `unattended = true` | `scripts/probes/` | [ADR 9](docs/adr/0009-native-harness-features-first.md) item 4, [harness data file](docs/reference/harness-data.md) |
 | A CLI command or package, with its Go tests | `cli/` | [ADR 15](docs/adr/0015-the-cech-cli.md); [ADR 18](docs/adr/0018-generated-files.md) for what `cech build` reads and writes |
 | The catalogue's namespace, description, owner or code owners team, or the roles it defines, then `mise run build:fix` | `data/marketplace.toml` | [ADR 17](docs/adr/0017-repository-data-and-state.md) item 7 |
-| Adding, removing or merging one of CECH's categories, as ADR 12 item 1 sets, then `mise run build:fix` | `cli/internal/marketplace/categories.toml` | [ADR 12](docs/adr/0012-categories-and-names.md) item 1 |
+| Adding, removing or merging one of CECH's categories, then `mise run build:fix` | `cli/internal/marketplace/categories.toml` | [ADR 12](docs/adr/0012-categories-and-names.md) item 1 |
 | A Go dependency, with its reason on its line | `cli/go.mod` | [ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1 |
 | A public term rule or an allowlisted email address | `checks/terms/` | [ADR 3](docs/adr/0003-vendor-neutrality.md) |
 | A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 5](docs/adr/0005-tool-pins.md) for a pin, [ADR 4](docs/adr/0004-gates-and-ci.md) item 1 for a task |
