@@ -92,7 +92,7 @@ mise installs the pinned Go, golangci-lint, go-licenses and govulncheck, and `sc
 | Task | Runs |
 | --- | --- |
 | `lint:go` | `go vet`, golangci-lint with the linters in `cli/.golangci.yml`, and `go mod tidy -diff` |
-| `lint:licenses` | go-licenses: disallowed or unidentified licences in the CLI command's external dependencies, including transitive imports for the current platform ([ADR 16](docs/adr/0016-building-the-cech-cli.md) item 3) |
+| `lint:licenses` | go-licenses: licences outside the list in `scripts/check-go`, or unidentified, in the CLI command's external dependencies, including transitive imports for the current platform; CI runs it on each platform ([ADR 2](docs/adr/0002-licence-and-contributions.md) item 4) |
 | `format:check:go` | the diff that gofumpt and goimports would apply; `format:fix:go` applies it |
 | `test:go` | `go test`, with the race detector where the platform has one, cgo is on (it needs a C compiler) and the race runtime builds |
 | `vuln` | govulncheck: known vulnerabilities in the CLI and its Go release; needs the network |
@@ -112,7 +112,8 @@ CI runs `vuln` on pull requests that touch the CLI or its tools, without blockin
 It fails when a generated file differs from its sources: `data/marketplace.toml` ([ADR 17](docs/adr/0017-repository-data-and-state.md) item 7), CECH's categories in `cli/internal/marketplace/categories.toml`, the root `LICENSE`, and each plugin's `plugin.json`, `SKILL.md` and reviewer agents.
 Change the source, then let `mise run build:fix` rewrite the generated files with the same `cech`.
 
-A new Go dependency says on its line in `cli/go.mod` why it is there, and its commit records its licence ([ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1).
+A new Go dependency says on its line in `cli/go.mod` why it is there ([ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1), and `lint:licenses` checks its licence.
+Output that scripts rely on ([the CLI reference](docs/reference/cli.md)) has golden files.
 
 ### Optional git hooks
 
