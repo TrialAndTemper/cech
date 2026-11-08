@@ -9,4 +9,4 @@ Where a page and the code disagree, the code and its tests are right, and the pa
 
 ## Pages
 
-None yet.
+- [The term check](term-check.md): the `terms` gate's tiers, what it scans, its exceptions and its output.
