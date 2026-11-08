@@ -1,6 +1,6 @@
 # Research: what `cech setup` must do for Codex
 
-`cech setup` is the per-clone command of [ADR 19](../../../docs/adr/0019-per-project-plugin-enablement.md) item 8.
+`cech setup` is the per-clone command of [ADR 19](../../docs/adr/0019-per-project-plugin-enablement.md) item 8.
 This note gathers what is known about Codex's handling of a marketplace that a project declares, for the change that builds the command.
 The gap itself, with its probe, is the entry `codex-project-marketplace-fetch` in `cli/internal/harnessdata/harnesses.toml`, and `scripts/probes/codex-project-marketplace-fetch` runs that probe.
 
@@ -38,6 +38,6 @@ Both runs used a local `file://` git marketplace, a trusted project that declare
 
 ## Open question for the change
 
-[ADR 15](../../../docs/adr/0015-the-cech-cli.md) item 2 has `cech` run a harness's own command rather than change the harness's state, and edit only documented settings.
+[ADR 15](../../docs/adr/0015-the-cech-cli.md) item 2 has `cech` run a harness's own command rather than change the harness's state, and edit only documented settings.
 The second way breaks the first rule and the third breaks ADR 19 item 6, so the change must find a way that keeps both, or decide in an ADR which rule gives.
 Before choosing, check the newest Codex for a command or setting that reinstalls a project's enabled plugins, and whether the gap still holds: `mise run probes -- codex-project-marketplace-fetch`.

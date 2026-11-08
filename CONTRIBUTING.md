@@ -10,7 +10,7 @@ Report security problems privately, as [SECURITY.md](SECURITY.md) explains, not 
 The [architecture decision records](docs/adr/README.md) (ADRs) hold the contracts CECH follows and the reasons for them.
 A change that fits an accepted ADR needs no new one.
 A change to a contract, or one that adds repo-wide machinery such as a command, a hook or a file format, needs a new ADR or a change to an accepted one ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
-An ADR holds the decision and its reasons; detail such as keys, flags and messages goes in a spec, as [.ai/README.md](.ai/README.md) explains.
+An ADR holds the decision and its reasons; detail such as keys, flags and messages goes in a spec, as [changes/README.md](changes/README.md) explains.
 For a larger change, open an issue first so we can agree on the approach.
 Ask questions in [Discussions](https://github.com/TrialAndTemper/cech/discussions); issues are for bugs and proposals.
 
