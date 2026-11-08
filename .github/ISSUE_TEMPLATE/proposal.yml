@@ -1,11 +1,11 @@
 name: Proposal
-description: A new skill, a change to a contract, or another improvement.
+description: A new skill, a new or changed decision, or another improvement.
 labels: [triage, proposal]
 body:
   - type: markdown
     attributes:
       value: |
-        A change to a contract needs a new ADR or a change to an accepted one; see docs/adr/ and CONTRIBUTING.md.
+        A new or reversed decision needs a new ADR or a change to an accepted one; see docs/adr/ and CONTRIBUTING.md.
         Use invented data such as example.com and acme, not names or hosts from a private organisation.
   - type: textarea
     id: problem
