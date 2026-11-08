@@ -41,6 +41,7 @@ regexTarget = "match"
 regexes = [
   '''(?i)^michal\.b\.bozek@gmail\.com$''',
   '''(?i)^noreply@anthropic\.com$''',
+  '''(?i)^noreply@openai\.com$''',
 ]
 
 [[rules]]
