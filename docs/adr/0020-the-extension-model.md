@@ -37,7 +37,7 @@ The [docs on private marketplaces](https://code.claude.com/docs/en/plugins/host-
    Some extension plugins depend on CECH, directly or through other plugins.
    A project that pins a different CECH release cannot enable them, because their dependencies name a release it lacks: `cech enable` refuses them, and `cech check` fails ([ADR 19](0019-per-project-plugin-enablement.md) items 5 and 8).
 5. **The same tooling.**
-   An extension's CI runs `cech build --check` and `cech validate` ([ADR 4](0004-gates-and-ci.md) item 5), and `cech check` ([ADR 3](0003-vendor-neutrality.md) item 6).
+   An extension's CI runs `cech build --check` and `cech validate` ([ADR 4](0004-gates-and-ci.md) item 5).
    The rules and CECH's categories come from the CLI version that runs, not from the release the `cech` key names.
    In an extension, `cech validate` also rejects a plugin name without the namespace prefix, a category that is neither CECH's nor its own, and a dependency item 3 does not allow.
    An extension that also has a `.cech/config.toml` gets a project's checks too.

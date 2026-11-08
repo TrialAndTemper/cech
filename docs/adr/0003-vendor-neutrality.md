@@ -21,18 +21,11 @@ A leak in public git history is hard to undo.
    A private tracker becomes the `issue-tracker` role with a public adapter.
    A brand becomes a brand contract with an invented demo.
    The organisation's own version lives in its extension.
-4. **A term check enforces this** in pre-commit, on commit messages and in CI, in three tiers:
-   - **generic rules** (public): patterns that suggest content copied from a private environment, such as email addresses, cloud resource ids and signed URLs.
-     Their allowlist holds invented domains and the addresses CECH credits or publishes.
-   - **vendor names** (public): a plain list of chosen product and brand names CECH does not cover, since such a name hints at whose private stack the content came from.
-     Only listed names are flagged.
-   - **private terms**: kept outside git and in a CI secret.
-     A hit reports file, line and term number, never the term.
-     This tier runs in pre-commit where a local copy exists, on pull requests from branches in the repository, and on `main`.
-     It must pass before each release tag.
-5. A false positive on a public tier (a common word that is a listed name, a deliberate mention, an address in an upstream notice) goes in a tracked allowlist or carries an inline marker with a reason.
-   Exceptions to private terms stay in the private list.
-6. `cech check` runs the same tiers with a project's or extension's own lists.
+4. **A term check enforces this,** before each commit, on each commit message, and in CI.
+   Its public tiers live in git: generic rules for shapes that suggest copied private content, and a list of vendor names CECH does not cover.
+   Its private tier lives outside git, in each contributor's own list and in a CI secret, and a hit never reveals the term.
+   Pull requests from forks never receive the secret and run only the public tiers.
+   A false positive on a public tier is allowed in git with its reason; an exception to a private term stays in the private list.
 
 ## Consequences
 

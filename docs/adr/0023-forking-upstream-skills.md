@@ -28,7 +28,7 @@ The [GitHub CLI manual](https://cli.github.com/manual/gh_skill_update), read on 
    Text with no licence, or under any other licence, is not taken into a skill.
 3. **The skill's `NOTICE` is the source note**, with one *entry* per upstream.
    An entry records, in lines a gate can read, upstream's repository URL, the *pinned commit* (the full hash of the last upstream commit taken in), the upstream paths the text came from, the licence's SPDX id and whether CECH changed the text, then upstream's copyright and licence text word for word, and for `Apache-2.0` also upstream's own `NOTICE` text.
-   The notice is never rewritten to pass the term check; a hit goes in its allowlist ([ADR 3](0003-vendor-neutrality.md) item 5).
+   The notice is never rewritten to pass the term check; a hit goes in its allowlist ([ADR 3](0003-vendor-neutrality.md) item 4).
    `plugin.json` `license` is an SPDX expression naming every licence in the folder, such as `MIT AND Apache-2.0`.
 4. **Files from `Apache-2.0` upstreams keep upstream's notices in them, and changed ones say so.**
    Each changed file carries a one-line comment naming its upstream and saying CECH changed it; review checks which files need one.
