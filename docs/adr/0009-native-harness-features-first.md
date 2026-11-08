@@ -26,12 +26,7 @@ A probe that drives only a harness's plugin and debug commands, such as installi
 4. On the newest harness releases, a scheduled CI job runs each probe that can run unattended, and a person runs the others.
    A result that differs from the one expected opens an issue: a behaviour changed or a gap closed.
    The `cech` CLI warns when an installed harness is newer than the versions recorded there, but never blocks; the scheduled job catches breaks.
-5. **Harness data file entries.**
-   The file is TOML.
-   Each entry has a unique name, `<harness>-<short-name>`, which code that works around a gap cites.
-   An entry is a gap, which also says what CECH does instead, or a behaviour; each gives its probe, the result expected while it holds, and the last harness version that gave it.
-   An entry may be marked as one whose probe runs unattended; the scheduled job runs only those.
-   Reading the file fails on any key it does not expect, and a gate checks the committed file.
+5. Each entry in the file has a unique name, which code working around its gap cites, and reading the file fails on a key it does not expect.
 
 ## Consequences
 
