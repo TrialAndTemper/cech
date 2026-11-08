@@ -70,3 +70,11 @@ An extension may add categories of its own in its data file; each has a `name` f
 - An extension's final release must build on a final CECH release: with a `V` that has no `-rc.N`, the build fails when the `cech` key names a pre-release.
 
 Without `--release`, the catalogue is named after the namespace and every `plugin.json` has the `version` `0.0.0-dev`.
+
+## A private extension
+
+A private extension stays on authenticated git ([ADR 22](../adr/0022-two-install-paths.md) item 8).
+For copies made with a skill installer from a private source:
+
+- do not share them through a skills.sh pack: its docs call a pack "unlisted, not access-controlled", so anyone with its link can install it;
+- set `DISABLE_TELEMETRY=1` for every `npx skills` command, which otherwise can send source and skill names (checked in `skills` 1.7.4).
