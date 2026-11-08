@@ -17,7 +17,13 @@ Ask questions in [Discussions](https://github.com/TrialAndTemper/cech/discussion
 By contributing you agree that your work is licensed under the licence of the files it adds or changes: MIT unless a file or folder says otherwise ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
 Text copied or adapted from another project needs a licence that [ADR 2](docs/adr/0002-licence-and-contributions.md) item 4 accepts (permissive, not copyleft), and so does a Go module the CLI builds in.
 Copied text also needs its notice and, in a skill, a source note naming the upstream project and the commit it came from; rewrite it where you can.
-[ADR 23](docs/adr/0023-forking-upstream-skills.md) says what a fork's `NOTICE` records and how a fork takes in upstream changes.
+[ADR 23](docs/adr/0023-forking-upstream-skills.md) says what a fork's `NOTICE` records and how a fork takes in upstream changes:
+
+- A fork's `NOTICE` keeps upstream's notices word for word: a term check hit in one goes in the check's allowlist, never in a rewrite.
+- To take in upstream changes, diff upstream's listed paths from the pinned commit to a newer one, and apply only the changes CECH wants, rewritten to its rules.
+  The change moves the pinned commit, updates the entry, and names the old and new upstream commits, so the reviewer can read it beside that range.
+- Remove an entry only when no derived text is left, say so in the change, and move upstream's credit to `CREDITS.md`.
+
 The notice for text in a skill goes in the skill folder's `NOTICE`; any other goes in [NOTICE](NOTICE).
 A skill based on a person's unpublished work ships only once they agree; credit published work by citing it.
 
