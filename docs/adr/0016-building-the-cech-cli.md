@@ -31,7 +31,7 @@ Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1
 3. **Gates.**
    A licence gate checks the external dependencies compiled into the CLI command, including transitive imports, against item 1's list.
    It runs for the current platform locally and on each CI platform, so platform-specific imports are checked too ([ADR 4](0004-gates-and-ci.md) item 2).
-   govulncheck is not a gate, extending [ADR 4](0004-gates-and-ci.md) item 7: it reports on pull requests without blocking them, and a failure on `main` opens an issue.
+   govulncheck is not a gate, extending [ADR 4](0004-gates-and-ci.md) item 6: it reports on pull requests without blocking them, and a failure on `main` opens an issue.
    Output that is a contract has golden files.
 
 ## Consequences

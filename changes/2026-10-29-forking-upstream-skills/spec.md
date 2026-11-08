@@ -90,4 +90,4 @@ description: ...
     If the issue was closed as not planned, the job stays silent for that skill and upstream until a listed path changes in a commit after the one that issue named.
 19. An issue holds only values from the tree's `NOTICE` and commit hashes: no upstream commit messages or file text.
     Upstream values reach a `run:` step only through environment variables, quoted.
-20. The workflow has `contents: read`, widened by `issues: write` only for a separate job that writes the issue ([ADR 4](../../docs/adr/0004-gates-and-ci.md) item 6).
+20. The workflow has `contents: read`, widened by `issues: write` only for a separate job that writes the issue ([ADR 4](../../docs/adr/0004-gates-and-ci.md) item 5).
