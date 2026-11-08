@@ -25,6 +25,7 @@ The plugin folder, the skill folder, the manifest's `name` and the skill's `name
 
 - A file without `cech` is CECH's own: its namespace is `cech`, and it has no `categories` or `terms`.
 - An extension's namespace is not `cech` and does not start with `cech-`.
+- Each role has a `name` following the name rules, not starting with `cech-`, and in an extension starting with `<namespace>-`; no role is defined twice, and each has a `means`.
 - The build rejects, and names, an unknown, misplaced, missing or invalid key.
 
 ## Names
