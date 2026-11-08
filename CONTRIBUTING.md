@@ -15,8 +15,9 @@ For a larger change, open an issue first so we can agree on the approach.
 Ask questions in [Discussions](https://github.com/TrialAndTemper/cech/discussions); issues are for bugs and proposals.
 
 By contributing you agree that your work is licensed under the licence of the files it adds or changes: MIT unless a file or folder says otherwise ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
-Text copied or adapted from another project needs a compatible licence, its notice and, in a skill, a source note naming the upstream project and the commit it came from; rewrite it where you can.
-[ADR 23](docs/adr/0023-forking-upstream-skills.md) lists the licences a skill may fork, what its `NOTICE` records, and how a fork takes in upstream changes.
+Text copied or adapted from another project needs a licence that [ADR 2](docs/adr/0002-licence-and-contributions.md) item 4 accepts (permissive, not copyleft), and so does a Go module the CLI builds in.
+Copied text also needs its notice and, in a skill, a source note naming the upstream project and the commit it came from; rewrite it where you can.
+[ADR 23](docs/adr/0023-forking-upstream-skills.md) says what a fork's `NOTICE` records and how a fork takes in upstream changes.
 The notice for text in a skill goes in the skill folder's `NOTICE`; any other goes in [NOTICE](NOTICE).
 A skill based on a person's unpublished work ships only once they agree; credit published work by citing it.
 
