@@ -36,7 +36,7 @@ The [docs on private marketplaces](https://code.claude.com/docs/en/plugins/host-
    Some extension plugins depend on CECH, directly or through other plugins.
    A project that pins a different CECH release cannot enable them, because their dependencies name a release it lacks: `cech enable` refuses them, and `cech check` fails ([ADR 19](0019-per-project-plugin-enablement.md) items 5 and 8).
 5. **The same tooling.**
-   An extension's CI runs the same `cech` checks as CECH's ([ADR 4](0004-gates-and-ci.md) item 4), with the rules and CECH's categories of the CLI version that runs, not of the release the `cech` key names.
+   An extension's CI runs the same `cech` checks as CECH's ([ADR 5](0005-gates-and-tool-pins.md) item 4), with the rules and CECH's categories of the CLI version that runs, not of the release the `cech` key names.
    An extension that also has a `.cech/config.toml` gets a project's checks too.
 6. **Private repositories use the machine's git credentials.**
    No committed file holds a token, as for `.cech/config.toml` ([ADR 19](0019-per-project-plugin-enablement.md) item 1), and an extension runs its own secret scanning: `cech` checks only the sources it manages.

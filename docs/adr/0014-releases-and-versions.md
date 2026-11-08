@@ -36,7 +36,7 @@ Only a plugin with no `version` in a git marketplace takes it from the commit, a
    A command that picks a release by default skips pre-releases.
    A final extension release builds on a final CECH release.
 6. **A release workflow creates catalogue tags.**
-   It releases only a commit of `main`, at a version above every earlier catalogue release, makes the release commit with a release build, runs every gate and the private term tier ([ADR 3](0003-vendor-neutrality.md) item 4) on it, and pushes the tag only when all pass.
+   It releases only a commit of `main`, at a version above every earlier catalogue release, makes the release commit with a release build, runs every gate and the private term tier ([ADR 4](0004-vendor-neutrality.md) item 4) on it, and pushes the tag only when all pass.
 7. **Extensions** follow items 1 to 6 with their own namespace, tags, default branch and private term list, without CLI tags.
    On a host that cannot enforce them, a maintainer keeps to them by hand.
 

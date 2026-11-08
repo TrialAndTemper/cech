@@ -25,7 +25,7 @@ It is still at 0.x, so a new release may format files differently.
    A sentence is never broken across lines.
    A sentence that is too long is shortened by rewriting it, not by wrapping it.
 3. **rumdl checks and fixes it**, set to sentence-per-line reflow with no line-length limit.
-   Its lint and its format check are gates ([ADR 4](0004-gates-and-ci.md)).
+   Its lint and its format check are gates ([ADR 5](0005-gates-and-tool-pins.md)).
 
 ## Consequences
 

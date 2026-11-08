@@ -5,7 +5,7 @@
 # entry in cli/internal/harnessdata/harnesses.toml, and calls
 # probe_start. It exits 0 on the result in the entry's expect, 1 on any
 # other, through differs, and 2 when it cannot run, through die.
-# POSIX sh (ADR 4), run under dash and macOS sh. The probes run on
+# POSIX sh (ADR 5), run under dash and macOS sh. The probes run on
 # Linux and macOS only: Node and Codex on Windows need SYSTEMROOT and
 # USERPROFILE, which harness leaves out with the rest of the
 # environment.

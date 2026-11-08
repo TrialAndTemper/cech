@@ -23,7 +23,7 @@ Release notes need commits they can sort by kind.
    Each commit is one logical change, and review fixes are folded into the commits they fix before merge.
 3. **Messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/),** with a fixed set of types, so release notes can sort commits by kind.
    The scope is for readers: a plugin may share a name with an area, so tools that need a commit's plugins read the paths it changes.
-4. **Every commit is signed off by its author** ([ADR 2](0002-licence-and-contributions.md)), since the DCO is the author's statement.
+4. **Every commit is signed off by its author** ([ADR 3](0003-licence-and-contributions.md)), since the DCO is the author's statement.
    A gate checks each commit's header and sign-off, and that no fixup or merge commit reaches `main`; the rest of the message rules are for reviewers.
 
 ## Consequences

@@ -1,6 +1,6 @@
 # Working material for changes
 
-`changes/` holds the working material of each change, written by people and agents alike: specs, test plans, briefs, research and spike results ([ADR 24](../docs/adr/0024-where-each-kind-of-text-lives.md) item 3).
+`changes/` holds the working material of each change, written by people and agents alike: specs, test plans, briefs, research and spike results ([ADR 2](../docs/adr/0002-where-each-kind-of-text-lives.md) item 3).
 It is not a changelog; release notes are written from the commits.
 What CECH does now is in [`docs/reference/`](../docs/reference/README.md) and the code, and why is in the [ADRs](../docs/adr/README.md).
 
@@ -71,6 +71,6 @@ Keep it short: someone writing by hand should not face a form.
 
 ## Rules for everything here
 
-- Never commit notes that quote private or unpublished sources; rewrite their findings in your own words ([ADR 3](../docs/adr/0003-vendor-neutrality.md)).
+- Never commit notes that quote private or unpublished sources; rewrite their findings in your own words ([ADR 4](../docs/adr/0004-vendor-neutrality.md)).
 - An ADR or a reference page never links here: it states what it rests on in its own words, since folders here move.
 - A commit message links here only at a fixed commit, for the same reason.

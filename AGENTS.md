@@ -15,12 +15,12 @@ People and agents follow the same rules: [CONTRIBUTING.md](CONTRIBUTING.md) says
 
 A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths and never weakens one from this file.
 
-- The ADRs in `docs/adr/` record decisions and their reasons, not the detail that carries them out ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 2): what CECH does now is in `docs/reference/` and the code, how contributors work is in `CONTRIBUTING.md`, and a change's own rules and tests are in `changes/` ([ADR 24](docs/adr/0024-where-each-kind-of-text-lives.md)).
+- The ADRs in `docs/adr/` record decisions and their reasons, not the detail that carries them out ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 2): what CECH does now is in `docs/reference/` and the code, how contributors work is in `CONTRIBUTING.md`, and a change's own rules and tests are in `changes/` ([ADR 2](docs/adr/0002-where-each-kind-of-text-lives.md)).
   Read the ADRs a change touches before designing it; a new or reversed decision needs a new ADR or a change to an accepted one, in the form ADR 1 item 5 sets.
   Read `changes/done/` only for the history of a change.
-- Keep files, commit messages, and branch and tag names vendor-neutral ([ADR 3](docs/adr/0003-vendor-neutrality.md)): nothing specific to a private organisation, and invented examples such as `example.com` and `acme`.
+- Keep files, commit messages, and branch and tag names vendor-neutral ([ADR 4](docs/adr/0004-vendor-neutrality.md)): nothing specific to a private organisation, and invented examples such as `example.com` and `acme`.
   Never copy text from git-ignored notes into the tree; rewrite it, run `mise run terms`, and let a person read it.
-- Text from another project needs a compatible licence, its notice and, in a skill, a source note naming the upstream project and commit ([ADR 2](docs/adr/0002-licence-and-contributions.md)); a skill that forks such text follows [ADR 23](docs/adr/0023-forking-upstream-skills.md).
+- Text from another project needs a compatible licence, its notice and, in a skill, a source note naming the upstream project and commit ([ADR 3](docs/adr/0003-licence-and-contributions.md)); a skill that forks such text follows [ADR 23](docs/adr/0023-forking-upstream-skills.md).
   The notice for text in a skill goes in the skill folder's `NOTICE`; any other goes in the root `NOTICE`.
 - ADR evidence cites tree files, dates and the versions of harnesses and tools, never pull request or issue numbers, so each ADR stands alone.
 - Commit messages and other published text link only to public, lasting pages, never to an agent session or a page that needs a login ([ADR 6](docs/adr/0006-change-record.md)).
@@ -31,19 +31,19 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | Change | Destination | Rule or reference |
 | --- | --- | --- |
 | A new decision that is costly to reverse, also added to `docs/adr/README.md` | `docs/adr/` | [ADR 1](docs/adr/0001-record-architecture-decisions.md) |
-| The detail of a file, command or check that users or scripts rely on, in the same commit as the behaviour | `docs/reference/` | [ADR 24](docs/adr/0024-where-each-kind-of-text-lives.md) item 2 |
+| The detail of a file, command or check that users or scripts rely on, in the same commit as the behaviour | `docs/reference/` | [ADR 2](docs/adr/0002-where-each-kind-of-text-lives.md) item 2 |
 | A change's spec, test plan, brief, research or spike results, before or with its code, in a folder `YYYY-MM-DD-short-title/`; moved to `done/` once a test or a recorded check by hand covers each criterion | `changes/` | [changes/README.md](changes/README.md) |
-| A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 4](docs/adr/0004-gates-and-ci.md) |
+| A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) |
 | A harness probe that runs unattended, named after its entry in the harness data file, which has `unattended = true` | `scripts/probes/` | [ADR 9](docs/adr/0009-native-harness-features-first.md) item 4, [harness data file](docs/reference/harness-data.md) |
 | A CLI command or package, with its Go tests | `cli/` | [ADR 15](docs/adr/0015-the-cech-cli.md); [ADR 18](docs/adr/0018-generated-files.md) for what `cech build` reads and writes |
 | The catalogue's namespace, description, owner or code owners team, or the roles it defines, then `mise run build:fix` | `data/marketplace.toml` | [ADR 17](docs/adr/0017-repository-data-and-state.md) item 7 |
 | Adding, removing or merging one of CECH's categories, then `mise run build:fix` | `cli/internal/marketplace/categories.toml` | [ADR 12](docs/adr/0012-categories-and-names.md) item 1 |
 | A Go dependency, with its reason on its line | `cli/go.mod` | [ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1 |
-| A public term rule or an allowlisted email address | `checks/terms/` | [ADR 3](docs/adr/0003-vendor-neutrality.md) |
-| A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 5](docs/adr/0005-tool-pins.md) for a pin, [ADR 4](docs/adr/0004-gates-and-ci.md) item 1 for a task |
-| A CI step that is not a gate task, such as the private term tier; a new gate is a task in `check:os` once what it checks exists | `.github/workflows/ci.yml` | [ADR 4](docs/adr/0004-gates-and-ci.md) items 1, 4 and 5 |
-| A check that reports or runs on a schedule but never blocks a merge | `.github/workflows/` | [ADR 4](docs/adr/0004-gates-and-ci.md) items 5 and 6 |
-| A rule for contributors; route agents to it from here | `CONTRIBUTING.md` | [ADR 24](docs/adr/0024-where-each-kind-of-text-lives.md) item 1 |
+| A public term rule or an allowlisted email address | `checks/terms/` | [ADR 4](docs/adr/0004-vendor-neutrality.md) |
+| A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) for a pin, [ADR 5](docs/adr/0005-gates-and-tool-pins.md) item 1 for a task |
+| A CI step that is not a gate task, such as the private term tier; a new gate is a task in `check:os` once what it checks exists | `.github/workflows/ci.yml` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) items 1, 4 and 5 |
+| A check that reports or runs on a schedule but never blocks a merge | `.github/workflows/` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) items 5 and 6 |
+| A rule for contributors; route agents to it from here | `CONTRIBUTING.md` | [ADR 2](docs/adr/0002-where-each-kind-of-text-lives.md) item 1 |
 
 ## Direct ownership
 

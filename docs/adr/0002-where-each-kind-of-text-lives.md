@@ -1,4 +1,4 @@
-# 24. Where each kind of text lives
+# 2. Where each kind of text lives
 
 - Status: accepted
 - Date: 2026-11-08
@@ -24,7 +24,7 @@ A change also needs a place for its rules before the code exists, for its test p
    - An ADR states each finding it rests on in one sentence, with its date and the versions checked; the steps and raw results stay in the research.
    - Once a test, or a recorded check by hand, covers every rule, the folder moves to `changes/done/`, where only typos and links change.
 4. An ADR or a reference page never links into `changes/`, since its folders move; it states what it rests on in its own words.
-5. Notes quoting private or unpublished sources stay out of git ([ADR 3](0003-vendor-neutrality.md)).
+5. Notes quoting private or unpublished sources stay out of git.
 
 ## Consequences
 

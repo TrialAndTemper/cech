@@ -45,7 +45,7 @@ description: ...
    After `Upstream:` it holds, in this order and with nothing between them:
    - one `Commit: <hash>`, 40 or 64 lowercase hexadecimal characters;
    - one or more `Path: <path>`, relative to upstream's root, with `/` separators, no leading `/`, no `.` or `..` part, and no path repeated in the entry;
-   - one `Licence: <id>`, spelled exactly as one of these SPDX ids, which meet [ADR 2](../../docs/adr/0002-licence-and-contributions.md) item 4: `MIT`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `0BSD`, `Apache-2.0`, `CC0-1.0`.
+   - one `Licence: <id>`, spelled exactly as one of these SPDX ids, which meet [ADR 3](../../docs/adr/0003-licence-and-contributions.md) item 4: `MIT`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `0BSD`, `Apache-2.0`, `CC0-1.0`.
      When upstream offers a choice, such as `MIT OR Apache-2.0`, the field holds the one id the text is taken under, and the notice holds that licence.
 4. After the header's blank line comes one line: `Changed by CECH contributors.`, or `Copied unchanged.` when CECH changed none of the text.
    Then come a blank line and the notice.
@@ -90,4 +90,4 @@ description: ...
     If the issue was closed as not planned, the job stays silent for that skill and upstream until a listed path changes in a commit after the one that issue named.
 19. An issue holds only values from the tree's `NOTICE` and commit hashes: no upstream commit messages or file text.
     Upstream values reach a `run:` step only through environment variables, quoted.
-20. The workflow has `contents: read`, widened by `issues: write` only for a separate job that writes the issue ([ADR 4](../../docs/adr/0004-gates-and-ci.md) item 5).
+20. The workflow has `contents: read`, widened by `issues: write` only for a separate job that writes the issue ([ADR 5](../../docs/adr/0005-gates-and-tool-pins.md) item 5).

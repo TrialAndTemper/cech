@@ -1,6 +1,6 @@
 #!/bin/sh
 # Opens the issues for a failed run of the harness probes (ADR 9 item 4,
-# ADR 4 item 6), as .github/workflows/probes.yml's report job. RESULTS
+# ADR 5 item 6), as .github/workflows/probes.yml's report job. RESULTS
 # is the file scripts/run-probes --results wrote, empty if the run
 # stopped before it.
 #

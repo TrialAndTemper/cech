@@ -14,8 +14,8 @@ An ADR holds no detail such as keys, flags and messages: a change to such detail
 For a larger change, open an issue first so we can agree on the approach.
 Ask questions in [Discussions](https://github.com/TrialAndTemper/cech/discussions); issues are for bugs and proposals.
 
-By contributing you agree that your work is licensed under the licence of the files it adds or changes: MIT unless a file or folder says otherwise ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
-Text copied or adapted from another project needs a licence that [ADR 2](docs/adr/0002-licence-and-contributions.md) item 4 accepts (permissive, not copyleft), and so does a Go module the CLI builds in.
+By contributing you agree that your work is licensed under the licence of the files it adds or changes: MIT unless a file or folder says otherwise ([ADR 3](docs/adr/0003-licence-and-contributions.md)).
+Text copied or adapted from another project needs a licence that [ADR 3](docs/adr/0003-licence-and-contributions.md) item 4 accepts (permissive, not copyleft), and so does a Go module the CLI builds in.
 Copied text also needs its notice and, in a skill, a source note naming the upstream project and the commit it came from; rewrite it where you can.
 [ADR 23](docs/adr/0023-forking-upstream-skills.md) says what a fork's `NOTICE` records and how a fork takes in upstream changes:
 
@@ -30,7 +30,7 @@ A skill based on a person's unpublished work ships only once they agree; credit 
 ## Set up
 
 You need git, and [mise](https://mise.jdx.dev/getting-started.html) 2026.10.3 or later.
-mise installs the exact tool versions pinned in `mise.toml` and runs the gates as tasks ([ADR 4](docs/adr/0004-gates-and-ci.md)).
+mise installs the exact tool versions pinned in `mise.toml` and runs the gates as tasks ([ADR 5](docs/adr/0005-gates-and-tool-pins.md)).
 On Windows, use Git Bash: the tasks run with `sh`.
 
 In a new clone, trust the repository's `mise.toml` and install the tools:
@@ -92,7 +92,7 @@ mise installs the pinned Go, golangci-lint, go-licenses and govulncheck, and `sc
 | Task | Runs |
 | --- | --- |
 | `lint:go` | `go vet`, golangci-lint with the linters in `cli/.golangci.yml`, and `go mod tidy -diff` |
-| `lint:licenses` | go-licenses: licences outside the list in `scripts/check-go`, or unidentified, in the CLI command's external dependencies, including transitive imports for the current platform; CI runs it on each platform ([ADR 2](docs/adr/0002-licence-and-contributions.md) item 4) |
+| `lint:licenses` | go-licenses: licences outside the list in `scripts/check-go`, or unidentified, in the CLI command's external dependencies, including transitive imports for the current platform; CI runs it on each platform ([ADR 3](docs/adr/0003-licence-and-contributions.md) item 4) |
 | `format:check:go` | the diff that gofumpt and goimports would apply; `format:fix:go` applies it |
 | `test:go` | `go test`, with the race detector where the platform has one, cgo is on (it needs a C compiler) and the race runtime builds |
 | `vuln` | govulncheck: known vulnerabilities in the CLI and its Go release; needs the network |
@@ -234,7 +234,7 @@ A vulnerability report itself goes through [SECURITY.md](SECURITY.md), not an is
 
 ## Keep CECH vendor-neutral
 
-CECH holds nothing specific to a private organisation: no internal names, hosts, emails, products, ids or quotes in files, commit messages, or branch and tag names ([ADR 3](docs/adr/0003-vendor-neutrality.md)).
+CECH holds nothing specific to a private organisation: no internal names, hosts, emails, products, ids or quotes in files, commit messages, or branch and tag names ([ADR 4](docs/adr/0004-vendor-neutrality.md)).
 Examples use invented data such as `example.com`, `*.example`, `*.test` and the company `acme`.
 
 The term check enforces this with rules in `checks/terms/`.
