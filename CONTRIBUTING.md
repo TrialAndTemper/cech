@@ -154,6 +154,8 @@ Commits are the record of the project ([ADR 6](docs/adr/0006-change-record.md)):
 - Add a `Co-authored-by:` trailer for each other author, human or tool.
 - Link only to public pages that last, such as a CECH issue, a spec or an upstream commit.
 
+The `commits` gate checks each commit's header and that its `Signed-off-by:` carries the commit author's email, and fails while a fixup, squash, amend or merge commit remains; reviewers check the rest of these rules.
+
 ### Sign-off
 
 Every commit carries a `Signed-off-by:` trailer with your name and the email git records as the commit's author.
