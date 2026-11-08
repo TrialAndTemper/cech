@@ -2,7 +2,7 @@
 
 Implemented 2026-10-30; not maintained: the code and its tests are current.
 
-The scheduled job of [ADR 9](../../../../docs/adr/0009-native-harness-features-first.md) item 4, and the check of the newest Codex that [ADR 10](../../../../docs/adr/0010-claude-code-and-codex-from-one-source.md) item 5 asks of it.
+The scheduled job of [ADR 9](../../../docs/adr/0009-native-harness-features-first.md) item 4, and the check of the newest Codex that [ADR 10](../../../docs/adr/0010-claude-code-and-codex-from-one-source.md) item 5 asks of it.
 
 ## The data file
 

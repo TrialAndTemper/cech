@@ -1,15 +1,15 @@
 # Working material for changes
 
-`.ai/` holds material written mostly by and for agents, one folder per change: specs, briefs, research and spike results.
+`changes/` holds material written mostly by and for agents, one folder per change: specs, briefs, research and spike results.
 People review it with the change; the documents written for people are in `docs/` ([ADR 1](../docs/adr/0001-record-architecture-decisions.md) item 8).
 
 ## Layout
 
 ```text
-.ai/changes/YYYY-MM-DD-short-title/        a change in progress
-  spec.md                                  what the change must do, or specs/ for several
-  brief.md, research/, spikes/             anything else the change needs
-.ai/changes/done/YYYY-MM-DD-short-title/   a finished change, kept as history
+changes/YYYY-MM-DD-short-title/        a change in progress
+  spec.md                              what the change must do, or specs/ for several
+  brief.md, research/, spikes/         anything else the change needs
+changes/done/YYYY-MM-DD-short-title/   a finished change, kept as history
 ```
 
 The date is the day the folder is created; it stays when the folder moves.

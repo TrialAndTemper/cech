@@ -37,11 +37,11 @@ Written into an ADR, that detail hides the decision, pulls review towards edge c
    Past that, move a second decision or a spec's detail out, not the rejected options.
    Cross-references use the form `[ADR N](NNNN-title.md)` and point only to earlier ADRs, except a `superseded by` status, so the log reads in order.
 7. `docs/adr/README.md` lists every ADR.
-8. **Material for agents lives in `.ai/`; `docs/` is for people.**
-   Each change keeps any working material in `.ai/changes/YYYY-MM-DD-short-title/`.
+8. **Material for agents lives in `changes/`; `docs/` is for people.**
+   Each change keeps any working material in `changes/YYYY-MM-DD-short-title/`.
    A change to detail others rely on has a spec there: rules a test can check, reviewed before or with the code.
    Briefs, research and spike results sit beside it, in subfolders as needed.
-   Once tests cover every rule, the spec is dated and its folder moves to `.ai/changes/done/`, where only typos and links change; the code and tests are then the authority.
+   Once tests cover every rule, the spec is dated and its folder moves to `changes/done/`, where only typos and links change; the code and tests are then the authority.
    Notes quoting private or unpublished sources stay out of git.
 
 ## Consequences

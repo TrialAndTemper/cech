@@ -17,7 +17,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 
 - The ADRs in `docs/adr/` are the contracts.
   Read the ones a change touches before designing it; changing a contract needs a new ADR or a change to an accepted one, in the form [ADR 1](docs/adr/0001-record-architecture-decisions.md) item 5 sets.
-  Read `.ai/changes/done/` only for the history of a change: the code and its tests say what CECH does now.
+  Read `changes/done/` only for the history of a change: the code and its tests say what CECH does now.
 - Keep files, commit messages, and branch and tag names vendor-neutral ([ADR 3](docs/adr/0003-vendor-neutrality.md)): nothing specific to a private organisation, and invented examples such as `example.com` and `acme`.
   Never copy text from git-ignored notes into the tree; rewrite it, run `mise run terms`, and let a person read it.
 - Text from another project needs a compatible licence, its notice and, in a skill, a source note naming the upstream project and commit ([ADR 2](docs/adr/0002-licence-and-contributions.md)); a skill that forks such text follows [ADR 23](docs/adr/0023-forking-upstream-skills.md).
@@ -31,7 +31,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | Change | Destination | Rule or reference |
 | --- | --- | --- |
 | A new decision that is costly to reverse, also added to `docs/adr/README.md` | `docs/adr/` | [ADR 1](docs/adr/0001-record-architecture-decisions.md) |
-| A change's spec, brief, research or spike results, before or with its code; moved to `done/` once tests cover each rule | `.ai/changes/YYYY-MM-DD-short-title/` | [.ai/README.md](.ai/README.md) |
+| A change's spec, brief, research or spike results, before or with its code; moved to `done/` once tests cover each rule | `changes/YYYY-MM-DD-short-title/` | [changes/README.md](changes/README.md) |
 | A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 4](docs/adr/0004-gates-and-ci.md) |
 | A harness probe that runs unattended, with `unattended = true` on its entry in the harness data file | `scripts/probes/<entry name>` | [ADR 9](docs/adr/0009-native-harness-features-first.md) items 4 and 5 |
 | A CLI command or package, with its Go tests | `cli/` | [ADR 15](docs/adr/0015-the-cech-cli.md); [ADR 18](docs/adr/0018-generated-files.md) for what `cech build` reads and writes |
@@ -49,7 +49,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | Path | Responsibility |
 | --- | --- |
 | `docs/` | Documents for people: decision records in `adr/`, and the catalogue page `catalogue.md` that `cech build` generates; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
-| `.ai/` | Working material written mostly by and for agents, one folder per change in `changes/`, finished ones in `changes/done/` |
+| `changes/` | Working material written mostly by and for agents, one folder per change, finished ones in `done/` |
 | `scripts/` | Gate and harness probe scripts in POSIX sh that run under dash, macOS sh and Git Bash, the harness probes on Linux and macOS only; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks, `scripts/probes/` the harness probes that `run-probes` runs |
 | `data/` | Hand-written data on the marketplace: `marketplace.toml`, its namespace, description, owner, code owners team and roles ([ADR 17](docs/adr/0017-repository-data-and-state.md) item 7) |
 | `.claude-plugin/` | The marketplace catalogue `marketplace.json`, which `cech build` generates |
