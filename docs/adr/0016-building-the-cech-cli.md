@@ -20,19 +20,15 @@ Checked on 2026-10-31 with Go 1.27.3: of the modules `github.com/spf13/cobra` v1
 1. **Dependency budget.**
    The standard library comes first.
    A third-party module is added only for a feature the standard library lacks, when writing it would cost more than depending on it.
-   Each module the CLI requires directly says on its line in `go.mod` why it is there, and the commit that adds it records its licence.
-   External dependencies compiled into the CLI may use only these licences, by SPDX id: `MIT`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `0BSD`, `Apache-2.0`, `CC0-1.0`.
+   Each module the CLI requires directly states why it is there, and every module compiled into the CLI has a licence that [ADR 2](0002-licence-and-contributions.md) item 4 accepts.
    Tools that only build or check the CLI are pinned in `mise.toml`, not in `go.mod`.
    The command line is built on `github.com/spf13/cobra`, since the standard `flag` package has no command tree, generated help or shell completion.
 2. **Versions.**
    The CLI has its own SemVer versions, on the `cli/` tags of [ADR 14](0014-releases-and-versions.md) item 2.
    `cech version` reports the CLI's version, so users and scripts can tell which layout rules they run.
-   The CLI's release pipeline is outside this ADR.
 3. **Gates.**
-   A licence gate checks the external dependencies compiled into the CLI command, including transitive imports, against item 1's list.
-   It runs for the current platform locally and on each CI platform, so platform-specific imports are checked too ([ADR 4](0004-gates-and-ci.md) item 2).
+   A licence gate checks every module compiled into the CLI, including transitive ones, on each platform.
    govulncheck is not a gate, extending [ADR 4](0004-gates-and-ci.md) item 6: it reports on pull requests without blocking them, and a failure on `main` opens an issue.
-   Output that is a contract has golden files.
 
 ## Consequences
 
