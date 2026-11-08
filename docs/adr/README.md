@@ -44,3 +44,4 @@ Words the ADRs use, in short:
 21. [Roles](0021-roles.md)
 22. [Two install paths](0022-two-install-paths.md)
 23. [Forking upstream skills](0023-forking-upstream-skills.md)
+24. [Where each kind of text lives](0024-where-each-kind-of-text-lives.md)

@@ -14,7 +14,8 @@ It has no skills yet, so there is nothing to install.
 
 ## Learn more
 
-- [Architecture decision records](docs/adr/README.md): the contracts CECH follows, and why.
+- [Architecture decision records](docs/adr/README.md): the decisions CECH rests on, and why.
+- [Reference](docs/reference/README.md): what CECH's files, commands and checks do now.
 - [Contributing](CONTRIBUTING.md): set-up, gates, commit rules and issue labels.
 - [Discussions](https://github.com/TrialAndTemper/cech/discussions): questions and ideas.
 - [Code of conduct](CODE_OF_CONDUCT.md)
