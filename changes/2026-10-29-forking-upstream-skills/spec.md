@@ -45,7 +45,7 @@ description: ...
    After `Upstream:` it holds, in this order and with nothing between them:
    - one `Commit: <hash>`, 40 or 64 lowercase hexadecimal characters;
    - one or more `Path: <path>`, relative to upstream's root, with `/` separators, no leading `/`, no `.` or `..` part, and no path repeated in the entry;
-   - one `Licence: <id>`, an SPDX id from ADR 23 item 2, spelled exactly.
+   - one `Licence: <id>`, spelled exactly as one of these SPDX ids, which meet [ADR 2](../../docs/adr/0002-licence-and-contributions.md) item 4: `MIT`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `0BSD`, `Apache-2.0`, `CC0-1.0`.
      When upstream offers a choice, such as `MIT OR Apache-2.0`, the field holds the one id the text is taken under, and the notice holds that licence.
 4. After the header's blank line comes one line: `Changed by CECH contributors.`, or `Copied unchanged.` when CECH changed none of the text.
    Then come a blank line and the notice.
@@ -70,7 +70,7 @@ description: ...
    A skill folder holds a `NOTICE` only for third-party text ([ADR 22](../../docs/adr/0022-two-install-paths.md) item 4), and ADR 23 item 1 makes any skill with such text a fork.
 10. Each `Apache-2.0` entry marked `Changed by CECH contributors.` is named by at least one change comment in its folder, and each change comment names an `Apache-2.0` entry so marked in that folder's `NOTICE`.
 11. `plugin.json` `license` starts with the marketplace's own licence (`MIT` in CECH).
-    Each other licence of an entry in the skill's `NOTICE` follows once, in the order of ADR 23 item 2, joined by ` AND `.
+    Each other licence of an entry in the skill's `NOTICE` follows once, in the order of rule 3's list, joined by ` AND `.
     With no `NOTICE`, the field is the marketplace's own licence alone.
     The check covers only the terms after the first, since an extension chooses its own licence.
 12. Each break of rules 1 to 6 and 9 to 11, and a change comment in the wrong form or place, is a finding that names the file and line; validation then exits 1 ([ADR 15](../../docs/adr/0015-the-cech-cli.md) item 5).
