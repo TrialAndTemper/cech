@@ -20,10 +20,11 @@ actionlint = "1.7.12"
 bats = { version = "1.14.0", os = ["linux", "macos"] }
 gitleaks = "8.30.1"
 go = "1.27.3"
-# mise builds govulncheck from source with the pinned go, which checks
+# mise builds the Go tools from source with the pinned go, which checks
 # the module against the Go checksum database; mise.lock records the
 # version only, with no download or checksum.
 "go:golang.org/x/vuln/cmd/govulncheck" = "1.9.0"
+"go:github.com/google/go-licenses/v2" = "2.0.1"
 golangci-lint = "2.14.0"
 lychee = "0.24.2"
 rumdl = "0.2.79"
@@ -103,6 +104,10 @@ run = "scripts/check-adr"
 [tasks."lint:go"]
 description = "go vet, golangci-lint and go mod tidy -diff on the CLI"
 run = "scripts/check-go lint"
+
+[tasks."lint:licenses"]
+description = "Check the CLI's dependencies for disallowed or unidentified licences"
+run = "scripts/check-go licenses"
 
 [tasks."lint:markdown"]
 description = "Lint the Markdown files"

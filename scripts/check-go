@@ -1,15 +1,17 @@
 #!/bin/sh
-# Go gates for the cech CLI in cli/ (ADR 16): lint, format check, tests,
+# Go gates for the cech CLI in cli/ (ADR 16): lint, licence check, format check, tests,
 # the vulnerability check of ADR 16 item 3 and the check of the
-# generated files of ADR 18, run as `mise run lint`,
+# generated files of ADR 18, run as `mise run lint`, `mise run lint:licenses`,
 # `mise run format:check`, `mise run format:fix`, `mise run test`,
 # `mise run vuln`, `mise run build:check` and `mise run build:fix`.
 # POSIX sh (ADR 4): it must run under dash, macOS sh and Git Bash.
 #
-# Usage: scripts/check-go lint | format | fix | test | vuln | build | build-fix
+# Usage: scripts/check-go lint | licenses | format | fix | test | vuln | build | build-fix
 #
 #   lint    go vet, golangci-lint (cli/.golangci.yml), and go mod tidy
 #           -diff, which fails if go.mod or go.sum is not tidy
+#   licenses check the CLI command's dependencies for disallowed or
+#           unidentified licences
 #   format  show what gofumpt and goimports, run by golangci-lint fmt,
 #           would change
 #   fix     let them rewrite the files
@@ -28,7 +30,7 @@
 # GOWORK=off, so a go.work file in a parent directory cannot change the
 # build.
 #
-# Requires: go, golangci-lint and govulncheck (pinned in mise.toml;
+# Requires: go, golangci-lint, go-licenses and govulncheck (pinned in mise.toml;
 # `mise run` puts them on PATH).
 #
 # Exit status: 0 clean (or formatted), 1 findings, 2 the check could not
@@ -52,10 +54,12 @@ STATUS=0
 
 usage() {
   cat << 'EOF'
-Usage: mise run lint | format:check | format:fix | test | vuln | build:check | build:fix
-       (scripts/check-go lint | format | fix | test | vuln | build | build-fix)
+Usage: mise run lint | lint:licenses | format:check | format:fix | test | vuln | build:check | build:fix
+       (scripts/check-go lint | licenses | format | fix | test | vuln | build | build-fix)
 
   lint     go vet, golangci-lint and go mod tidy -diff
+  licenses check the CLI command's dependencies for disallowed or
+           unidentified licences
   format   show what the Go formatters would change
   fix      let the Go formatters rewrite the files
   test     go test, with -race where the platform has a race
@@ -96,7 +100,7 @@ main() {
   local mode race cgo goos goarch probe cech
 
   case "${1:-}" in
-    lint | format | fix | test | vuln | build | build-fix) mode=$1 ;;
+    lint | licenses | format | fix | test | vuln | build | build-fix) mode=$1 ;;
     -h | --help)
       usage
       exit 0
@@ -115,6 +119,7 @@ main() {
   require_tool go
   case "${mode}" in
     lint | format | fix) require_tool golangci-lint ;;
+    licenses) require_tool go-licenses ;;
     vuln) require_tool govulncheck ;;
     *) ;;
   esac
@@ -133,6 +138,13 @@ main() {
       step 1 go vet ./...
       step 1 golangci-lint run ./...
       step 1 go mod tidy -diff
+      ;;
+    licenses)
+      # The root LICENSE covers CECH; check its external imports, including
+      # transitive ones, for the current platform (ADR 16 item 3).
+      step 1 go-licenses check ./cmd/cech \
+        --ignore github.com/TrialAndTemper/cech/cli \
+        --allowed_licenses MIT,BSD-2-Clause,BSD-3-Clause,ISC,0BSD,Apache-2.0,CC0-1.0
       ;;
     format) step 1 golangci-lint fmt --diff ./... ;;
     fix)
