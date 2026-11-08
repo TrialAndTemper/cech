@@ -1,6 +1,6 @@
 # Upstream entries in a skill's NOTICE
 
-The format of a forked skill's `NOTICE`, the change comments in files from `Apache-2.0` upstreams, the `cech validate` checks of both, and the scheduled upstream job, for [ADR 23](../../../docs/adr/0023-forking-upstream-skills.md) items 3 to 6.
+The format of a forked skill's `NOTICE`, the change comments in files from `Apache-2.0` upstreams, the `cech validate` checks of both, and the scheduled upstream job, for [ADR 23](../../docs/adr/0023-forking-upstream-skills.md) items 3 to 6.
 Nothing here is built yet; the change that builds `cech validate` or the job takes these rules.
 
 ## Example
@@ -67,13 +67,13 @@ description: ...
 ## `cech validate`
 
 9. Every `NOTICE` in a skill folder has at least one entry.
-   A skill folder holds a `NOTICE` only for third-party text ([ADR 22](../../../docs/adr/0022-two-install-paths.md) item 4), and ADR 23 item 1 makes any skill with such text a fork.
+   A skill folder holds a `NOTICE` only for third-party text ([ADR 22](../../docs/adr/0022-two-install-paths.md) item 4), and ADR 23 item 1 makes any skill with such text a fork.
 10. Each `Apache-2.0` entry marked `Changed by CECH contributors.` is named by at least one change comment in its folder, and each change comment names an `Apache-2.0` entry so marked in that folder's `NOTICE`.
 11. `plugin.json` `license` starts with the marketplace's own licence (`MIT` in CECH).
     Each other licence of an entry in the skill's `NOTICE` follows once, in the order of ADR 23 item 2, joined by ` AND `.
     With no `NOTICE`, the field is the marketplace's own licence alone.
     The check covers only the terms after the first, since an extension chooses its own licence.
-12. Each break of rules 1 to 6 and 9 to 11, and a change comment in the wrong form or place, is a finding that names the file and line; validation then exits 1 ([ADR 15](../../../docs/adr/0015-the-cech-cli.md) item 5).
+12. Each break of rules 1 to 6 and 9 to 11, and a change comment in the wrong form or place, is a finding that names the file and line; validation then exits 1 ([ADR 15](../../docs/adr/0015-the-cech-cli.md) item 5).
 13. It reads only the files in the tree, never the network.
     The contributor finds the files that hold changed `Apache-2.0` text (rule 7) and keeps files with no comment syntax unchanged (rule 8); review checks both.
 14. The root `NOTICE` is not checked by these rules.
@@ -90,4 +90,4 @@ description: ...
     If the issue was closed as not planned, the job stays silent for that skill and upstream until a listed path changes in a commit after the one that issue named.
 19. An issue holds only values from the tree's `NOTICE` and commit hashes: no upstream commit messages or file text.
     Upstream values reach a `run:` step only through environment variables, quoted.
-20. The workflow has `contents: read`, widened by `issues: write` only for a separate job that writes the issue ([ADR 4](../../../docs/adr/0004-gates-and-ci.md) item 6).
+20. The workflow has `contents: read`, widened by `issues: write` only for a separate job that writes the issue ([ADR 4](../../docs/adr/0004-gates-and-ci.md) item 6).
