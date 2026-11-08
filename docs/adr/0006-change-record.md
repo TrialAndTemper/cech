@@ -19,29 +19,12 @@ Release notes need commits they can sort by kind.
 2. **Commits are the record.**
    Anything that must last (the reason for a change, evidence, rejected options) goes in a commit message or an ADR.
    The pull request description summarises and links; it is not the only place for any of that.
-3. **Clean before merge.**
-   Each commit is one logical change and should leave the tree passing the gates ([ADR 4](0004-gates-and-ci.md)).
-   CI runs them on the pull request as a whole, not on each commit, so this is guidance.
-   Review fixes are pushed as fixup commits, so a reviewer sees each one, and are folded into the commits they fix before merge.
-   Force pushes to one's own pull request branch are expected.
-4. **Message format:** [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
-   - Header `type(scope): summary`, at most 72 characters, imperative, no final full stop.
-   - Types: `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
-     A revert uses `revert:` with the reverted header, not git's default `Revert "…"`.
-   - Scope: the plugin name for a change inside one plugin and its evals; otherwise an area such as `cli`, `adr`, `ci`, `checks`.
-     Omitted when the change spans areas.
-     The scope is for readers: a plugin may share a name with an area, so tools that need a commit's plugins read the paths it changes.
-   - A breaking change uses `!` after the scope and a `BREAKING CHANGE:` footer saying what users must do.
-   - The body says why, wrapped at 72 characters.
-5. **Trailers.**
-   `Signed-off-by:` on every commit ([ADR 2](0002-licence-and-contributions.md)).
-   `Co-authored-by:` for each other author, human or tool.
-   No other content limits beyond [ADR 3](0003-vendor-neutrality.md).
-6. **Messages stand alone.**
-   A link in a commit message points only to a public, durable page: a CECH issue or pull request, a spec, an upstream commit.
-7. **The commit message gate** checks every commit in a pull request for item 4's header and item 5's sign-off, which must carry the commit author's email, since the DCO is the author's statement.
-   It fails while a fixup or merge commit remains, so neither reaches `main`.
-   The rest of items 4 to 6 is for reviewers to check.
+   A link in a commit message points only to a public page that lasts.
+   Each commit is one logical change, and review fixes are folded into the commits they fix before merge.
+3. **Messages follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/),** with a fixed set of types, so release notes can sort commits by kind.
+   The scope is for readers: a plugin may share a name with an area, so tools that need a commit's plugins read the paths it changes.
+4. **Every commit is signed off by its author** ([ADR 2](0002-licence-and-contributions.md)), since the DCO is the author's statement.
+   A gate checks each commit's header and sign-off, and that no fixup or merge commit reaches `main`; the rest of the message rules are for reviewers.
 
 ## Consequences
 
