@@ -123,6 +123,7 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
 
 - Markdown has one sentence per line, never wrapped; shorten a long sentence rather than break it ([ADR 7](docs/adr/0007-markdown-source-format.md)).
   `mise run format:fix` reflows it.
+  Text copied word for word from upstream keeps its own layout: exempt its file, or a marked part, in rumdl's settings or with a disable comment, and give the reason next to it.
 - Refer to Claude Code and Codex as harnesses, the programs that run an agent ([ADR 8](docs/adr/0008-a-marketplace-you-extend-not-fork.md)).
   "Tool" means something else: a tool pinned in `mise.toml`, the `tool` plugin category, a tool an agent calls, or a command-line program.
 - Shell scripts are POSIX sh that runs under dash, macOS sh and Git Bash, and pass shellcheck and shfmt.
@@ -144,6 +145,7 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
 Commits are the record of the project ([ADR 6](docs/adr/0006-change-record.md)): reviewers read each one, and the reason for a change belongs in its message, not only in the pull request.
 
 - Make each commit one logical change that leaves the gates passing.
+- Bump a formatter or linter in its own commit, together with the changes it makes to files.
 - Write the header in the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) form `type(scope): summary`, at most 72 characters, imperative, with no final full stop.
   Types: `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
   The scope is a plugin name or an area such as `cli`, `adr`, `ci` or `checks`, in lower-case words joined by `-`; leave it out when a change spans areas.
