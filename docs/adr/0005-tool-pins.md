@@ -18,18 +18,17 @@ Probed with mise 2026.10.3 on 2026-10-19:
 ## Decision
 
 1. **Exact versions.**
-   Every tool that builds or checks CECH is pinned to an exact version in the `[tools]` table of `mise.toml`, and `mise.lock` records each download and its checksum.
-   For a Go tool that mise builds from source, it records only the version, and the Go checksum database checks the source.
-   The table holds only such tools, not Claude Code or Codex: CECH tests its work against them but does not pin them.
+   Every tool that builds or checks CECH is pinned to an exact version in `mise.toml`, and the lockfile records each download's checksum, or, for a Go tool built from source, its version, which the Go checksum database checks.
+   Claude Code and Codex are not pinned: CECH tests its work against them, but does not build with them.
 2. **Locked installs.**
-   CI installs an exact mise version, then the tools with `locked` set; `mise.toml` sets mise's `min_version`.
+   CI installs an exact mise version, then the tools with `locked` set, and `mise.toml` names the oldest mise it works with.
 3. **Bumps wait a week.**
    Pins are added and bumped by letting mise resolve them under a week's `minimum_release_age`; review checks the release date of a version given by hand.
 
 ## Consequences
 
-- A bump is a visible change to `mise.toml` and `mise.lock`, reviewed like any other.
-- A tool's new release reaches CECH no sooner than a week after it is published; for a version given by hand, review holds to this.
+- A bump is a visible change to the pin and the lockfile, reviewed like any other.
+- A tool's new release reaches CECH no sooner than a week after it is published.
 
 ## Options considered
 

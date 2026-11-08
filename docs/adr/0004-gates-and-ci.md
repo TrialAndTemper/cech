@@ -25,15 +25,15 @@ A movable action tag, or a secret given to fork code, can leak secrets or change
    Each gate is a mise task that runs a pinned tool, CECH's CLI, or a POSIX shell script, and one task runs them all, so contributors and CI run the same thing.
    Gate scripts are POSIX sh, so on Windows they run under Git Bash.
 2. **CI is the authority.**
-   On every pull request and push to `main`, a GitHub Actions workflow runs the gates through their mise tasks on Linux, macOS and Windows, apart from gates that read only git history, which run once; a new gate joins CI without a change to the workflow.
+   CI runs the gates through their mise tasks on every pull request and push to `main`, on Linux, macOS and Windows, so a new gate joins CI without a change to the workflow.
    A ruleset on `main` requires the gates to pass before merge.
    A gate that needs a secret, such as the private term tier ([ADR 3](0003-vendor-neutrality.md)), is required only where the secret reaches, and is skipped locally without it.
    A rule CI cannot check is guidance in the contributing guide, not described as enforced.
 3. **Hooks are a convenience.**
-   Optional `pre-commit` and `commit-msg` hooks run some of the gates through `mise run`, on the staged tree or on the message; no rule exists only in a hook.
+   Optional git hooks run some of the gates before a commit; no rule exists only in a hook.
 4. **The gates.**
    A gate is a check that must pass before a change merges.
-   Each check an ADR asks for becomes one once the thing it checks exists, and this ADR adds the checks on CECH's own tooling: its scripts, workflows and links.
+   Each check an ADR asks for becomes one once what it checks exists; this ADR adds checks of CECH's scripts, workflows and links.
 5. **Workflow safety.**
    Third-party actions are pinned by full commit SHA.
    Workflows default to `permissions: contents: read`, widened per job only where needed.
