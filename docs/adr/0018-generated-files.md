@@ -15,31 +15,18 @@ The same check fails when the marketplace catalogue has no `description`, and ac
 
 ## Decision
 
-1. Per plugin, two files hold hand-written metadata:
-   - `SKILL.md`: name, description, `metadata`, and the skill itself;
-   - `.claude-plugin/plugin.json`: every field (name, author, licence, dependencies) except `description`, `version` and, in an extension, the `marketplace` of a dependency on a CECH plugin.
-
-   The name appears in both files and as the skill and plugin folder names.
-   The validator checks that all of them match, extending the same-name rule of [ADR 11](0011-one-plugin-one-skill.md).
-
+1. Per plugin, only `SKILL.md` and `plugin.json` hold hand-written metadata, so a description is written once, in `SKILL.md`.
+   The name appears in both files and as the skill and plugin folder names, and all of them must match, extending the same-name rule of [ADR 11](0011-one-plugin-one-skill.md).
    Repo-wide data in `data/` is hand-written too ([ADR 17](0017-repository-data-and-state.md)); it describes the catalogue, not one plugin.
-2. Everything else derived from them is generated:
-   - the `description` field in each `plugin.json`, copied from `SKILL.md`;
-   - the `version` field in each `plugin.json`, the same for every plugin: `0.0.0-dev`, or the release's version in a release build ([ADR 14](0014-releases-and-versions.md) item 3);
-   - in an extension, the `marketplace` of each dependency on a CECH plugin, the versioned name of the CECH release the extension builds on;
-   - the marketplace catalogue `.claude-plugin/marketplace.json`, named after the namespace (plus the version in a release build), with each plugin's category taken from its folder ([ADR 12](0012-categories-and-names.md));
-   - Codex TOML for reviewer agents ([ADR 10](0010-claude-code-and-codex-from-one-source.md));
-   - a copy of the root `LICENSE` in each skill folder, byte for byte and with no generated-file line (item 4), so a skill copied without its plugin keeps its licence ([ADR 2](0002-licence-and-contributions.md)); a marketplace with no root `LICENSE` gets none;
-   - the code owners file ([ADR 13](0013-attribution.md) item 4);
-   - the catalogue page in `docs/`.
+2. Everything derived from them is generated: the derived fields of each `plugin.json`, such as its description and version ([ADR 14](0014-releases-and-versions.md) item 3), the marketplace catalogue, Codex TOML for reviewer agents ([ADR 10](0010-claude-code-and-codex-from-one-source.md)), the code owners file ([ADR 13](0013-attribution.md) item 4) and the catalogue page.
+   Each skill folder also gets a copy of the root `LICENSE`, so a skill copied without its plugin keeps its licence ([ADR 2](0002-licence-and-contributions.md)).
 3. One generator writes all of them: `cech build`.
    It works on any marketplace with CECH's layout, so extensions use it too ([ADR 8](0008-a-marketplace-you-extend-not-fork.md)).
 4. Generated files are committed, because both harnesses read the catalogue and manifests straight from git.
    Where the format allows comments, a generated file starts with a line saying it is generated and by what.
 5. Output is deterministic and byte for byte the same on every OS; running the build twice changes nothing.
-6. Where the build writes a field inside a hand-written file (`plugin.json` `description` or `version`, or a dependency's `marketplace`), it changes only that field and leaves the rest of the file byte for byte as it was.
-7. `cech build --check` regenerates in memory and fails on any difference from the committed files.
-   It is a gate.
+6. Where the build writes a field inside a hand-written file, it changes only that field and leaves the rest of the file byte for byte as it was.
+7. A check mode regenerates in memory and fails on any difference from the committed files, and is a gate.
    A wrong generated file is fixed by changing its source, never by editing the output.
 
 ## Consequences
