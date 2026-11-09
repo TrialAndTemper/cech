@@ -49,9 +49,9 @@ CECH's categories are built into the `cech` CLI, from `cli/internal/marketplace/
 | `writing` | Prose, docs, decision records, changelogs, commit messages |
 | `agent` | How agents work in a repository (instruction files, task records, estimates, change specs) |
 | `workflow` | Multi-step flows that move a change through stages |
-| `lang` | Languages and runtimes |
+| `lang` | Programming and query languages and their runtimes, such as Go, SQL dialects or the JVM |
 | `framework` | Libraries and frameworks |
-| `tool` | One command-line tool each |
+| `tool` | One product each that a project installs or runs, such as a command-line tool, a database or a message broker |
 | `platform` | Hosted services: forges, trackers, clouds, observability |
 | `meta` | Authoring and testing CECH skills |
 
