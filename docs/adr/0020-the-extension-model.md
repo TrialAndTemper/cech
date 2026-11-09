@@ -26,7 +26,7 @@ The [docs on private marketplaces](https://code.claude.com/docs/en/plugins/host-
 2. **Replace, do not patch.**
    To replace a CECH skill, a project enables the extension's plugin instead.
    The replacement can fill the same role ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 3), but a plugin that depends on the CECH plugin by name still needs the CECH plugin.
-   An extension never ships edited copies of CECH text.
+   A replacement is a whole plugin of the extension's own, even when it starts from a CECH skill's text.
 3. **Build on a CECH plugin by depending on it.**
    An extension plugin depends on a CECH plugin by name, such as `{"name": "cech-prose"}` ([ADR 11](0011-one-plugin-one-skill.md) item 3).
    A name starting with `cech-` marks a CECH plugin.
