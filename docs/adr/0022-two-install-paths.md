@@ -8,6 +8,7 @@
 
 Skill installers can copy skills out of CECH's public repository.
 A *copy* is a skill folder that an installer wrote: a *project copy* sits in a repository, a *personal copy* in a home directory.
+A harness's own plugin commands can also install CECH's plugins in user settings, without `cech`; [ADR 19](0019-per-project-plugin-enablement.md) item 6 and its Consequences cover that case.
 
 Checked on 2026-10-28 in the source of `skills` 1.7.4, the npm package behind `npx skills`, and of its main branch at 4d786c1:
 
