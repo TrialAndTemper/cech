@@ -30,7 +30,7 @@ Read on 2026-10-28, with Claude Code 2.1.312 and Codex CLI 0.165.0 installed:
    - *Standalone:* people make copies of portable skills with an installer, without `cech`.
 2. **Skills are portable by default.**
    A skill must do what it claims with its own folder alone.
-   It may still read its facts in `.cech/<namespace>/<plugin>.toml` ([ADR 17](0017-repository-data-and-state.md)).
+   It may still read its settings in `.cech/<namespace>/<plugin>.toml` ([ADR 17](0017-repository-data-and-state.md)).
 3. **Managed-only skills say so.**
    A skill is managed-only when it cannot do what it claims without reviewer agents, hooks, an MCP server, a dependency or a role binding ([ADR 21](0021-roles.md)).
    Its `SKILL.md` sets `metadata.cech-managed-only`, and its text says what a copy lacks.
@@ -60,5 +60,5 @@ Read on 2026-10-28, with Claude Code 2.1.312 and Codex CLI 0.165.0 installed:
 - **Managed path only, or copies allowed but unsupported:** people copy anyway, and skills that need their plugin break silently.
 - **The installer's `metadata.internal: true`:** hides a skill from the installer's list, but [Agent Skills](https://agentskills.io/specification) `metadata` allows only strings, and only one installer reads it.
 - **Inferring the mark instead of writing it:** misses role bindings, and is invisible in `SKILL.md`.
-- **Copies of skills a managed project has not enabled:** they are not pinned, and their facts files fail `cech check` ([ADR 17](0017-repository-data-and-state.md) item 4).
+- **Copies of skills a managed project has not enabled:** they are not pinned, and their files in `.cech/` fail `cech check` ([ADR 17](0017-repository-data-and-state.md) item 4).
 - **Only the root `NOTICE`, or only `license` in `SKILL.md` frontmatter:** MIT asks for its notice in every copy, and the copy would have none.
