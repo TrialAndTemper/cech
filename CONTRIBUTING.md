@@ -113,6 +113,7 @@ It fails when a generated file differs from its sources: `data/marketplace.toml`
 Change the source, then let `mise run build:fix` rewrite the generated files with the same `cech`.
 
 A new Go dependency says on its line in `cli/go.mod` why it is there ([ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1), and `lint:licenses` checks its licence.
+Upgrade a module only for a fix or a feature the CLI needs.
 Output that scripts rely on ([the CLI reference](docs/reference/cli.md)) has golden files.
 
 ### Optional git hooks
