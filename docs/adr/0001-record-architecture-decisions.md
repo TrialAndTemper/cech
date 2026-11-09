@@ -10,6 +10,7 @@ A few CECH choices are costly to undo, such as formats, names, pins and CLI prom
 A log full of small decisions hides the ones that matter, and parallel branches clash on numbers or leave gaps.
 Each ADR's status must say whether it is in force, and one index must list them all.
 Until the first plugin merges, nothing is built on the ADRs' exact wording.
+After that, most work fits accepted ADRs, so two pull requests rarely add ADRs at once.
 
 Written into an ADR, contributor rules and the detail users rely on, such as keys, flags and messages, hide the decision, pull review towards edge cases, and change whenever the code or the way of working does.
 Agents follow every line of an ADR as if it were a decision.
@@ -47,4 +48,7 @@ Agents follow every line of an ADR as if it were a decision.
 - **An ADR for every notable change:** the decisions get buried.
 - **Amendment notes from the first ADR on:** the groundwork would reach the first plugin as a stack of notes on text nothing yet relied on.
 - **Reserve a number when a branch starts:** needs a shared registry, and abandoned branches leave gaps.
+- **A placeholder until approval, numbered just before merge:** a clash still means renumbering, only later, and reviewers cannot see where the ADR falls in the order.
+- **Dates instead of numbers,** such as `20261109-title.md`: long citations, and ADRs written on the same day can still clash.
+- **The pull request's number:** no clashes, but the numbers have gaps, and an ADR opened first can merge last, so the numbers no longer give the reading order.
 - **All detail and contributor rules in the ADRs:** each new key, message or way of working would need an amendment note.
