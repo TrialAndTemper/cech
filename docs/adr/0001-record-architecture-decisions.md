@@ -34,7 +34,7 @@ Agents follow every line of an ADR as if it were a decision.
 6. Under 800 words of prose outside code blocks, plain English.
    Past that, split a second decision into its own ADR and move a rule or detail to its home outside the ADRs; keep every rejected option.
    Cross-references use the form `[ADR N](NNNN-title.md)` and point only to earlier ADRs, except a `superseded by` status, so the log reads in order.
-7. `docs/adr/README.md` lists every ADR.
+7. `docs/adr/README.md` lists every ADR and what it decides.
 
 ## Consequences
 
@@ -49,7 +49,7 @@ Agents follow every line of an ADR as if it were a decision.
 - **Amendment notes from the first ADR on:** the groundwork would reach the first plugin as a stack of notes on text nothing yet relied on.
 - **Reserve a number when a branch starts:** needs a shared registry, and abandoned branches leave gaps.
 - **A placeholder until approval, numbered just before merge:** a clash still means renumbering, only later, and reviewers cannot see where the ADR falls in the order.
-- **Dates instead of numbers,** such as `20261109-title.md`: long citations, and ADRs written on the same day can still clash.
+- **Dates instead of numbers:** long citations, and ADRs written on the same day can still clash.
 - **The pull request's number:** no clashes, but the numbers have gaps, and an ADR opened first can merge last, so the numbers no longer give the reading order.
 - **A folder for rejected ADRs:** a rejected idea is kept as an option in the ADR that settled its question, next to the reasons it lost, and a "no" that is costly to reverse is an accepted ADR of its own.
 - **All detail and contributor rules in the ADRs:** each new key, message or way of working would need an amendment note.
