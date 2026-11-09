@@ -148,7 +148,7 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
 - A skill that reads its file in `.cech/` ([ADR 17](docs/adr/0017-repository-data-and-state.md)) carries an eval with and without that file, on both harnesses.
 - Keep an ADR under 800 words of prose outside fenced code blocks ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 6); `mise run lint:adr` counts them.
 - Until the first plugin merges, an accepted ADR is edited in place, and the commit says why.
-  From then on, it is not rewritten, apart from typo and link fixes: a refinement goes in a dated amendment note, and a different choice in a new ADR that supersedes it ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
+  From then on, it is not rewritten, apart from fixes to typos, links and wording that keep the meaning, which review checks: a refinement goes in a dated amendment note, and a different choice in a new ADR that supersedes it ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
 
 ## Commits
 

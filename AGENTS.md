@@ -49,7 +49,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 
 | Path | Responsibility |
 | --- | --- |
-| `docs/` | Documents for people: decision records in `adr/`, the pages on what CECH does now in `reference/`, and the catalogue page `catalogue.md` that `cech build` generates; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
+| `docs/` | Documents for people: decision records in `adr/`, the pages on what CECH does now in `reference/`, and the catalogue page `catalogue.md` that `cech build` generates; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from fixes to typos, links and wording that keep the meaning |
 | `changes/` | Working material for people and agents, one folder per change, finished ones in `done/`; not a changelog |
 | `scripts/` | Gate and harness probe scripts in POSIX sh that run under dash, macOS sh and Git Bash, the harness probes on Linux and macOS only; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks, `scripts/probes/` the harness probes that `run-probes` runs |
 | `data/` | Hand-written data on the marketplace: `marketplace.toml`, its namespace, description, owner, code owners team and roles ([ADR 17](docs/adr/0017-repository-data-and-state.md) item 7) |
