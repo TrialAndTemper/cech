@@ -7,7 +7,7 @@
 ## Context
 
 The `cech` CLI is a Go module in `cli/` ([ADR 15](0015-the-cech-cli.md) item 1).
-CECH ships every third-party module the CLI uses, and every module those need, and must keep them all current.
+Every third-party module the CLI uses, and every module those need, is built into the CLI, so CECH answers for their licences and their vulnerabilities.
 CECH releases its layout rules with each CLI release, separately from its catalogue releases ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 6), so users and scripts need to know which CLI they run.
 A vulnerability database changes on its own, so a check against it can fail a branch that has not changed.
 
