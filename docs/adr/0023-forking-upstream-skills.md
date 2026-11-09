@@ -37,7 +37,7 @@ The [GitHub CLI manual](https://cli.github.com/manual/gh_skill_update), read on 
 7. **Updates are diffed and applied by hand.**
    A contributor applies only the upstream changes CECH wants, rewritten to its rules, and moves the pinned commit; a reviewer reads the change beside that upstream range.
 8. **A fork may diverge without limit.**
-   CECH's rules win over upstream wording: a fork drops any name ADR 4 bars and any rule CECH would not keep.
+   CECH's rules win over upstream wording: a fork drops any name [ADR 4](0004-vendor-neutrality.md) bars and any rule CECH would not keep.
    Its entry stays while any derived text remains.
 
 ## Consequences
