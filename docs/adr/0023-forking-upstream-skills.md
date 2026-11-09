@@ -24,6 +24,7 @@ The [GitHub CLI manual](https://cli.github.com/manual/gh_skill_update), read on 
    Any passage, list, example or script copied, translated, closely paraphrased or reordered from upstream makes it one.
    A skill written from an upstream's idea alone, not its wording or structure, credits the idea in `CREDITS.md`.
    In doubt, it is a fork.
+   A skill in an extension that starts from a CECH skill is a fork, with CECH as its upstream.
 2. **Only licences that [ADR 3](0003-licence-and-contributions.md) item 4 accepts.**
    Text with no licence, or under any other licence, is not taken into a skill.
 3. **The skill's `NOTICE` is the source note**, with one *entry* per upstream.
