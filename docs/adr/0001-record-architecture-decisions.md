@@ -31,7 +31,7 @@ Agents follow every line of an ADR as if it were a decision.
    - A refinement, such as a parameter, an edge case or a rename, goes in a dated `> **Amendment (YYYY-MM-DD).**` note with its evidence, under the paragraph it changes, and the status gains `Last amended: <date>`.
    - A different option, one an earlier ADR rejected, or a removed or reversed rule needs a new ADR that supersedes the old one, with links both ways.
 6. Under 800 words of prose outside code blocks, plain English.
-   Past that, move a second decision, a rule or detail out, not the rejected options.
+   Past that, split a second decision into its own ADR and move a rule or detail to its home outside the ADRs; keep every rejected option.
    Cross-references use the form `[ADR N](NNNN-title.md)` and point only to earlier ADRs, except a `superseded by` status, so the log reads in order.
 7. `docs/adr/README.md` lists every ADR.
 
