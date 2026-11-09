@@ -221,7 +221,8 @@ A vulnerability report itself goes through [SECURITY.md](SECURITY.md), not an is
   git commit -s --fixup=<commit>
   ```
 
-- Before merge, fold them in and update your branch:
+- Once a review has started, don't rewrite commits a reviewer has seen: push fixups on top, so they can see what changed since their review.
+- Fold them in, and rebase if `main` moved, only after the reviewers approve:
 
   ```sh
   git fetch origin
