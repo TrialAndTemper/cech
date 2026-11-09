@@ -20,7 +20,7 @@ Plugins also come from marketplaces that follow no CECH rule, and a skill instal
 ## Decision
 
 1. CECH's categories are a closed list, each with what it holds, built into the `cech` CLI.
-   Adding one is a reviewed change to the list; removing or merging one is a breaking change of the CLI, since extensions and plugins may use it.
+   Adding one is a reviewed change to the list.
 2. The category is the plugin's folder (`plugins/<category>/<name>/`).
    The build generates the marketplace catalogue, including its `category` field, from it.
    It is not part of the name.

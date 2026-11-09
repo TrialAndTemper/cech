@@ -67,3 +67,5 @@ Words the ADRs use, in short:
     - Skills install as plugins or as plain copied folders.
 23. [Forking upstream skills](0023-forking-upstream-skills.md)
     - How a skill forked from an upstream project keeps its notices and takes in updates.
+24. [What a version change means](0024-what-a-version-change-means.md)
+    - What each kind of release may change, for the catalogue and the CLI.

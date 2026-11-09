@@ -33,7 +33,6 @@ Checked on 2026-10-27 with Go 1.27.3:
 5. **Output is a contract.**
    Results go to stdout and messages to stderr; on request, a command prints one JSON object instead, and it exits with one of a small, fixed set of statuses, with partial success counted as a failure.
    A command never reports success for a check it could not run.
-   A minor release may add JSON fields; removing, renaming or changing the meaning of a field or a status is a breaking change.
 6. **Harness quirks stay in one place.**
    Code that knows one harness's behaviour lives in a package for that harness alone.
    Each workaround names its entry in the harness data file ([ADR 9](0009-native-harness-features-first.md)), so it can be deleted when the harness closes the gap.

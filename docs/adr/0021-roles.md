@@ -24,7 +24,7 @@ With the choice in a generated `.cech/roles.toml` that the release-notes skill p
    Each marketplace lists the roles it defines, with what each means, in `data/marketplace.toml` ([ADR 17](0017-repository-data-and-state.md) item 7).
    A role takes at most one bound skill unless it is marked as taking several.
    Role names have the form of [ADR 12](0012-categories-and-names.md) item 3, never start with `cech-`, and in an extension start with its namespace.
-   Roles are versioned with the marketplace release that lists them ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 6), so removing or renaming one is a breaking change.
+   Roles are versioned with the marketplace release that lists them ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 6).
 3. **Metadata.**
    A skill declares the roles it fills and uses in `SKILL.md` `metadata`, under the keys `cech-fills` and `cech-uses`.
    A CECH skill names only CECH's roles; an extension skill names its own and those of the CECH release it builds on.

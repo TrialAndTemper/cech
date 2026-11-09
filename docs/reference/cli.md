@@ -46,4 +46,4 @@ No other status is used.
 ### Compatibility
 
 A minor release of the CLI may add fields to a JSON object.
-Removing a field, renaming it or changing its meaning, and changing what an exit status means, is a breaking change.
+Removing a field, renaming it or changing its meaning, and changing what an exit status means, is a breaking change ([ADR 24](../adr/0024-what-a-version-change-means.md)).
