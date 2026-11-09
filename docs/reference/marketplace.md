@@ -56,7 +56,7 @@ CECH's categories are built into the `cech` CLI, from `cli/internal/marketplace/
 | `meta` | Authoring and testing CECH skills |
 
 Adding a category is a reviewed change to that file.
-Removing or merging one is a breaking change of the CLI, since an extension or a plugin may use it.
+Removing or merging one is a breaking change of the CLI, since an extension or a plugin may use it ([ADR 24](../adr/0024-what-a-version-change-means.md)).
 
 An extension may add categories of its own in its data file; each has a `name` following the name rules, not one of CECH's, and a `holds`.
 
