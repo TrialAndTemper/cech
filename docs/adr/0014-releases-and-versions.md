@@ -18,7 +18,7 @@ Only a plugin with no `version` in a git marketplace takes it from the commit, a
 ## Decision
 
 1. **Releases are cut from `main`.**
-   A catalogue release gets its own commit, on top of a commit of `main` that passes the gates and holds the changelog entry.
+   A catalogue release gets its own commit, on top of a commit of `main` that passes the gates and holds the release's changelog entries.
    It changes only what a release build writes (item 3).
    Only the tag points to the release commit, so `main`'s catalogue keeps the namespace's name.
 2. **Two kinds of tag.**
@@ -30,7 +30,8 @@ Only a plugin with no `version` in a git marketplace takes it from the commit, a
    Outside a release build, the catalogue keeps the namespace's name and every plugin has the same development version.
 4. **One version for every plugin.**
    A plugin's `version` is generated, never written by hand, and there are no per-plugin versions or tags.
-   The changelog, not the version, says which plugins changed.
+   Each plugin has its own changelog, made from the commits that change it, which says what changed in that plugin.
+   A release's notes list the plugins that changed and link their changelogs; the version alone says nothing about what changed.
 5. **Pre-releases.**
    `rc.N` is the only pre-release form; a final release is one without it.
    A command that picks a release by default skips pre-releases.
@@ -49,6 +50,7 @@ Only a plugin with no `version` in a git marketplace takes it from the commit, a
 
 ## Options considered
 
+- **One changelog for the whole catalogue:** it grows with every plugin, a project must search it for the few it enables, and a copy of one skill carries no history.
 - **The build reads the version from git tags:** a shallow clone and a full clone would build different files.
 - **The version in `data/marketplace.toml`:** a hand-written key that must stay off `main`, and can disagree with the tag.
 - **A `cech release` command that commits and tags:** the CLI would write git history.
