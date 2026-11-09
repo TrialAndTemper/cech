@@ -7,7 +7,7 @@
 ## Context
 
 A marketplace's catalogue and checks need details about it, such as its owner.
-A project that uses CECH commits facts for the `cech` CLI and for plugins: which marketplaces and plugins it enables, which skill fills each role ([ADR 8](0008-a-marketplace-you-extend-not-fork.md)), and facts a skill reads, such as a tracker's project key.
+A project that uses CECH commits settings for the `cech` CLI and for plugins, values that tell them about this project: which marketplaces and plugins it enables, which skill fills each role ([ADR 8](0008-a-marketplace-you-extend-not-fork.md)), and values a skill reads, such as the key of the project's issue tracker or the branch it releases from.
 Extensions add plugins of their own, and their files must not clash with CECH's.
 Files scattered over a repository's root are hard to find and can clash with other tools' files.
 When several owners write one shared file, an upgrade of one can rewrite the others' parts, and their changes conflict in merges.
@@ -20,11 +20,11 @@ JSON has no comments, which hand-edited files need.
 
 1. **One folder.**
    `.cech/` at the root of a project holds the committed files that `cech` and the project's plugins read there.
-   Apart from what the project enables ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 2), it holds facts only, never a plugin's content.
+   Apart from what the project enables ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 2), it holds settings only, never a plugin's content.
    It holds no secrets, no values that differ between machines, and no caches; those stay outside the repository or in git-ignored paths outside `.cech/`.
 2. **Files by owner:**
    - `.cech/config.toml` belongs to the `cech` CLI, and so does `.cech/roles.toml`, which it generates from the config and the pinned marketplaces;
-   - `.cech/<namespace>/<plugin>.toml` belongs to the plugin of that name, and holds the facts its skill reads.
+   - `.cech/<namespace>/<plugin>.toml` belongs to the plugin of that name, and holds the settings its skill reads.
 
    The owner defines a file's keys; a person or the owner's tooling edits it.
    A plugin with nothing to keep has no file.
