@@ -24,17 +24,17 @@ A skill installer, such as `npx skills`, can copy one skill folder out of the re
    Published ideas are credited by citing the publication.
    Naming a person beyond that needs their consent, and they choose the name and email shown, if any.
 4. **Third-party text and code.**
-   Rewrite text where you can.
-   Copied or adapted text needs a licence that is permissive, not copyleft, and whose terms can be met inside the skill folder or the binary that ships it, and so does a Go module the CLI builds in.
+   Rewrite text in your own words where you can; a skill written from an idea alone needs only the credit of item 3.
+   Text copied from another project, or adapted from it by translating, closely paraphrasing or reordering it, needs a licence that is permissive, not copyleft, and whose terms can be met inside the skill folder or the binary that ships it, and so does a Go module the CLI builds in.
    The SPDX ids that meet this are listed where the check that enforces it reads them; adding one is a reviewed change to that list.
    Copied or adapted text also needs its notice, and a source note in the skill naming the upstream project and the commit it came from.
    The notice for text in a skill goes in a `NOTICE` file in the skill folder, so it travels with the folder; any other notice goes in the root `NOTICE` file.
 
 ## Consequences
 
-- Companies can build private extensions on CECH with few limits.
+- Companies can build private extensions on CECH, and MIT asks only that they keep its notice.
 - Contributors add `-s` to every commit.
-- A skill may wait for its idea's author to answer.
+- The people whose ideas a skill builds on are credited, and a skill based on unpublished work waits for its author's consent.
 
 ## Options considered
 
