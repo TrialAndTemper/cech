@@ -124,6 +124,9 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
   `mise run format:fix` reflows it.
 - Refer to Claude Code and Codex as harnesses, the programs that run an agent ([ADR 8](docs/adr/0008-a-marketplace-you-extend-not-fork.md)).
   "Tool" means something else: a tool pinned in `mise.toml`, the `tool` plugin category, a tool an agent calls, or a command-line program.
+- Exported Go declarations need doc comments, except test entry points and methods on unexported receiver types; comments on unexported declarations are optional.
+  A function or method's comment starts with its name and explains what it returns or does, following [Go Doc Comments](https://go.dev/doc/comment#func).
+  Refer to each parameter or named result by name when its meaning is not clear from the signature alone.
 - Shell scripts are POSIX sh that runs under dash, macOS sh and Git Bash, and pass shellcheck and shfmt.
   A change to a script comes with a test in `test/` for each way it could let a gate pass when it should fail, where review would likely miss it, such as after a tool bump, on another platform or on the staged tree; a comment on each case names the way it guards ([ADR 4](docs/adr/0004-gates-and-ci.md) item 5).
   Such a case runs the script, task or config file that could let the gate pass, not the tool on its own.
