@@ -198,8 +198,8 @@ var categoriesFile string
 // from categories.toml, which the CLI builds in (ADR 20 item 5).
 var CECHCategories = mustCategories(categoriesFile)
 
-// mustCategories reads CECH's categories, holding them to the rules an
-// extension's are held to; the file is built in, so a fault is a bug.
+// mustCategories reads CECH's categories from src, holding them to the
+// rules an extension's are held to; the file is built in, so a fault is a bug.
 func mustCategories(src string) []Category {
 	var f struct {
 		Categories []Category `toml:"categories"`
@@ -348,7 +348,8 @@ func loadLicense(fsys fs.FS) ([]byte, error) {
 	return readFile(fsys, LicenseFile)
 }
 
-// check applies the rules of ADR 17 item 7 that need no other file.
+// check applies the rules of ADR 17 item 7 that need no other file,
+// using meta to distinguish absent keys from those with empty values.
 func (d Data) check(meta toml.MetaData) error {
 	switch {
 	case d.Namespace == "":
@@ -388,9 +389,9 @@ func (d Data) check(meta toml.MetaData) error {
 	return checkRoles(d.Roles, d.Namespace+"-")
 }
 
-// checkRoles checks that each role has a valid name, which starts with
-// prefix and not with cech-, is not given twice, and says what it means
-// (ADR 21 item 2). CECH's roles have no prefix.
+// checkRoles checks that each role in rs has a valid name, which starts
+// with prefix and not with cech-, is not given twice, and says what it
+// means (ADR 21 item 2). CECH's roles have no prefix.
 func checkRoles(rs []Role, prefix string) error {
 	seen := map[string]bool{}
 	for i, r := range rs {
@@ -411,8 +412,8 @@ func checkRoles(rs []Role, prefix string) error {
 	return nil
 }
 
-// checkCategories checks that each category has a valid name, is not in
-// taken and is not given twice, and says what it holds.
+// checkCategories checks that each category in cs has a valid name, is
+// not in taken and is not given twice, and says what it holds.
 func checkCategories(cs, taken []Category) error {
 	seen := map[string]bool{}
 	for i, c := range cs {
@@ -431,7 +432,7 @@ func checkCategories(cs, taken []Category) error {
 	return nil
 }
 
-// checkTerms checks that each term list is a file inside the root.
+// checkTerms checks that each term list is a file inside the root of fsys.
 func (d Data) checkTerms(fsys fs.FS) error {
 	for _, list := range []struct {
 		key   string
@@ -568,8 +569,8 @@ func (p *Plugin) readManifest(src []byte) error {
 	return nil
 }
 
-// readMaintainers reads the maintainers in the manifest's metadata, an
-// object the harnesses leave to the plugin.
+// readMaintainers reads the maintainers in meta, the manifest's metadata,
+// an object the harnesses leave to the plugin.
 func (p *Plugin) readMaintainers(meta jsontext.Value) error {
 	var fields map[string]jsontext.Value
 	if err := json.Unmarshal(meta, &fields); err != nil || fields == nil {

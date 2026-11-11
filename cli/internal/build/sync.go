@@ -29,8 +29,8 @@ type Diff struct {
 	Change Change `json:"change"`
 }
 
-// Compare returns the outputs that differ from the files under root, in
-// the order given, and writes nothing. A read it was denied is
+// Compare returns the differences between outs and the files under root,
+// in the order of outs, and writes nothing. A read it was denied is
 // marketplace.ErrUnreadable.
 func Compare(root *os.Root, outs []Output) ([]Diff, error) {
 	var diffs []Diff
@@ -53,8 +53,8 @@ func Compare(root *os.Root, outs []Output) ([]Diff, error) {
 	return diffs, nil
 }
 
-// Apply makes each change in diffs, taking contents from outs, and
-// returns the changes it made; on an error, those made before it, so
+// Apply makes each change in diffs under root, taking contents from outs,
+// and returns the changes it made; on an error, those made before it, so
 // the rest of diffs, from diffs[len(done)], were not made.
 func Apply(root *os.Root, outs []Output, diffs []Diff) ([]Diff, error) {
 	content := make(map[string][]byte, len(outs))
@@ -78,9 +78,9 @@ func Apply(root *os.Root, outs []Output, diffs []Diff) ([]Diff, error) {
 	return done, nil
 }
 
-// writeFile replaces the file at the slash path p with data atomically:
-// it writes a temporary file beside it and renames it over the file. A
-// file that exists keeps its mode.
+// writeFile replaces the file at the slash path p under root with data
+// atomically: it writes a temporary file beside it and renames it over
+// the file. A file that exists keeps its mode.
 func writeFile(root *os.Root, p string, data []byte) error {
 	name := filepath.FromSlash(p)
 	if err := root.MkdirAll(filepath.FromSlash(path.Dir(p)), 0o755); err != nil {

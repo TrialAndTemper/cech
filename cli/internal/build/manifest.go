@@ -29,9 +29,9 @@ func Manifest(p marketplace.Plugin, version, catalogue string) ([]byte, error) {
 	return out, nil
 }
 
-// setCECHMarketplace sets the marketplace of each dependency in src
-// written as an object whose name starts with cech-. It leaves other
-// dependencies, such as a plain string, to the validator.
+// setCECHMarketplace sets the marketplace to catalogue for each
+// dependency in src written as an object whose name starts with cech-.
+// It leaves other dependencies, such as a plain string, to the validator.
 func setCECHMarketplace(src []byte, catalogue string) ([]byte, error) {
 	spans, _, err := jsonedit.Elements(src, "dependencies")
 	if err != nil {

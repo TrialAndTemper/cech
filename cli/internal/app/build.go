@@ -164,9 +164,9 @@ func runBuild(opts buildOptions, stdout, stderr io.Writer) int {
 }
 
 // buildIn runs the build in mode on the marketplace rooted at dir, for
-// release or for none when it is "", and returns the files it changed
-// or, without writing, would change. When writing fails partway, it
-// also returns the changes it did not make.
+// release or for none when it is "". files holds the changes it made
+// or, without writing, would make. When writing fails partway, skipped
+// holds the changes it did not make.
 func buildIn(dir, mode, release string) (files, skipped []build.Diff, err error) {
 	root, err := os.OpenRoot(dir)
 	if err != nil {

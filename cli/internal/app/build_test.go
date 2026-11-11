@@ -618,8 +618,8 @@ func TestBuildErrors(t *testing.T) {
 	}
 }
 
-// cechOwn makes the acme data file CECH's own: no cech key, namespace
-// cech.
+// cechOwn makes the acme data file under dir CECH's own: no cech key,
+// namespace cech.
 func cechOwn(t *testing.T, dir string) {
 	t.Helper()
 	replaceIn("data/marketplace.toml", `cech = "0.1.0"`+"\n", "")(t, dir)
@@ -802,7 +802,8 @@ func skipWithoutModes(t *testing.T) {
 	}
 }
 
-// runIn runs cech with args and returns its exit code and output.
+// runIn runs cech with args and returns its exit code, results on stdout
+// and messages and errors on stderr.
 func runIn(t *testing.T, args ...string) (code int, stdout, stderr string) {
 	t.Helper()
 	var out, errOut bytes.Buffer
@@ -889,8 +890,8 @@ func appendTo(p, text string) func(*testing.T, string) {
 	}
 }
 
-// replaceIn returns a change that replaces old with new in the file at p,
-// which must hold old.
+// replaceIn returns a change that replaces old with replacement in the
+// file at p, which must hold old.
 func replaceIn(p, old, replacement string) func(*testing.T, string) {
 	return func(t *testing.T, dir string) {
 		t.Helper()

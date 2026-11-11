@@ -151,7 +151,8 @@ func decodeString(raw []byte) (string, error) {
 }
 
 // readValue reads the next value from dec, a name or any other, and
-// returns where it starts and ends in dec's input.
+// returns its byte offsets start (inclusive) and end (exclusive) in
+// dec's input.
 func readValue(dec *jsontext.Decoder) (start, end int, err error) {
 	raw, err := dec.ReadValue()
 	if err != nil {

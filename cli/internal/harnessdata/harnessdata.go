@@ -186,9 +186,10 @@ var kinds = map[string]string{
 	"ArrayHash": "an array of tables",
 }
 
-// decode decodes and checks the entry named n. It decodes only an entry
-// whose keys are all known and of the right type, so each problem gets
-// a message of its own rather than the TOML package's.
+// decode decodes p as the entry named n, using meta to check its keys
+// and their types. It decodes only an entry whose keys are all known
+// and of the right type, so each problem gets a message of its own
+// rather than the TOML package's.
 func decode(meta toml.MetaData, n string, p toml.Primitive) (Entry, []error) {
 	// The TOML package calls a table, inline or not, a Hash.
 	if meta.Type(n) != "Hash" {
@@ -247,8 +248,8 @@ func decode(meta toml.MetaData, n string, p toml.Primitive) (Entry, []error) {
 	return e, e.check(meta)
 }
 
-// decodeSources builds each source from its table as decoded, checking
-// each key and its type.
+// decodeSources builds each source from its table in raw, checking each
+// key and its type.
 func decodeSources(raw []map[string]any) ([]Source, []error) {
 	var errs []error
 	sources := make([]Source, len(raw))
@@ -298,7 +299,8 @@ func describe(v any) string {
 }
 
 // check holds e to the format: the rules of ADR 9 item 5, and the keys
-// and values this package defines.
+// and values this package defines. It uses meta to distinguish absent
+// keys from those with empty values.
 func (e Entry) check(meta toml.MetaData) []error {
 	var errs []error
 	add := func(format string, a ...any) { errs = append(errs, fmt.Errorf(format, a...)) }
