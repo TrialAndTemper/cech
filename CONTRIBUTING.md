@@ -245,11 +245,13 @@ Without a list this tier is skipped; set `CECH_REQUIRE_PRIVATE_TERMS=1` to make 
 
 ### For maintainers
 
-CI reads the private list from the repository secret `PRIVATE_TERMS`, one regular expression per line.
-It uses the secret on pushes to `main` and on pull requests from branches in this repository, and there an empty or missing secret fails the run.
-Pull requests from forks never receive it and run only the public rules.
+CI reads the private list from the secret `PRIVATE_TERMS` in the `private-terms` environment, one regular expression per line.
+The `private terms` job uses it on pushes to `main` and on pull requests from branches in this repository, and there an empty or missing secret fails the run.
+The environment holds each run until a maintainer approves it.
+A pull request's run uses that pull request's own workflow files, so approve it only after reading its changes to `.github/`.
+Pull requests from forks never receive the secret and skip the job.
 To replace the secret from your local list:
 
 ```sh
-gh secret set PRIVATE_TERMS --repo TrialAndTemper/cech < .private/denylist.txt
+gh secret set PRIVATE_TERMS --repo TrialAndTemper/cech --env private-terms < .private/denylist.txt
 ```
