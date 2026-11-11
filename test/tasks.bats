@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status, output and lines; helpers.bash sets SRC
-# Tests of the mise tasks and the git hooks (ADR 4). As ADR 4 asks of
+# Tests of the mise tasks and the git hooks (ADR 5). As CONTRIBUTING.md asks of
 # gate tests, each case guards a way a gate task or a hook could pass
 # when it should fail, where review would likely miss it, and says
 # which: most are a tool bump that changes what a gate sees, or a hook,

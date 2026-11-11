@@ -1,5 +1,6 @@
 # CECH's categories, the closed list of ADR 12 item 1, which the cech CLI
-# builds in. Adding, removing or merging one follows that item.
+# builds in. Adding one is a reviewed change here; removing or merging one
+# is a breaking change of the CLI (docs/reference/marketplace.md).
 
 [[categories]]
 name = "practice"
@@ -19,7 +20,7 @@ holds = "Multi-step flows that move a change through stages"
 
 [[categories]]
 name = "lang"
-holds = "Languages and runtimes"
+holds = "Programming and query languages and their runtimes, such as Go, SQL dialects or the JVM"
 
 [[categories]]
 name = "framework"
@@ -27,7 +28,7 @@ holds = "Libraries and frameworks"
 
 [[categories]]
 name = "tool"
-holds = "One command-line tool each"
+holds = "One product each that a project installs or runs, such as a command-line tool, a database or a message broker"
 
 [[categories]]
 name = "platform"

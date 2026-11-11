@@ -1,0 +1,69 @@
+# 5. Gates and tool pins
+
+- Status: accepted
+- Date: 2026-10-19
+- Deciders: Michał Bożek
+
+## Context
+
+ADRs promise checks, such as ADR numbering ([ADR 1](0001-record-architecture-decisions.md)) and the term check ([ADR 4](0004-vendor-neutrality.md)).
+A check that runs only on some machines, or differently on each, lets breakage through.
+Check tools differ between versions, so contributors and CI need the same ones.
+A release only days old has had little use, and a fault in it reaches every run at once.
+
+Workflows run third-party actions with the repository's token, and anyone can open a pull request from a fork.
+A movable action tag, or a secret given to fork code, can leak secrets or change the repository.
+
+Probed with mise 2026.10.3 on 2026-10-19:
+
+- `mise run` runs a task with the tools pinned in `mise.toml` on `PATH`, without shell activation;
+- mise runs a `mise.toml` only after `mise trust`, and with `paranoid` on asks again after each change;
+- on Windows a task runs with cmd unless it names another shell;
+- `mise lock` records each tool's download and checksum per platform, and with `locked` set an install fails on an unlocked version or a checksum mismatch;
+- `minimum_release_age` applies when mise resolves a version, not to an exact version given by hand.
+
+## Decision
+
+1. **One entry point: mise.**
+   mise is the required task runner.
+   Each gate is a mise task that runs a pinned tool, CECH's CLI, or a POSIX shell script, and one task runs them all, so contributors and CI run the same thing.
+   Gate scripts are POSIX sh, so on Windows they run under Git Bash.
+2. **CI is the authority.**
+   CI runs the gates through their mise tasks on every pull request and push to `main`, on Linux, macOS and Windows, so a new gate joins CI without a change to the workflow.
+   A ruleset on `main` requires the gates to pass before merge.
+   A gate that needs a secret, such as the private term tier ([ADR 4](0004-vendor-neutrality.md)), is required only where the secret reaches, and is skipped locally without it.
+   A rule CI cannot check is guidance in the contributing guide, not described as enforced.
+3. **Hooks are a convenience.**
+   Optional git hooks run some of the gates before a commit; no rule exists only in a hook.
+4. **The gates.**
+   A gate is a check that must pass before a change merges.
+   Each check an ADR asks for becomes one once what it checks exists; this ADR adds checks of CECH's scripts, workflows and links.
+5. **Workflow safety.**
+   Third-party actions are pinned by full commit SHA.
+   Workflows default to `permissions: contents: read`, widened per job only where needed.
+   Pull requests from forks run on `pull_request`, never `pull_request_target`, and never receive secrets.
+   Jobs that need secrets run only on branches in the repository, and a secret reaches only the step that needs it.
+6. **Scheduled jobs are not gates.**
+   Jobs such as probes of harness behaviour run on a schedule, open an issue on failure, and never block a pull request.
+7. **Exact versions.**
+   Every tool that builds or checks CECH is pinned to an exact version in `mise.toml`, and the lockfile records each download's checksum, or, for a Go tool built from source, its version, which the Go checksum database checks.
+   The harnesses are not pinned: CECH tests its work against them, but does not build with them.
+8. **Locked installs.**
+   CI installs an exact mise version, then the tools with `locked` set, and `mise.toml` names the oldest mise it accepts.
+9. **Bumps wait a week.**
+   Pins are added and bumped by letting mise resolve them under a week's `minimum_release_age`; review checks the release date of a version given by hand.
+
+## Consequences
+
+- A contributor runs exactly what CI runs with one command, after `mise trust` and `mise install`.
+- A fork pull request can merge without the gates that need a secret; their run on `main` catches a problem afterwards.
+- A bump is a visible change to the pin and the lockfile, reviewed like any other.
+- A tool's new release reaches CECH no sooner than a week after it is published.
+
+## Options considered
+
+- **Hooks as the gate:** skipped with `--no-verify`, absent on web edits.
+- **A shell script as the entry point, with mise optional:** contributors without mise install each pinned tool by hand, and two ways to run the gates can drift apart.
+- **Another task runner (make, just):** it would still need a second tool to install the pins.
+- **CI steps written straight into workflow files:** local runs drift from CI.
+- **Version ranges, with exact versions only in the lockfile:** a lock refresh could change a tool's version with no visible change to its pin.

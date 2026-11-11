@@ -26,23 +26,20 @@ The [docs on private marketplaces](https://code.claude.com/docs/en/plugins/host-
 2. **Replace, do not patch.**
    To replace a CECH skill, a project enables the extension's plugin instead.
    The replacement can fill the same role ([ADR 8](0008-a-marketplace-you-extend-not-fork.md) item 3), but a plugin that depends on the CECH plugin by name still needs the CECH plugin.
-   An extension never ships edited copies of CECH text.
+   A replacement is a whole plugin of the extension's own, even when it starts from a CECH skill's text.
 3. **Build on a CECH plugin by depending on it.**
    An extension plugin depends on a CECH plugin by name, such as `{"name": "cech-prose"}` ([ADR 11](0011-one-plugin-one-skill.md) item 3).
    A name starting with `cech-` marks a CECH plugin.
    `cech build` sets each CECH dependency's marketplace from the `cech` key ([ADR 17](0017-repository-data-and-state.md) item 7), `cech-0-1-0` for `cech = "0.1.0"`, replacing any value there ([ADR 18](0018-generated-files.md) items 1 and 2).
-   `cech validate` rejects a CECH dependency written as a plain string, which has no marketplace to set, or with a `version`, since CECH has no per-plugin tags to match.
    Dependencies on the extension's own plugins name no marketplace, so they still work when a release renames the catalogue.
 4. **One CECH release per extension release.**
    Some extension plugins depend on CECH, directly or through other plugins.
    A project that pins a different CECH release cannot enable them, because their dependencies name a release it lacks: `cech enable` refuses them, and `cech check` fails ([ADR 19](0019-per-project-plugin-enablement.md) items 5 and 8).
 5. **The same tooling.**
-   An extension's CI runs `cech build --check` and `cech validate` ([ADR 4](0004-gates-and-ci.md) item 5), and `cech check` ([ADR 3](0003-vendor-neutrality.md) item 6).
-   The rules and CECH's categories come from the CLI version that runs, not from the release the `cech` key names.
-   In an extension, `cech validate` also rejects a plugin name without the namespace prefix, a category that is neither CECH's nor its own, and a dependency item 3 does not allow.
+   An extension's CI runs the same `cech` checks as CECH's ([ADR 5](0005-gates-and-tool-pins.md) item 4), with the rules and CECH's categories of the CLI version that runs, not of the release the `cech` key names.
    An extension that also has a `.cech/config.toml` gets a project's checks too.
 6. **Private repositories use the machine's git credentials.**
-   No committed file holds a token, as for `.cech/config.toml` ([ADR 19](0019-per-project-plugin-enablement.md) item 1); the generic term rules catch tokens.
+   No committed file holds a token, as for `.cech/config.toml` ([ADR 19](0019-per-project-plugin-enablement.md) item 1), and an extension runs its own secret scanning: `cech` checks only the sources it manages.
 
 ## Consequences
 

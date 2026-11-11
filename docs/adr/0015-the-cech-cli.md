@@ -6,7 +6,7 @@
 
 ## Context
 
-Earlier ADRs promise a `cech` command: the validator ([ADR 10](0010-claude-code-and-codex-from-one-source.md)), the build of generated files, and the gates that run them ([ADR 4](0004-gates-and-ci.md)).
+Earlier ADRs promise a `cech` command: the validator ([ADR 10](0010-claude-code-and-codex-from-one-source.md)), the build of generated files, and the gates that run them ([ADR 5](0005-gates-and-tool-pins.md)).
 Some commands edit the harnesses' settings in people's repositories and home directories, where a careless edit loses someone's settings.
 Scripts and CI read a command's output and exit status, so both become a contract as soon as someone depends on them.
 
@@ -29,15 +29,10 @@ Checked on 2026-10-27 with Go 1.27.3:
    It refuses a file that does not parse or has duplicate keys, reads the result back to check it, and replaces the file atomically.
    Before changing a file outside the repository, it saves a backup.
 4. **Writes can be previewed.**
-   Every command that writes takes `--dry-run`, which reports the changes and writes nothing.
+   Every command that writes can report its changes without making them.
 5. **Output is a contract.**
-   - Results go to stdout, and messages and errors to stderr.
-   - Every command except `help` and `completion`, whose output is help for people or a script for a shell, takes `--json` and then prints one JSON object on stdout, even when it fails after parsing its arguments; after an internal error, such as a panic, stdout holds no valid JSON, and the command exits 1.
-     A minor release may add fields; removing a field, renaming it or changing its meaning is a breaking change.
-   - Exit status: 0 done; 1 the command ran and met a failure, including a partial success; 2 a wrong command line; 3 something it needs could not be reached, so it could not decide.
-     When a command both meets a failure and cannot decide something else, it exits 1, since a retry cannot fix the failure, and its output names both.
-     Other codes are not used.
-   - A command never reports success for a check it could not run, and after a partial success it says what it skipped.
+   Results go to stdout and messages to stderr; on request, a command prints one JSON object instead, and it exits with one of a small, fixed set of statuses, with partial success counted as a failure.
+   A command never reports success for a check it could not run.
 6. **Harness quirks stay in one place.**
    Code that knows one harness's behaviour lives in a package for that harness alone.
    Each workaround names its entry in the harness data file ([ADR 9](0009-native-harness-features-first.md)), so it can be deleted when the harness closes the gap.

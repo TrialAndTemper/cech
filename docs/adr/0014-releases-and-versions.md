@@ -18,31 +18,26 @@ Only a plugin with no `version` in a git marketplace takes it from the commit, a
 ## Decision
 
 1. **Releases are cut from `main`.**
-   A catalogue release gets its own commit, on top of a commit of `main` that passes the gates and holds the changelog entry.
+   A catalogue release gets its own commit, on top of a commit of `main` that passes the gates and holds the release's changelog entries.
    It changes only what a release build writes (item 3).
    Only the tag points to the release commit, so `main`'s catalogue keeps the namespace's name.
 2. **Two kinds of tag.**
    - A catalogue release is tagged `vX.Y.Z`, or `vX.Y.Z-rc.N` for a pre-release (item 5), on its release commit.
    - A CLI release is tagged `cli/vX.Y.Z` or `cli/vX.Y.Z-rc.N` on a commit of `main`, with version numbers of its own.
 
-   `X`, `Y`, `Z` and `N` are decimal with no leading zeros, and `N` starts at 1.
    The host refuses moving or deleting either kind of tag, and creating a catalogue tag outside the release workflow (item 6).
-3. **A release build.**
-   `cech build --release V` takes `V`, a version as in item 2 without the `v`.
-   It names the catalogue `<namespace>-V`, with each `.` in `V` turned into `-`, such as `cech-0-2-0-rc-1`.
-   It writes `V` as the `version` of every `plugin.json`; the catalogue has none.
-   Without `--release`, the catalogue keeps the namespace's name and every `version` is `0.0.0-dev`.
+3. **A release build** names the catalogue after the namespace and the version, such as `cech-0-2-0-rc-1`, and writes the version into every `plugin.json`.
+   Outside a release build, the catalogue keeps the namespace's name and every plugin has the same development version.
 4. **One version for every plugin.**
    A plugin's `version` is generated, never written by hand, and there are no per-plugin versions or tags.
-   The changelog, not the version, says which plugins changed.
+   Each plugin has its own changelog, made from the commits that change it, which says what changed in that plugin.
+   A release's notes list the plugins that changed and link their changelogs; the version alone says nothing about what changed.
 5. **Pre-releases.**
    `rc.N` is the only pre-release form; a final release is one without it.
-   Versions are ordered as SemVer says.
    A command that picks a release by default skips pre-releases.
    A final extension release builds on a final CECH release.
 6. **A release workflow creates catalogue tags.**
-   A maintainer starts it with `V` and a commit, and it fails unless the commit is on `main` and `V` is above every earlier catalogue release.
-   It makes the release commit with `cech build --release V`, runs every gate and the private term tier ([ADR 3](0003-vendor-neutrality.md) item 4) on it, and pushes the tag only when all pass.
+   It releases only a commit of `main`, at a version above every earlier catalogue release, makes the release commit with a release build, runs every gate and the private term tier ([ADR 4](0004-vendor-neutrality.md) item 4) on it, and pushes the tag only when all pass.
 7. **Extensions** follow items 1 to 6 with their own namespace, tags, default branch and private term list, without CLI tags.
    On a host that cannot enforce them, a maintainer keeps to them by hand.
 
@@ -52,10 +47,10 @@ Only a plugin with no `version` in a git marketplace takes it from the commit, a
 - A git marketplace that follows a branch shows Claude Code no new version, since every commit carries `0.0.0-dev`.
   Contributors try plugins from a local directory, and users try a release at its `-rc.N` tag.
 - Each release is above the last, so an older line gets no patch release.
-- The release workflow's other steps (artifacts, checksums, attestations and GitHub releases), the CLI's release pipeline and the changelog's format are outside this ADR.
 
 ## Options considered
 
+- **One changelog for the whole catalogue:** it grows with every plugin, a project must search it for the few it enables, and a copy of one skill carries no history.
 - **The build reads the version from git tags:** a shallow clone and a full clone would build different files.
 - **The version in `data/marketplace.toml`:** a hand-written key that must stay off `main`, and can disagree with the tag.
 - **A `cech release` command that commits and tags:** the CLI would write git history.

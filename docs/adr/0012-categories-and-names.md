@@ -20,15 +20,13 @@ Plugins also come from marketplaces that follow no CECH rule, and a skill instal
 ## Decision
 
 1. CECH's categories are a closed list, each with what it holds, built into the `cech` CLI.
-   Adding one refines this ADR, with an amendment note under this item naming it; removing or merging one needs a superseding ADR.
-   Until the first plugin merges, either is a change to the list alone ([ADR 1](0001-record-architecture-decisions.md) item 5).
+   Adding one is a reviewed change to the list.
 2. The category is the plugin's folder (`plugins/<category>/<name>/`).
    The build generates the marketplace catalogue, including its `category` field, from it.
    It is not part of the name.
 3. CECH plugin names start with `cech-`: `cech-prose`, `cech-docker`.
    The skill inside has the same name, with no alias.
-   Names use `a-z`, `0-9` and `-`, start with a letter, do not end with `-`, contain no `--`, and have at most 64 characters.
-   Such names are valid in both harnesses and in Agent Skills.
+   Names have a form that both harnesses and Agent Skills accept.
 4. Each extension prefixes its plugin names with `<namespace>-` (`acme-tracker`).
    The namespace is the name the catalogue carries outside a release tag; each release adds its version to it, as CECH's releases do (item 5).
    It is not `cech` and does not start with `cech-` (item 5), so its plugin names cannot equal a CECH name.

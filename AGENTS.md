@@ -3,24 +3,24 @@
 ## Where am I?
 
 The root of CECH, a marketplace of agent skills for Claude Code and Codex that organisations extend rather than fork ([README](README.md)).
-It has no skills yet: the tree holds the decision records, a first `cech` CLI that prints its version and generates a marketplace's files, the gates that check every change, and their tests.
+It has no skills yet: the tree holds the decision records, the pages on what CECH does now, a first `cech` CLI that prints its version and generates a marketplace's files, the gates that check every change, and their tests.
 This is the only `AGENTS.md`, so it answers for every path.
 
 ## What belongs to this layer?
 
 Everything tracked in the repository.
-People and agents follow the same rules: [CONTRIBUTING.md](CONTRIBUTING.md) and the ADRs state them, and this file routes to them and adds the few that matter most to agents.
+People and agents follow the same rules: [CONTRIBUTING.md](CONTRIBUTING.md) says how to work and the ADRs say why, and this file routes to them and adds the few that matter most to agents.
 
 ## Local boundaries
 
 A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths and never weakens one from this file.
 
-- The ADRs in `docs/adr/` are the contracts.
-  Read the ones a change touches before designing it; changing a contract needs a new ADR or a change to an accepted one, in the form [ADR 1](docs/adr/0001-record-architecture-decisions.md) item 5 sets.
-  Read `.ai/changes/done/` only for the history of a change: the code and its tests say what CECH does now.
-- Keep files, commit messages, and branch and tag names vendor-neutral ([ADR 3](docs/adr/0003-vendor-neutrality.md)): nothing specific to a private organisation, and invented examples such as `example.com` and `acme`.
+- The ADRs in `docs/adr/` record decisions and their reasons, not the detail that carries them out ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 2): what CECH does now is in `docs/reference/` and the code, how contributors work is in `CONTRIBUTING.md`, and a change's own rules and tests are in `changes/` ([ADR 2](docs/adr/0002-where-each-kind-of-text-lives.md)).
+  Read the ADRs a change touches before designing it; a new or reversed decision needs a new ADR or a change to an accepted one, in the form ADR 1 item 5 sets.
+  Read `changes/done/` only for the history of a change.
+- Keep files, commit messages, and branch and tag names vendor-neutral ([ADR 4](docs/adr/0004-vendor-neutrality.md)): nothing specific to a private organisation, and invented examples such as `example.com` and `acme`.
   Never copy text from git-ignored notes into the tree; rewrite it, run `mise run terms`, and let a person read it.
-- Text from another project needs a compatible licence, its notice and, in a skill, a source note naming the upstream project and commit ([ADR 2](docs/adr/0002-licence-and-contributions.md)); a skill that forks such text follows [ADR 23](docs/adr/0023-forking-upstream-skills.md).
+- Text from another project needs a compatible licence, its notice and, in a skill, a source note naming the upstream project and commit ([ADR 3](docs/adr/0003-licence-and-contributions.md)); a skill that forks such text follows [ADR 23](docs/adr/0023-forking-upstream-skills.md).
   The notice for text in a skill goes in the skill folder's `NOTICE`; any other goes in the root `NOTICE`.
 - ADR evidence cites tree files, dates and the versions of harnesses and tools, never pull request or issue numbers, so each ADR stands alone.
 - Commit messages and other published text link only to public, lasting pages, never to an agent session or a page that needs a login ([ADR 6](docs/adr/0006-change-record.md)).
@@ -31,31 +31,32 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | Change | Destination | Rule or reference |
 | --- | --- | --- |
 | A new decision that is costly to reverse, also added to `docs/adr/README.md` | `docs/adr/` | [ADR 1](docs/adr/0001-record-architecture-decisions.md) |
-| A change's spec, brief, research or spike results, before or with its code; moved to `done/` once tests cover each rule | `.ai/changes/YYYY-MM-DD-short-title/` | [.ai/README.md](.ai/README.md) |
-| A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 4](docs/adr/0004-gates-and-ci.md) |
-| A harness probe that runs unattended, with `unattended = true` on its entry in the harness data file | `scripts/probes/<entry name>` | [ADR 9](docs/adr/0009-native-harness-features-first.md) items 4 and 5 |
+| The detail of a file, command or check that users or scripts rely on, in the same commit as the behaviour | `docs/reference/` | [ADR 2](docs/adr/0002-where-each-kind-of-text-lives.md) item 2 |
+| A change's spec, test plan, brief, research or spike results, before or with its code, in a folder `YYYY-MM-DD-short-title/`; moved to `done/` once a test or a recorded check by hand covers each criterion | `changes/` | [changes/README.md](changes/README.md) |
+| A gate's behaviour, with its task in `mise.toml` and tests in `test/` | `scripts/` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) |
+| A harness probe that runs unattended, named after its entry in the harness data file, which has `unattended = true` | `scripts/probes/` | [ADR 9](docs/adr/0009-native-harness-features-first.md) item 4, [harness data file](docs/reference/harness-data.md) |
 | A CLI command or package, with its Go tests | `cli/` | [ADR 15](docs/adr/0015-the-cech-cli.md); [ADR 18](docs/adr/0018-generated-files.md) for what `cech build` reads and writes |
 | The catalogue's namespace, description, owner or code owners team, or the roles it defines, then `mise run build:fix` | `data/marketplace.toml` | [ADR 17](docs/adr/0017-repository-data-and-state.md) item 7 |
-| Adding, removing or merging one of CECH's categories, as ADR 12 item 1 sets, then `mise run build:fix` | `cli/internal/marketplace/categories.toml` | [ADR 12](docs/adr/0012-categories-and-names.md) item 1 |
+| Adding, removing or merging one of CECH's categories, then `mise run build:fix` | `cli/internal/marketplace/categories.toml` | [ADR 12](docs/adr/0012-categories-and-names.md) item 1; [ADR 24](docs/adr/0024-what-a-version-change-means.md) for removing or merging |
 | A Go dependency, with its reason on its line | `cli/go.mod` | [ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1 |
-| A public term rule or an allowlisted email address | `checks/terms/` | [ADR 3](docs/adr/0003-vendor-neutrality.md) |
-| A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 5](docs/adr/0005-tool-pins.md) for a pin, [ADR 4](docs/adr/0004-gates-and-ci.md) item 1 for a task |
-| A CI step that is not a gate task, such as the private term tier; a new gate is a task in `check:os` once what it checks exists | `.github/workflows/ci.yml` | [ADR 4](docs/adr/0004-gates-and-ci.md) items 1, 5 and 6 |
-| A check that reports or runs on a schedule but never blocks a merge | `.github/workflows/` | [ADR 4](docs/adr/0004-gates-and-ci.md) items 6 and 7 |
-| A rule for contributors; route agents to it from here | `CONTRIBUTING.md` | [ADR 4](docs/adr/0004-gates-and-ci.md) item 2 |
+| A public term rule or an allowlisted email address | `checks/terms/` | [ADR 4](docs/adr/0004-vendor-neutrality.md) |
+| A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) for a pin, [ADR 5](docs/adr/0005-gates-and-tool-pins.md) item 1 for a task |
+| A CI step that is not a gate task, such as the private term tier; a new gate is a task in `check:os` once what it checks exists | `.github/workflows/ci.yml` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) items 1, 4 and 5 |
+| A check that reports or runs on a schedule but never blocks a merge | `.github/workflows/` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) items 5 and 6 |
+| A rule for contributors; route agents to it from here | `CONTRIBUTING.md` | [ADR 2](docs/adr/0002-where-each-kind-of-text-lives.md) item 1 |
 
 ## Direct ownership
 
 | Path | Responsibility |
 | --- | --- |
-| `docs/` | Documents for people: decision records in `adr/`, and the catalogue page `catalogue.md` that `cech build` generates; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from typo and link fixes |
-| `.ai/` | Working material written mostly by and for agents, one folder per change in `changes/`, finished ones in `changes/done/` |
+| `docs/` | Documents for people: decision records in `adr/`, the pages on what CECH does now in `reference/`, and the catalogue page `catalogue.md` that `cech build` generates; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from fixes to typos, links and wording that keep the meaning |
+| `changes/` | Working material for people and agents, one folder per change, finished ones in `done/`; not a changelog |
 | `scripts/` | Gate and harness probe scripts in POSIX sh that run under dash, macOS sh and Git Bash, the harness probes on Linux and macOS only; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks, `scripts/probes/` the harness probes that `run-probes` runs |
 | `data/` | Hand-written data on the marketplace: `marketplace.toml`, its namespace, description, owner, code owners team and roles ([ADR 17](docs/adr/0017-repository-data-and-state.md) item 7) |
 | `.claude-plugin/` | The marketplace catalogue `marketplace.json`, which `cech build` generates |
 | `checks/` | Public tiers of the term check; the private tier lives outside git |
 | `cli/` | The `cech` CLI, Go module `github.com/TrialAndTemper/cech/cli`: `cmd/cech` for `main`, `internal/` for the rest, golden files and fixture marketplaces in `testdata/`, linter settings in `.golangci.yml` |
-| `test/` | bats suites for the scripts and tasks; a script change adds the cases, and the hand checks in the pull request, that [CONTRIBUTING.md](CONTRIBUTING.md#writing) and [ADR 4](docs/adr/0004-gates-and-ci.md) item 5 ask for |
+| `test/` | bats suites for the scripts and tasks; a script change adds the cases, and the hand checks in the pull request, that [CONTRIBUTING.md](CONTRIBUTING.md#writing) asks for |
 | `mise.toml` | Exact tool pins and every task; the single entry point for the gates |
 | `mise.lock` | Downloads and checksums for each pin and platform, or only the version of a pin built from source, written by `mise lock` |
 | `.github/` | The CI workflow, the vulnerability check and harness probe workflows, issue forms, pull request template, and the code owners file that `cech build` generates |
@@ -90,5 +91,5 @@ mise is the task runner: use `mise run …` rather than the tools it pins, and r
 
 Keep this file on five questions: where an agent is, what the layer owns, which boundaries hold, where a change goes, and how to do and verify it.
 Update the routing and ownership tables in the same change that adds, moves or removes a path.
-Put a recurring instruction in the layer that owns it, and point to `CONTRIBUTING.md` or an ADR rather than repeating it.
+Put a recurring instruction in the layer that owns it, and point to `CONTRIBUTING.md`, a `docs/reference/` page or an ADR rather than repeating it.
 Past 100 lines, split: give a directory with its own boundary, routing or work method its own `AGENTS.md`, move its answers there, and route to it from here.

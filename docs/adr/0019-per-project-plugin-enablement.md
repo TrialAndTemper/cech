@@ -22,26 +22,8 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
 ## Decision
 
 1. **One config file.**
-   `.cech/config.toml` ([ADR 17](0017-repository-data-and-state.md)) lists the marketplaces the project manages, its *managed marketplaces*, and the plugins it enables from each:
-
-   ```toml
-   [marketplaces.cech]
-   source = "https://github.com/TrialAndTemper/cech.git"
-   ref = "v0.1.0"
-   commit = "<40-hex commit of v0.1.0>"
-
-   [marketplaces.acme]
-   source = "git@git.acme.example:platform/acme-skills.git"
-   ref = "v1.4.0"
-   commit = "<40-hex commit of v1.4.0>"
-
-   [enable]
-   cech = ["cech-conventional-commits", "cech-prose"]
-   acme = ["acme-tracker"]
-   ```
-
-   Each key under `marketplaces` and `enable` is a namespace ([ADR 12](0012-categories-and-names.md) items 4 and 5).
-   `ref` is a catalogue release tag ([ADR 14](0014-releases-and-versions.md) item 2), and `commit` the tag's commit at pinning; `cech` writes both.
+   `.cech/config.toml` ([ADR 17](0017-repository-data-and-state.md)) lists the marketplaces the project manages, its *managed marketplaces*, each with its source and the catalogue release tag it pins ([ADR 14](0014-releases-and-versions.md) item 2), and the plugins the project enables from each, by namespace ([ADR 12](0012-categories-and-names.md) items 4 and 5).
+   `cech` writes each pin, together with the commit the tag pointed to when pinned.
    Other marketplaces go into the harnesses' settings files by hand, and `cech` leaves them as they are.
    A source never holds credentials; access uses the machine's git configuration.
 2. **Rendered native files.**
@@ -53,22 +35,17 @@ The [Claude Code marketplace docs](https://code.claude.com/docs/en/plugins/marke
    For each managed marketplace, the native files hold `true` for each enabled plugin and `false` for every other plugin in its catalogue at the pinned commit.
    Apart from item 6, `cech` writes no keys for other marketplaces.
 5. **Dependencies.**
-   Neither harness installs dependencies ([ADR 10](0010-claude-code-and-codex-from-one-source.md)), so `cech enable` also enables what an enabled plugin depends on, and fails when a managed catalogue at its pinned commit lacks it.
-   `cech disable` refuses to turn off a plugin another enabled plugin needs, and names them.
+   Neither harness installs dependencies ([ADR 10](0010-claude-code-and-codex-from-one-source.md)), so enabling a plugin also enables what it depends on, and fails when a managed catalogue at its pinned commit lacks it; disabling a plugin that another enabled plugin needs is refused.
 6. **Unversioned copies.**
    Outside a release tag a catalogue is named after its namespace ([ADR 12](0012-categories-and-names.md) items 4 and 5).
    So the native files also set every plugin of each pinned catalogue to `false` under the bare namespace, such as `cech-prose@cech`.
    A copy enabled in user settings then cannot load beside the pin.
    `cech` never writes to user settings.
 7. **Hand-written files.**
-   A project may write the native files by hand, without the config, following items 3, 4 and 6, with each dependency enabled.
-   The commands of item 8 then neither render the files nor check the pins or catalogue names.
+   A project may write the native files by hand, without the config, following items 3, 4 and 6, with each dependency enabled; `cech` then neither renders them nor checks the pins or catalogue names.
 8. **Commands.**
-   - `cech init` writes the config and renders the native files.
-   - `cech enable` and `cech disable` change the plugin lists, apply item 5, and render again.
-   - `cech upgrade` moves a pin, the marketplace's name and its keys together.
-   - `cech check`, read-only, fails when the files break this ADR or two enabled plugins share a name ([ADR 12](0012-categories-and-names.md) item 7).
-   - `cech setup`, run in each clone, makes Codex install every enabled plugin at its pin, a gap recorded in the harness data file ([ADR 9](0009-native-harness-features-first.md) item 2), and syncs their reviewer agents ([ADR 10](0010-claude-code-and-codex-from-one-source.md) item 3).
+   `cech` commands write the config and render the native files from it; a read-only check fails when the files break this ADR or two enabled plugins share a name ([ADR 12](0012-categories-and-names.md) item 7).
+   A command run in each clone makes Codex install every enabled plugin at its pin, a gap recorded in the harness data file ([ADR 9](0009-native-harness-features-first.md) item 2), and syncs their reviewer agents ([ADR 10](0010-claude-code-and-codex-from-one-source.md) item 3).
 
 ## Consequences
 

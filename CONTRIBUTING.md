@@ -7,23 +7,30 @@ Report security problems privately, as [SECURITY.md](SECURITY.md) explains, not 
 
 ## Before you start
 
-The [architecture decision records](docs/adr/README.md) (ADRs) hold the contracts CECH follows and the reasons for them.
-A change that fits an accepted ADR needs no new one.
-A change to a contract, or one that adds repo-wide machinery such as a command, a hook or a file format, needs a new ADR or a change to an accepted one ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
-An ADR holds the decision and its reasons; detail such as keys, flags and messages goes in a spec, as [.ai/README.md](.ai/README.md) explains.
+The [architecture decision records](docs/adr/README.md) (ADRs) hold the decisions CECH rests on and the reasons for them, and the [reference](docs/reference/README.md) describes what CECH does now.
+A change that fits the accepted ADRs needs no new one.
+A new or reversed decision, or a change that adds repo-wide machinery such as a command, a hook or a file format, needs a new ADR or a change to an accepted one ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
+An ADR holds no detail such as keys, flags and messages: a change to such detail edits its reference page, or has a spec in `changes/`, with a test for each rule, as [changes/README.md](changes/README.md) explains.
 For a larger change, open an issue first so we can agree on the approach.
 Ask questions in [Discussions](https://github.com/TrialAndTemper/cech/discussions); issues are for bugs and proposals.
 
-By contributing you agree that your work is licensed under the licence of the files it adds or changes: MIT unless a file or folder says otherwise ([ADR 2](docs/adr/0002-licence-and-contributions.md)).
-Text copied or adapted from another project needs a compatible licence, its notice and, in a skill, a source note naming the upstream project and the commit it came from; rewrite it where you can.
-[ADR 23](docs/adr/0023-forking-upstream-skills.md) lists the licences a skill may fork, what its `NOTICE` records, and how a fork takes in upstream changes.
+By contributing you agree that your work is licensed under the licence of the files it adds or changes: MIT unless a file or folder says otherwise ([ADR 3](docs/adr/0003-licence-and-contributions.md)).
+Text copied or adapted from another project needs a licence that [ADR 3](docs/adr/0003-licence-and-contributions.md) item 4 accepts (permissive, not copyleft), and so does a Go module the CLI builds in.
+Copied text also needs its notice and, in a skill, a source note naming the upstream project and the commit it came from; rewrite it where you can.
+[ADR 23](docs/adr/0023-forking-upstream-skills.md) says what a fork's `NOTICE` records and how a fork takes in upstream changes:
+
+- A fork's `NOTICE` keeps upstream's notices word for word: a term check hit in one goes in the check's allowlist, never in a rewrite.
+- To take in upstream changes, diff upstream's listed paths from the pinned commit to a newer one, and apply only the changes CECH wants, rewritten to its rules.
+  The change moves the pinned commit, updates the entry, and names the old and new upstream commits, so the reviewer can read it beside that range.
+- Remove an entry only when no derived text is left, say so in the change, and move upstream's credit to `CREDITS.md`.
+
 The notice for text in a skill goes in the skill folder's `NOTICE`; any other goes in [NOTICE](NOTICE).
 A skill based on a person's unpublished work ships only once they agree; credit published work by citing it.
 
 ## Set up
 
 You need git, and [mise](https://mise.jdx.dev/getting-started.html) 2026.10.3 or later.
-mise installs the exact tool versions pinned in `mise.toml` and runs the gates as tasks ([ADR 4](docs/adr/0004-gates-and-ci.md)).
+mise installs the exact tool versions pinned in `mise.toml` and runs the gates as tasks ([ADR 5](docs/adr/0005-gates-and-tool-pins.md)).
 On Windows, use Git Bash: the tasks run with `sh`.
 
 In a new clone, trust the repository's `mise.toml` and install the tools:
@@ -75,7 +82,7 @@ A new gate goes into `check:os` in `mise.toml`; the workflow needs no change.
 A pull request merges only when CI passes.
 
 A test that fails only sometimes is not fixed by a green rerun: open an issue for it, then fix it, or skip it with a reason that names the issue.
-A skipped test of a gate script leaves a way for that gate to pass when it should fail ([ADR 4](docs/adr/0004-gates-and-ci.md) item 5), so fix it before the next change to that gate.
+A skipped test of a gate script leaves a way for that gate to pass when it should fail (see [Writing](#writing)), so fix it before the next change to that gate.
 
 ### The CLI's Go gates
 
@@ -85,7 +92,7 @@ mise installs the pinned Go, golangci-lint, go-licenses and govulncheck, and `sc
 | Task | Runs |
 | --- | --- |
 | `lint:go` | `go vet`, golangci-lint with the linters in `cli/.golangci.yml`, and `go mod tidy -diff` |
-| `lint:licenses` | go-licenses: disallowed or unidentified licences in the CLI command's external dependencies, including transitive imports for the current platform ([ADR 16](docs/adr/0016-building-the-cech-cli.md) item 3) |
+| `lint:licenses` | go-licenses: licences outside the list in `scripts/check-go`, or unidentified, in the CLI command's external dependencies, including transitive imports for the current platform; CI runs it on each platform ([ADR 3](docs/adr/0003-licence-and-contributions.md) item 4) |
 | `format:check:go` | the diff that gofumpt and goimports would apply; `format:fix:go` applies it |
 | `test:go` | `go test`, with the race detector where the platform has one, cgo is on (it needs a C compiler) and the race runtime builds |
 | `vuln` | govulncheck: known vulnerabilities in the CLI and its Go release; needs the network |
@@ -105,7 +112,9 @@ CI runs `vuln` on pull requests that touch the CLI or its tools, without blockin
 It fails when a generated file differs from its sources: `data/marketplace.toml` ([ADR 17](docs/adr/0017-repository-data-and-state.md) item 7), CECH's categories in `cli/internal/marketplace/categories.toml`, the root `LICENSE`, and each plugin's `plugin.json`, `SKILL.md` and reviewer agents.
 Change the source, then let `mise run build:fix` rewrite the generated files with the same `cech`.
 
-A new Go dependency says on its line in `cli/go.mod` why it is there, and its commit records its licence ([ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1).
+A new Go dependency says on its line in `cli/go.mod` why it is there ([ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1), and `lint:licenses` checks its licence.
+Upgrade a module only for a fix or a feature the CLI needs.
+Output that scripts rely on ([the CLI reference](docs/reference/cli.md)) has golden files.
 
 ### Optional git hooks
 
@@ -122,29 +131,34 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
 
 - Markdown has one sentence per line, never wrapped; shorten a long sentence rather than break it ([ADR 7](docs/adr/0007-markdown-source-format.md)).
   `mise run format:fix` reflows it.
+  Text copied word for word from upstream keeps its own layout: exempt its file, or a marked part, in rumdl's settings or with a disable comment, and give the reason next to it.
 - Refer to Claude Code and Codex as harnesses, the programs that run an agent ([ADR 8](docs/adr/0008-a-marketplace-you-extend-not-fork.md)).
   "Tool" means something else: a tool pinned in `mise.toml`, the `tool` plugin category, a tool an agent calls, or a command-line program.
 - Exported Go declarations need doc comments, except test entry points and methods on unexported receiver types; comments on unexported declarations are optional.
   A function or method's comment starts with its name and explains what it returns or does, following [Go Doc Comments](https://go.dev/doc/comment#func).
   Refer to each parameter or named result by name when its meaning is not clear from the signature alone.
 - Shell scripts are POSIX sh that runs under dash, macOS sh and Git Bash, and pass shellcheck and shfmt.
-  A change to a script comes with a test in `test/` for each way it could let a gate pass when it should fail, where review would likely miss it, such as after a tool bump, on another platform or on the staged tree; a comment on each case names the way it guards ([ADR 4](docs/adr/0004-gates-and-ci.md) item 5).
-  Such a case runs the script, task or config file that could let the gate pass, not the tool on its own.
-  Check any other way by hand, and say so in the pull request.
+  A change to a gate script comes with a test in `test/` for each way the gate could pass when it should fail, such as a lost finding or a skipped check, where review would likely miss it: most such faults lie outside the diff, after a tool bump, on another platform or on the staged tree.
+  A comment on each case names the way it guards, and the case runs the script, task or config file that could let the gate pass, not the tool on its own.
+  Check any other way by hand when the gate is added or changed, and say so in the pull request.
+  A gate that fails when it should pass shows itself the first time it runs, and needs no test.
 - A test in `test/` or `cli/` checks CECH's own code: a script, a task, a config or data file, the CLI's logic, or an option CECH chooses for a tool or library.
   A case that guards how that code handles a difference between shells or platforms checks CECH's code too.
   A case that only a change in Go, the shell, a tool or a library could break stays out.
   Where CECH relies on a tool or library feature, one case that runs CECH's code shows that the feature still works.
   A case that takes the same branch of CECH's code as another, with no new kind of input, stays out too.
+- A skill that uses a role ([ADR 21](docs/adr/0021-roles.md)) carries an eval with and without `.cech/roles.toml`, on both harnesses.
+- A skill that reads its file in `.cech/` ([ADR 17](docs/adr/0017-repository-data-and-state.md)) carries an eval with and without that file, on both harnesses.
 - Keep an ADR under 800 words of prose outside fenced code blocks ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 6); `mise run lint:adr` counts them.
 - Until the first plugin merges, an accepted ADR is edited in place, and the commit says why.
-  From then on, it is not rewritten, apart from typo and link fixes: a refinement goes in a dated amendment note, and a different choice in a new ADR that supersedes it ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
+  From then on, it is not rewritten, apart from fixes to typos, links and wording that keep the meaning, which review checks: a refinement goes in a dated amendment note, and a different choice in a new ADR that supersedes it ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
 
 ## Commits
 
 Commits are the record of the project ([ADR 6](docs/adr/0006-change-record.md)): reviewers read each one, and the reason for a change belongs in its message, not only in the pull request.
 
 - Make each commit one logical change that leaves the gates passing.
+- Bump a formatter or linter in its own commit, together with the changes it makes to files.
 - Write the header in the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) form `type(scope): summary`, at most 72 characters, imperative, with no final full stop.
   Types: `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`.
   The scope is a plugin name or an area such as `cli`, `adr`, `ci` or `checks`, in lower-case words joined by `-`; leave it out when a change spans areas.
@@ -154,6 +168,8 @@ Commits are the record of the project ([ADR 6](docs/adr/0006-change-record.md)):
 - Mark a breaking change with `!` after the scope and a `BREAKING CHANGE:` footer saying what users must do.
 - Add a `Co-authored-by:` trailer for each other author, human or tool.
 - Link only to public pages that last, such as a CECH issue, a spec or an upstream commit.
+
+The `commits` gate checks each commit's header and that its `Signed-off-by:` carries the commit author's email, and fails while a fixup, squash, amend or merge commit remains; reviewers check the rest of these rules.
 
 ### Sign-off
 
@@ -210,7 +226,8 @@ A vulnerability report itself goes through [SECURITY.md](SECURITY.md), not an is
   git commit -s --fixup=<commit>
   ```
 
-- Before merge, fold them in and update your branch:
+- Once a review has started, don't rewrite commits a reviewer has seen: push fixups on top, so they can see what changed since their review.
+- Fold them in, and rebase if `main` moved, only after the reviewers approve:
 
   ```sh
   git fetch origin
@@ -223,7 +240,7 @@ A vulnerability report itself goes through [SECURITY.md](SECURITY.md), not an is
 
 ## Keep CECH vendor-neutral
 
-CECH holds nothing specific to a private organisation: no internal names, hosts, emails, products, ids or quotes in files, commit messages, or branch and tag names ([ADR 3](docs/adr/0003-vendor-neutrality.md)).
+CECH holds nothing specific to a private organisation: no internal names, hosts, emails, products, ids or quotes in files, commit messages, or branch and tag names ([ADR 4](docs/adr/0004-vendor-neutrality.md)).
 Examples use invented data such as `example.com`, `*.example`, `*.test` and the company `acme`.
 
 The term check enforces this with rules in `checks/terms/`.
@@ -244,6 +261,11 @@ The allowlists and the inline marker do not apply to this tier: fix a false posi
 Without a list this tier is skipped; set `CECH_REQUIRE_PRIVATE_TERMS=1` to make a missing list an error.
 
 ### For maintainers
+
+Organisation owners may bypass the ruleset on `main` only to repair `main` or a gate, and each bypass gets an issue saying what was done and why.
+
+Being named a plugin's owner or maintainer ([ADR 13](docs/adr/0013-attribution.md)) is a request for write access: a CECH maintainer grants it, or the name is removed before merge.
+Code owner review is requested, not required, until CECH has two maintainers on the team; with one, a required review would block every change they make.
 
 CI reads the private list from the repository secret `PRIVATE_TERMS`, one regular expression per line.
 It uses the secret on pushes to `main` and on pull requests from branches in this repository, and there an empty or missing secret fails the run.

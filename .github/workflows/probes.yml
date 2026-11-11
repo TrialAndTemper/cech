@@ -5,7 +5,7 @@
 # on main daily and after each such push; a failure there opens an
 # issue for each entry whose result differs, and one for the job if a
 # probe could not run or gave no result, or comments on the open one
-# (ADR 4 item 7).
+# (ADR 5 item 6).
 name: probes
 
 on:

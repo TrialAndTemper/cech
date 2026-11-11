@@ -2,7 +2,7 @@
 
 Implemented 2026-10-29; not maintained: the code and its tests are current.
 
-The optional hooks of ADR 4 item 4, in `scripts/hooks/`, which `git config core.hooksPath scripts/hooks` turns on.
+The optional hooks of ADR 5 item 3, in `scripts/hooks/`, which `git config core.hooksPath scripts/hooks` turns on.
 
 ## Rules
 

@@ -1,7 +1,7 @@
 #!/bin/sh
-# Commit message gate (ADR 4, ADR 6 item 7), with the DCO sign-off of
-# ADR 2. Run as `mise run commits`.
-# POSIX sh (ADR 4): it must run under dash, macOS sh and Git Bash.
+# Commit message gate (ADR 5, ADR 6 item 4), with the DCO sign-off of
+# ADR 3. Run as `mise run commits`.
+# POSIX sh (ADR 5): it must run under dash, macOS sh and Git Bash.
 #
 # Usage: mise run commits -- [--message FILE | --range RANGE]
 #
@@ -13,11 +13,11 @@
 #   -h, --help     show usage
 #
 # Each message needs:
-#   - a Conventional Commits header (ADR 6, item 4): a type from ADR 6
-#     (TYPES below), an optional scope of lower-case words joined by `-`
-#     and starting with a letter, as ADR 12 names plugins, an optional
-#     `!`, then `: ` and a summary with no final full stop; at most 72
-#     characters of UTF-8, whatever the locale;
+#   - a Conventional Commits header (ADR 6 item 3): a type from
+#     CONTRIBUTING.md (TYPES below), an optional scope of lower-case
+#     words joined by `-` and starting with a letter, as ADR 12 names
+#     plugins, an optional `!`, then `: ` and a summary with no final
+#     full stop; at most 72 characters of UTF-8, whatever the locale;
 #   - a blank line after the header, if anything follows it;
 #   - a `Signed-off-by:` trailer whose email is the author's. With
 #     --message the author is the one git will record, which git passes
@@ -30,7 +30,7 @@
 # so a branch is rebased onto main, not merged with it.
 #
 # Findings name the commit and the rule, never the message text, which
-# could hold a private term (ADR 3).
+# could hold a private term (ADR 4).
 #
 # Requires: git, and the POSIX awk, sed, tr, wc and mktemp.
 #
