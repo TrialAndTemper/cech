@@ -3,7 +3,7 @@
 # once, on Linux, since commit messages are the same on every system, and
 # check:os, every other gate, on each system. So there is no second list
 # of gates to keep in step, and a new gate needs no change here (ADR 4
-# item 2); only the private term tier has its own step.
+# item 2); only the private term tier has its own job.
 name: CI
 
 on:
@@ -129,23 +129,55 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: mise run --continue-on-error --output prefix check:os
 
-      # check ran the public term tiers. This step runs the term gate again
-      # with the private tier (ADR 3), which runs, and must run, only where
-      # the secret reaches: pushes and pull requests from this repository's
-      # own branches, never forks. It has its own step so that no other gate
-      # sees the secret; a public finding shows in both steps.
-      - name: private terms
-        if: ${{ !cancelled() && steps.range.outcome == 'success' }}
+  # The private term tier (ADR 3), in its own job so that no other job
+  # sees the secret. The secret lives in the private-terms environment,
+  # which holds each run until a maintainer approves it: a pull request's
+  # run uses that pull request's copy of this file, so approve only after
+  # reading its changes to .github/. Fork pull requests never receive the
+  # secret and skip the job. Its first three steps copy the check job's,
+  # which explains them; keep the copies in step.
+  private-terms:
+    name: private terms
+    if: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: private-terms
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: jdx/mise-action@08ae2a091c038e1e05ec6f5115dc5c69d5a2a6b8 # v5.1.2
+        with:
+          version: 2026.10.3
+
+      - name: range
         env:
-          TRUSTED: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository }}
-          PRIVATE_TERMS: >-
-            ${{ (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
-              && secrets.PRIVATE_TERMS || '' }}
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE: ${{ github.event.before }}
         run: |
-          if [ "${TRUSTED}" != true ]; then
-            echo "private term tier skipped: no secret on fork pull requests"
-            exit 0
+          if [ "${EVENT}" = pull_request ]; then
+            range="${BASE_SHA}..${HEAD_SHA}"
+          elif git cat-file -e "${BEFORE}^{commit}" 2> /dev/null; then
+            range="${BEFORE}..${GITHUB_SHA}"
+          else
+            echo "::warning::old tip of main unknown; checking every commit"
+            range=${GITHUB_SHA}
           fi
+          echo "CECH_RANGE=${range}" >> "${GITHUB_ENV}"
+
+      # Runs the term gate again, now with the private tier; a public
+      # finding shows here and in the check jobs.
+      - name: private terms
+        env:
+          PRIVATE_TERMS: ${{ secrets.PRIVATE_TERMS }}
+        run: |
           if [ -z "${PRIVATE_TERMS}" ]; then
             echo "::error::the PRIVATE_TERMS secret is empty or not set"
             exit 2

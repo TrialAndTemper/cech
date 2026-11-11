@@ -48,6 +48,7 @@ A movable action tag, or a secret given to fork code, can leak secrets or change
 6. **Workflow safety.**
    Third-party actions are pinned by full commit SHA.
    Workflows default to `permissions: contents: read`, widened per job only where needed.
+   A secret lives in an environment that holds each run until a maintainer approves it, never at repository level, since any branch in the repository can change a workflow to read a repository secret.
    Pull requests from forks run on `pull_request`, never `pull_request_target`, and never receive secrets.
    Jobs that need secrets run only on branches in the repository, and a secret reaches only the step that needs it.
 7. **Scheduled jobs are not gates.**
