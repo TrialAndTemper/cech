@@ -7,10 +7,12 @@ import (
 )
 
 // Agent renders a reviewer agent written for Claude Code as a Codex
-// custom agent file. Codex ignores agents that a plugin bundles, so the
-// build writes this file beside the agent's Markdown, and cech copies it
-// into a project's .codex/agents/ (ADR 10 item 3): the workaround of
-// the harness data file's entry codex-plugin-agents (ADR 15 item 6).
+// custom agent file, using name and description for those fields and
+// instructions for developer_instructions. Codex ignores agents that a
+// plugin bundles, so the build writes this file beside the agent's
+// Markdown, and cech copies it into a project's .codex/agents/
+// (ADR 10 item 3): the workaround of the harness data file's entry
+// codex-plugin-agents (ADR 15 item 6).
 //
 // The file holds the three fields Codex requires, name, description and
 // developer_instructions, and sandbox_mode = "read-only", since a CECH

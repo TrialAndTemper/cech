@@ -30,8 +30,8 @@ const (
 // outside cech, such as a path in an error (ADR 15 item 5).
 var jsonOptions = jsontext.AllowInvalidUTF8(true)
 
-// Run runs the command line args, without the program name, and returns
-// the exit code.
+// Run runs the command line args, without the program name, with results
+// on stdout and messages and errors on stderr, and returns the exit code.
 func Run(args []string, stdout, stderr io.Writer) int {
 	return run(args, stdout, stderr, version.Current())
 }
@@ -199,14 +199,15 @@ func (o *outWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
-// usageError reports a wrong command line on stderr.
+// usageError reports msg as a wrong command line on stderr.
 func usageError(stderr io.Writer, msg string) int {
 	_, _ = fmt.Fprintf(stderr, "cech: %s\nRun cech help for usage.\n", msg)
 	return ExitUsage
 }
 
-// write prints text to stdout. A failed write, as to a closed pipe, is
-// a failure: the caller did not get the result.
+// write prints text to stdout and reports a failed write on stderr.
+// A failed write, as to a closed pipe, is a failure: the caller did not
+// get the result.
 func write(stdout, stderr io.Writer, text string) int {
 	if _, err := io.WriteString(stdout, text); err != nil {
 		_, _ = fmt.Fprintf(stderr, "cech: cannot write the output: %v\n", err)

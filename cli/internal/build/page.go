@@ -12,7 +12,7 @@ const PagePath = "docs/catalogue.md"
 
 var cellEscaper = strings.NewReplacer(`\`, `\\`, "<", `\<`, "|", `\|`)
 
-// Page returns the catalogue page: a table of the categories, CECH's
+// Page returns the catalogue page of m: a table of the categories, CECH's
 // and then any the marketplace adds, with what each holds, and a table
 // of plugins and their descriptions per category. A text goes on one
 // line, with runs of white space as one space, and \, < and | escaped,

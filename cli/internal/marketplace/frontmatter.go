@@ -15,7 +15,7 @@ type frontmatter struct {
 	body   string
 }
 
-// parseFrontmatter splits a Markdown file into its frontmatter and body.
+// parseFrontmatter splits the Markdown in src into its frontmatter and body.
 // CRLF line ends are read as LF, so the output is the same on every OS.
 // The frontmatter is a YAML mapping between two lines of ---; a
 // duplicate key in it is an error.
@@ -47,7 +47,7 @@ func parseFrontmatter(src []byte) (*frontmatter, error) {
 	return &frontmatter{fields: fields, body: string(body)}, nil
 }
 
-// mapping returns the keys of a YAML mapping node and their values.
+// mapping returns the keys of the YAML mapping node n and their values.
 func mapping(n *yaml.Node) (map[string]*yaml.Node, error) {
 	if n.Kind != yaml.MappingNode {
 		return nil, errors.New("not a mapping")
@@ -63,8 +63,8 @@ func mapping(n *yaml.Node) (map[string]*yaml.Node, error) {
 	return fields, nil
 }
 
-// str returns the string value of key, or "" when it is missing. A value
-// that YAML reads as another type, such as a number, is an error.
+// str returns the string value of key in fields, or "" when it is missing.
+// A value that YAML reads as another type, such as a number, is an error.
 func str(fields map[string]*yaml.Node, key string) (string, error) {
 	n, ok := fields[key]
 	if !ok {

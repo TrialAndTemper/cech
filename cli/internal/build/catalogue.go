@@ -27,11 +27,11 @@ type entry struct {
 	Category    string `json:"category"`
 }
 
-// Catalogue returns the marketplace catalogue: its name, the namespace
-// or a release's name, and its description and owner from
-// data/marketplace.toml, and each plugin with its category taken from
-// its folder (ADR 12 item 2). JSON allows no comments, so it has no line
-// saying it is generated (ADR 18 item 4).
+// Catalogue returns m's marketplace catalogue, using name (the namespace
+// or a release's name), the description and owner from data/marketplace.toml,
+// and each plugin with its category taken from its folder (ADR 12 item 2).
+// JSON allows no comments, so it has no line saying it is generated
+// (ADR 18 item 4).
 func Catalogue(m *marketplace.Marketplace, name string) []byte {
 	c := catalogue{Name: name, Description: m.Data.Description, Owner: m.Data.Owner, Plugins: []entry{}}
 	for _, p := range m.Plugins {
