@@ -32,8 +32,9 @@ A movable action tag, or a secret given to fork code, can leak secrets or change
    A gate that needs a secret, such as the private term tier ([ADR 3](0003-vendor-neutrality.md)), is required only where the secret reaches, and is skipped locally without it.
    A rule CI cannot check is guidance in the contributing guide, not described as enforced.
 3. **Bypass.**
-   Organisation owners may bypass the ruleset only to repair `main` or a gate.
-   Each bypass gets an issue saying what was done and why.
+   Two rulesets guard `main`: one holds the gates and branch rules, with no bypass; the other requires code owner review.
+   While the maintainers team has one member, they bypass review on their own pull requests.
+   To repair `main` or a gate, an organisation owner may lift the gate ruleset for that change, with an issue saying why.
 4. **Hooks are a convenience.**
    Optional `pre-commit` and `commit-msg` hooks run some of the gates through `mise run`, on the staged tree or on the message; no rule exists only in a hook.
 5. **The gates.**
@@ -48,7 +49,7 @@ A movable action tag, or a secret given to fork code, can leak secrets or change
 6. **Workflow safety.**
    Third-party actions are pinned by full commit SHA.
    Workflows default to `permissions: contents: read`, widened per job only where needed.
-   A secret lives in an environment that holds each run until a maintainer approves it, never at repository level, since any branch in the repository can change a workflow to read a repository secret.
+   A secret lives in an environment whose runs wait for a maintainer's approval, since any branch can change a workflow to read a repository secret.
    Pull requests from forks run on `pull_request`, never `pull_request_target`, and never receive secrets.
    Jobs that need secrets run only on branches in the repository, and a secret reaches only the step that needs it.
 7. **Scheduled jobs are not gates.**
