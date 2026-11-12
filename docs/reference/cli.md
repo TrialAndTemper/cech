@@ -38,9 +38,9 @@ The golden files in `cli/internal/app/testdata/` hold the exact output of each c
 | 0 | Done |
 | 1 | The command ran and met a failure, including a partial success |
 | 2 | The command line is wrong, such as an unknown command or flag, a wrong number of arguments, flags that conflict, or a bad flag value |
-| 3 | Something the command needs could not be reached, so it could not decide |
+| 3 | Something the command needs could not be reached, such as a file it is not allowed to read, so a retry may succeed |
 
-When a command both meets a failure and cannot decide something else, it exits 1, since a retry cannot fix the failure, and its output names both.
+When both 1 and 3 apply, the command exits 1, since a retry cannot fix the failure, and its output names both problems.
 No other status is used.
 
 ### Compatibility
