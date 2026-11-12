@@ -64,7 +64,7 @@ An extension may add categories of its own in its data file; each has a `name` f
 
 `cech build --release V` builds a catalogue release ([ADR 14](../adr/0014-releases-and-versions.md)).
 
-- `V` is `X.Y.Z` or `X.Y.Z-rc.N`, with no `v`: each part decimal with no leading zeros, and `N` from 1.
+- `V` is `X.Y.Z` or `X.Y.Z-rc.N`, such as `0.2.0` or `0.2.0-rc.1`: each part decimal with no leading zeros, and `N` from 1.
 - The catalogue is named `<namespace>-V` with each `.` turned into `-`, such as `cech-0-2-0-rc-1`, and has no `version`.
 - Every `plugin.json` gets `V` as its `version`.
 - An extension's final release must build on a final CECH release: with a `V` that has no `-rc.N`, the build fails when the `cech` key names a pre-release.
