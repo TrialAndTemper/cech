@@ -1,6 +1,6 @@
 # The term check
 
-The term check keeps content specific to a private organisation out of CECH ([ADR 3](../adr/0003-vendor-neutrality.md)).
+The term check keeps content specific to a private organisation out of CECH ([ADR 4](../adr/0004-vendor-neutrality.md)).
 It is the `terms` gate, run by `scripts/check-terms` through `mise run terms`, and it matches with the gitleaks pinned in `mise.toml`.
 How to set up a private list, and what to do with a false positive, is in [CONTRIBUTING.md](../../CONTRIBUTING.md#keep-cech-vendor-neutral).
 

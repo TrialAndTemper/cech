@@ -4,7 +4,7 @@
 # generated files of ADR 18, run as `mise run lint`, `mise run lint:licenses`,
 # `mise run format:check`, `mise run format:fix`, `mise run test`,
 # `mise run vuln`, `mise run build:check` and `mise run build:fix`.
-# POSIX sh (ADR 4): it must run under dash, macOS sh and Git Bash.
+# POSIX sh (ADR 5): it must run under dash, macOS sh and Git Bash.
 #
 # Usage: scripts/check-go lint | licenses | format | fix | test | vuln | build | build-fix
 #

@@ -1,6 +1,6 @@
 # Evidence moved out of the ADRs
 
-The ADR restructure kept one sentence per finding in each ADR ([ADR 24](../../../docs/adr/0024-where-each-kind-of-text-lives.md) item 3).
+The ADR restructure kept one sentence per finding in each ADR ([ADR 2](../../../docs/adr/0002-where-each-kind-of-text-lives.md) item 3).
 This note holds the detail those sentences summarise, as the ADRs stated it.
 
 ## ADR 16: building the `cech` CLI

@@ -1,8 +1,8 @@
-# The gates of ADR 4, run with the tools pinned in mise.toml. CI runs
+# The gates of ADR 5, run with the tools pinned in mise.toml. CI runs
 # the two tasks that `mise run check` runs for a contributor: commits
 # once, on Linux, since commit messages are the same on every system, and
 # check:os, every other gate, on each system. So there is no second list
-# of gates to keep in step, and a new gate needs no change here (ADR 4
+# of gates to keep in step, and a new gate needs no change here (ADR 5
 # item 2); only the private term tier has its own job.
 name: CI
 
@@ -129,7 +129,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: mise run --continue-on-error --output prefix check:os
 
-  # The private term tier (ADR 3), in its own job so that no other job
+  # The private term tier (ADR 4), in its own job so that no other job
   # sees the secret. The secret lives in the private-terms environment,
   # which holds each run until a maintainer approves it: a pull request's
   # run uses that pull request's copy of this file, so approve only after

@@ -1,6 +1,6 @@
 # Reference
 
-These pages describe what CECH does now, for the files, commands and checks that users, scripts and extensions rely on ([ADR 24](../adr/0024-where-each-kind-of-text-lives.md) item 2).
+These pages describe what CECH does now, for the files, commands and checks that users, scripts and extensions rely on ([ADR 2](../adr/0002-where-each-kind-of-text-lives.md) item 2).
 They cover only what exists: behaviour that is not built yet is in its change's folder under `changes/`, not here.
 The reason behind each choice is in the [ADRs](../adr/README.md), and how to contribute is in [CONTRIBUTING.md](../../CONTRIBUTING.md).
 

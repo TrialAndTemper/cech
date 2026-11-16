@@ -7,7 +7,7 @@
 ## Context
 
 Each plugin needs a named person who answers for it, and GitHub should ask that person to review changes to it.
-Credit for ideas follows [ADR 2](0002-licence-and-contributions.md).
+Credit for ideas follows [ADR 3](0003-licence-and-contributions.md).
 If the same names are kept in several hand-written files, they drift.
 CECH starts with one maintainer.
 
@@ -25,13 +25,13 @@ Checked on 2026-10-17 (Claude Code 2.1.302), and, where a line says so, on 2026-
 
 1. **Owner.**
    `plugin.json` `author` names the plugin's owner: the person who answers for it now, not necessarily who wrote it first.
-   They choose the name and whether to give an `email` ([ADR 2](0002-licence-and-contributions.md)).
+   They choose the name and whether to give an `email` ([ADR 3](0003-licence-and-contributions.md)).
    A plugin with no individual owner names the CECH maintainers, with the organisation's GitHub page as `url`.
 2. **Further maintainers** go in `plugin.json` as `metadata.maintainers`: an array of GitHub user names.
    So the owner and the maintainers sit in one file, the plugin's manifest.
    There is no top-level `maintainer` or `maintainers` field, which strict validation rejects.
    The harness data file ([ADR 9](0009-native-harness-features-first.md) item 3) records that both harnesses load a plugin with the `metadata` object, and that strict validation passes it.
-3. **Credit for ideas** and earlier authors, as [ADR 2](0002-licence-and-contributions.md) allows, goes in `CREDITS.md` in the skill folder, next to any source notes for third-party text.
+3. **Credit for ideas** and earlier authors, as [ADR 3](0003-licence-and-contributions.md) allows, goes in `CREDITS.md` in the skill folder, next to any source notes for third-party text.
    It counts as an asset of the skill under [ADR 11](0011-one-plugin-one-skill.md).
    Credits are for people, not agents, so `SKILL.md` does not link to the file.
 4. **Generated code owners.**

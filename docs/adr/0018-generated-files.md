@@ -19,7 +19,7 @@ The same check fails when the marketplace catalogue has no `description`, and ac
    The name appears in both files and as the skill and plugin folder names, and all of them must match, extending the same-name rule of [ADR 11](0011-one-plugin-one-skill.md).
    Repo-wide data in `data/` is hand-written too ([ADR 17](0017-repository-data-and-state.md)); it describes the catalogue, not one plugin.
 2. Everything derived from them is generated: the derived fields of each `plugin.json`, such as its description and version ([ADR 14](0014-releases-and-versions.md) item 3), the marketplace catalogue, Codex TOML for reviewer agents ([ADR 10](0010-claude-code-and-codex-from-one-source.md)), the code owners file ([ADR 13](0013-attribution.md) item 4) and the catalogue page.
-   Each skill folder also gets a copy of the root `LICENSE`, so a skill copied without its plugin keeps its licence ([ADR 2](0002-licence-and-contributions.md)).
+   Each skill folder also gets a copy of the root `LICENSE`, so a skill copied without its plugin keeps its licence ([ADR 3](0003-licence-and-contributions.md)).
 3. One generator writes all of them: `cech build`.
    It works on any marketplace with CECH's layout, so extensions use it too ([ADR 8](0008-a-marketplace-you-extend-not-fork.md)).
 4. Generated files are committed, because both harnesses read the catalogue and manifests straight from git.

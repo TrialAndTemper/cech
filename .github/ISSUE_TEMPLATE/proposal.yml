@@ -18,7 +18,7 @@ body:
     id: proposal
     attributes:
       label: Proposal
-      description: What you would change. For a skill based on someone else's work, say whose; for unpublished work, say whether they agree (ADR 2).
+      description: What you would change. For a skill based on someone else's work, say whose; for unpublished work, say whether they agree (ADR 3).
     validations:
       required: true
   - type: textarea

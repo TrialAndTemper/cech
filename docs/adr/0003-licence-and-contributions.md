@@ -1,4 +1,4 @@
-# 2. Licence and contributions
+# 3. Licence and contributions
 
 - Status: accepted
 - Date: 2026-10-16

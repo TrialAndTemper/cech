@@ -1,4 +1,4 @@
-# 3. Vendor neutrality
+# 4. Vendor neutrality
 
 - Status: accepted
 - Date: 2026-10-16
@@ -14,7 +14,7 @@ A leak in public git history is hard to undo.
 
 1. **No content specific to a private organisation** in tracked files or in git metadata (commit messages, branch and tag names, release notes).
    This means its internal names, hosts, emails, products, ids, private tracker keys, and quotes from private sources.
-   - Allowed: author, `Signed-off-by:` and co-author identities, credits allowed by [ADR 2](0002-licence-and-contributions.md), and CECH's own `#N` issue references.
+   - Allowed: author, `Signed-off-by:` and co-author identities, credits allowed by [ADR 3](0003-licence-and-contributions.md), and CECH's own `#N` issue references.
 2. **Examples use invented data:** `example.com`, `*.example`, `*.test`, the company `acme`.
    A skill about a public product may name it.
 3. **Organisation needs become generic ideas.**
