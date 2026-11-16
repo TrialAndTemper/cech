@@ -6,7 +6,7 @@
 
 ## Context
 
-Earlier ADRs promise a `cech` command: the validator ([ADR 10](0010-claude-code-and-codex-from-one-source.md)), the build of generated files, and the gates that run them ([ADR 4](0004-gates-and-ci.md)).
+Earlier ADRs promise a `cech` command: the validator ([ADR 10](0010-claude-code-and-codex-from-one-source.md)), the build of generated files, and the gates that run them ([ADR 5](0005-gates-and-tool-pins.md)).
 Some commands edit the harnesses' settings in people's repositories and home directories, where a careless edit loses someone's settings.
 Scripts and CI read a command's output and exit status, so both become a contract as soon as someone depends on them.
 

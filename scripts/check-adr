@@ -1,7 +1,7 @@
 #!/bin/sh
 # ADR gate: the numbering and index of ADR 1 items 4 and 7, and the
 # length limit of item 6, run as `mise run lint:adr` and, on the staged
-# tree, by the pre-commit hook. POSIX sh and POSIX awk (ADR 4): it must
+# tree, by the pre-commit hook. POSIX sh and POSIX awk (ADR 5): it must
 # run under dash, macOS sh and Git Bash, with BSD awk, mawk and gawk, so
 # the awk programs use no interval expressions.
 #

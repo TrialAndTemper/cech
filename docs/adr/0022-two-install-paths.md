@@ -36,7 +36,7 @@ Read on 2026-10-28, with Claude Code 2.1.312 and Codex CLI 0.165.0 installed:
    Its `SKILL.md` sets `metadata.cech-managed-only`, and its text says what a copy lacks.
    `cech validate` requires the mark where the plugin's files show the need; for reviewer agents and role bindings, the author decides.
 4. **Licence and notices travel with the folder.**
-   Each skill folder holds a copy of the root `LICENSE` when the marketplace has one ([ADR 18](0018-generated-files.md) item 2), and its own `NOTICE` when the skill holds third-party text ([ADR 2](0002-licence-and-contributions.md) item 4).
+   Each skill folder holds a copy of the root `LICENSE` when the marketplace has one ([ADR 18](0018-generated-files.md) item 2), and its own `NOTICE` when the skill holds third-party text ([ADR 3](0003-licence-and-contributions.md) item 4).
    Both count as assets of the skill ([ADR 11](0011-one-plugin-one-skill.md) item 2).
    `SKILL.md` does not link to them, so agents do not read them as guidance.
 5. **No project copies of managed skills.**
