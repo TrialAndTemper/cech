@@ -72,3 +72,5 @@ Words the ADRs use, in short:
     - What each kind of release may change, for the catalogue and the CLI.
 25. [Evals](0025-evals.md)
     - Eval cases beside each plugin, an offline gate on them, and the runner that drives both harnesses.
+26. [The release check](0026-the-release-check.md)
+    - Model runs before a release, added until each comparison is clear, so a skill works and does not get worse.
