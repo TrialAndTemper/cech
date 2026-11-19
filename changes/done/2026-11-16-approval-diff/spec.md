@@ -1,5 +1,7 @@
 # Approval diff
 
+Implemented 2026-11-19; not maintained: the code and its tests are current.
+
 A squash of fixups, or a rebase onto `main` with no conflict, keeps the approval.
 When an approval is dismissed, the approval diff comment shows what changed since the approved commit.
 A merge queue tests each pull request on the latest `main`, so branches need not be up to date.
