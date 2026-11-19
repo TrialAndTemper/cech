@@ -15,11 +15,13 @@ Release notes need commits they can sort by kind.
 Folding review fixes in rewrites the commits a reviewer approved.
 GitHub shows no readable diff across a force push.
 Probed on GitHub on 2026-11-18: with stale approvals dismissed, GitHub keeps an approval through a squash and a rebase that leave the diff unchanged, and dismisses it for any other change; it does not publish these rules.
+Probed on 2026-11-17: a merge queue takes an unapproved pull request only from a team exempt from review, not from a ruleset bypass.
 
 ## Decision
 
 1. **Rebase merge only.**
    `main` takes only rebase merges, so its history stays linear, and refuses force pushes; the host enforces both.
+   A merge queue runs the gates on the latest `main` before it merges a pull request, so a branch needs no rebase just because `main` moved.
 2. **Commits are the record.**
    Anything that must last (the reason for a change, evidence, rejected options) goes in a commit message or an ADR.
    The pull request description summarises and links; it is not the only place for any of that.
@@ -44,6 +46,7 @@ Probed on GitHub on 2026-11-18: with stale approvals dismissed, GitHub keeps an 
 - Authors spend some time shaping commits before merge.
 - Pull request reviewers read commits, not only the final diff.
 - A rebase during review costs no approval, so nothing forbids one.
+- Any member of the maintainers team can queue any pull request without review, so the team holds only people trusted to merge alone.
 - What lands on `main` has the approved diff, but not always the approved messages, split, SHA or signature: GitHub keeps an approval through a reword, and the rebase merge sets a new committer and drops signatures.
 - If GitHub's rules loosen, an approval could outlive a change; nothing in CECH would catch it.
 

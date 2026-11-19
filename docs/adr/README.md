@@ -32,7 +32,7 @@ Words the ADRs use, in short:
 5. [Gates and tool pins](0005-gates-and-tool-pins.md)
    - mise as the one entry point, CI as the authority, the gates, and exact tool pins.
 6. [Change record](0006-change-record.md)
-   - Rebase merges, commits as the record, Conventional Commits, sign-off, and a comment showing what changed since a dismissed approval.
+   - Rebase merges through a merge queue, a lasting record in commits and ADRs rather than the pull request, Conventional Commits, sign-off, and the approval diff comment, which shows what changed since a dismissed approval.
 7. [Markdown source format](0007-markdown-source-format.md)
    - Markdown with one sentence per line, checked by rumdl.
 8. [A marketplace you extend, not fork](0008-a-marketplace-you-extend-not-fork.md)

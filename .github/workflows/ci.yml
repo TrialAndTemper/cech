@@ -11,6 +11,9 @@ on:
     branches: [main]
   push:
     branches: [main]
+  # The merge queue tests each pull request on the latest main before it
+  # merges.
+  merge_group:
 
 permissions:
   contents: read
@@ -52,11 +55,11 @@ jobs:
         id: range
         env:
           EVENT: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           BEFORE: ${{ github.event.before }}
         run: |
-          if [ "${EVENT}" = pull_request ]; then
+          if [ "${EVENT}" = pull_request ] || [ "${EVENT}" = merge_group ]; then
             range="${BASE_SHA}..${HEAD_SHA}"
           elif git cat-file -e "${BEFORE}^{commit}" 2> /dev/null; then
             range="${BEFORE}..${GITHUB_SHA}"
@@ -94,7 +97,8 @@ jobs:
         with:
           version: 2026.10.3
 
-      # The commits under check: the pull request's own, or the push's.
+      # The commits under check: the pull request's own, the merge
+      # queue's, or the push's.
       # A push whose old tip is unknown, as on the first push or after a
       # force push, checks every commit on main. The term gate, and the
       # commit gate in the commits job, read CECH_RANGE when no mode is
@@ -103,11 +107,11 @@ jobs:
         id: range
         env:
           EVENT: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           BEFORE: ${{ github.event.before }}
         run: |
-          if [ "${EVENT}" = pull_request ]; then
+          if [ "${EVENT}" = pull_request ] || [ "${EVENT}" = merge_group ]; then
             range="${BASE_SHA}..${HEAD_SHA}"
           elif git cat-file -e "${BEFORE}^{commit}" 2> /dev/null; then
             range="${BEFORE}..${GITHUB_SHA}"
@@ -156,7 +160,9 @@ jobs:
   # which holds each run until a maintainer approves it: a pull request's
   # run uses that pull request's copy of this file, so approve only after
   # reading its changes to .github/. Fork pull requests never receive the
-  # secret and skip the job. Its first three steps copy the check job's,
+  # secret and skip the job. So does the merge queue, where a skipped job
+  # counts as passed: the pull request ran the job already, and the push
+  # to main runs it again. Its first three steps copy the check job's,
   # which explains them; keep the copies in step.
   private-terms:
     name: private terms
@@ -180,11 +186,11 @@ jobs:
       - name: range
         env:
           EVENT: ${{ github.event_name }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha }}
           BEFORE: ${{ github.event.before }}
         run: |
-          if [ "${EVENT}" = pull_request ]; then
+          if [ "${EVENT}" = pull_request ] || [ "${EVENT}" = merge_group ]; then
             range="${BASE_SHA}..${HEAD_SHA}"
           elif git cat-file -e "${BEFORE}^{commit}" 2> /dev/null; then
             range="${BEFORE}..${GITHUB_SHA}"

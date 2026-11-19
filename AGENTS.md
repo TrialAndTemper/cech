@@ -24,7 +24,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
   The notice for text in a skill goes in the skill folder's `NOTICE`; any other goes in the root `NOTICE`.
 - ADR evidence cites tree files, dates and the versions of harnesses and tools, never pull request or issue numbers, so each ADR stands alone.
 - Commit messages and other published text link only to public, lasting pages, never to an agent session or a page that needs a login ([ADR 6](docs/adr/0006-change-record.md)).
-- Push, open a pull request or merge only when a person asks.
+- Push, open a pull request, or merge or queue one only when a person asks.
 
 ## Routing
 
