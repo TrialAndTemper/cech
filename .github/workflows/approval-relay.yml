@@ -1,0 +1,51 @@
+# The first half of the approval diff comment (ADR 6 item 5, ADR 5 item
+# 6): on each push to a pull request, its reopening, and each review
+# or dismissal, save the pull request's number for
+# .github/workflows/approval.yml, which runs from main's code and posts
+# the diff comment. A pull request from a fork runs its own copy of this
+# file, so approval.yml trusts nothing in the saved file but a number it
+# checks against the pull request's head. This workflow runs no pull
+# request code, holds no secret and has no token permission.
+name: approval relay
+
+# Opening a pull request, or editing its title, its description or a
+# review, changes no approval, so they do not start this workflow. A
+# pull request retargeted onto main gets its diff comment at its next
+# push or review.
+on:
+  pull_request:
+    branches: [main]
+    types:
+      - synchronize # a new head needs its own diff comment while an approval stays dismissed
+      - reopened # catch up on what happened while the pull request was closed
+  pull_request_review:
+    types:
+      - submitted # a new approval or request for changes can end a dismissed approval
+      - dismissed # an approval dismissed by hand, or as stale after a push, gets a diff comment
+
+permissions: {}
+
+# A newer event for the same pull request replaces a pending run; each
+# run still saves only the number, and approval.yml checks the head.
+concurrency:
+  group: approval-relay-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  relay:
+    name: relay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: save
+        env:
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          mkdir -p relay
+          printf '%s\n' "${NUMBER}" > relay/number
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: approval-relay
+          path: relay/
+          retention-days: 1

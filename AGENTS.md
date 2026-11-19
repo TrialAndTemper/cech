@@ -43,6 +43,9 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) for a pin, [ADR 5](docs/adr/0005-gates-and-tool-pins.md) item 1 for a task |
 | A CI step that is not a gate task, such as the private term tier; a new gate is a task in `check:os` once what it checks exists | `.github/workflows/ci.yml` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) items 1, 5 and 6 |
 | A check that reports or runs on a schedule but never blocks a merge | `.github/workflows/` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) items 6 and 7 |
+| The approval diff comment's script `approval-diff`, with its cases in `test/approval.bats` | `scripts/approval-diff` | [ADR 6](docs/adr/0006-change-record.md) item 5, [the diff comment](docs/reference/approval-diff.md) |
+| The script `approval-comment` that posts the approval diff comment, with its option cases in `test/approval.bats` and the hand check the page describes | `scripts/approval-comment` | [ADR 6](docs/adr/0006-change-record.md) item 5, [the diff comment](docs/reference/approval-diff.md#how-it-runs) |
+| The approval diff comment's workflows `approval-relay.yml` and `approval.yml` | `.github/` | [ADR 6](docs/adr/0006-change-record.md) item 5, [ADR 5](docs/adr/0005-gates-and-tool-pins.md) item 6, [the diff comment](docs/reference/approval-diff.md) |
 | A rule for contributors; route agents to it from here | `CONTRIBUTING.md` | [ADR 2](docs/adr/0002-where-each-kind-of-text-lives.md) item 1 |
 
 ## Direct ownership
@@ -51,7 +54,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | --- | --- |
 | `docs/` | Documents for people: decision records in `adr/`, the pages on what CECH does now in `reference/`, and the catalogue page `catalogue.md` that `cech build` generates; an accepted ADR is edited in place until the first plugin merges, and from then on changes only by an amendment note or a superseding ADR, apart from fixes to typos, links and wording that keep the meaning |
 | `changes/` | Working material for people and agents, one folder per change, finished ones in `done/`; not a changelog |
-| `scripts/` | Gate and harness probe scripts in POSIX sh that run under dash, macOS sh and Git Bash, the harness probes on Linux and macOS only; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks, `scripts/probes/` the harness probes that `run-probes` runs |
+| `scripts/` | Gate, CI and harness probe scripts in POSIX sh that run under dash, macOS sh and Git Bash, the harness probes on Linux and macOS only; `scripts/lib/` holds the helpers they source, `scripts/hooks/` the optional git hooks, `scripts/probes/` the harness probes that `run-probes` runs |
 | `data/` | Hand-written data on the marketplace: `marketplace.toml`, its namespace, description, owner, code owners team and roles ([ADR 17](docs/adr/0017-repository-data-and-state.md) item 7) |
 | `.claude-plugin/` | The marketplace catalogue `marketplace.json`, which `cech build` generates |
 | `checks/` | Public tiers of the term check; the private tier lives outside git |
@@ -59,7 +62,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | `test/` | bats suites for the scripts and tasks; a script change adds the cases, and the hand checks in the pull request, that [CONTRIBUTING.md](CONTRIBUTING.md#writing) asks for |
 | `mise.toml` | Exact tool pins and every task; the single entry point for the gates |
 | `mise.lock` | Downloads and checksums for each pin and platform, or only the version of a pin built from source, written by `mise lock` |
-| `.github/` | The CI workflow, the vulnerability check and harness probe workflows, issue forms, pull request template, and the code owners file that `cech build` generates |
+| `.github/` | The CI workflow, the approval diff, vulnerability check and harness probe workflows, issue forms, pull request template, and the code owners file that `cech build` generates |
 | `.rumdl.toml` | Markdown lint and format settings: sentence per line, no line limit |
 | `lychee.toml` | Link check settings |
 | `.shellcheckrc` | shellcheck settings for every shell file |
@@ -84,7 +87,7 @@ mise is the task runner: use `mise run …` rather than the tools it pins, and r
   After a change to `data/marketplace.toml` or a plugin, `mise run build:fix` rewrites the generated files; never edit them by hand.
 - **Markdown:** one sentence per line, never wrapped ([ADR 7](docs/adr/0007-markdown-source-format.md)).
 - **Commits:** follow [CONTRIBUTING.md](CONTRIBUTING.md#commits); `mise run commits` checks them.
-  Sign off with `git commit -s`, credit yourself with a `Co-authored-by:` trailer, and fold review fixes in with `git commit -s --fixup=<commit>` and `git rebase --autosquash origin/main`.
+  Sign off with `git commit -s`, credit yourself with a `Co-authored-by:` trailer, and fold review fixes in with `git commit -s --fixup=<commit>` and, after approval, `git rebase --autosquash origin/main`.
 - **Issue tracker:** GitHub issues on `TrialAndTemper/cech`, labelled as [CONTRIBUTING.md](CONTRIBUTING.md#issues) describes; questions go to Discussions.
 
 ## Self-update and layer growth

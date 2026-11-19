@@ -14,3 +14,4 @@ Where a page and the code disagree, the code and its tests are right, and the pa
 - [Generated files](generated-files.md): what `cech build` writes, and from what.
 - [The harness data file](harness-data.md): its entries, their keys, and how its probes are run.
 - [The term check](term-check.md): the `terms` gate's tiers, what it scans, its exceptions and its output.
+- [The approval diff comment](approval-diff.md): when an approval holds, the diff comment that shows what changed since a dismissed one, and its workflows.
