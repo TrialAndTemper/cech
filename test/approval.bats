@@ -8,7 +8,7 @@
 # repository, which serves as the remote: an approved head, then a
 # current head made from it, and checks the diff comment the script
 # writes. The names match the criteria in
-# changes/2026-11-16-approval-diff/spec.md.
+# changes/done/2026-11-16-approval-diff/spec.md.
 #
 # Requires: bats (version in mise.toml), git >= 2.40, and what
 # approval-diff requires.
