@@ -1,0 +1,444 @@
+#!/bin/sh
+# The approval diff comment (ADR 6 item 5): for each approval GitHub
+# dismissed, what changed between the approved commits and the pull
+# request's current head? CI runs it from .github/workflows/approval.yml;
+# docs/reference/approval-diff.md describes its input and output.
+# POSIX sh (ADR 5): it must run under dash, macOS sh and Git Bash, and
+# under BusyBox ash in the alpine image CI runs it in.
+#
+# Usage: scripts/approval-diff --remote URL --base SHA --head SHA
+#          --reviews FILE --dismissed-approvals FILE --comment DIR
+#
+#   --remote URL                where to fetch the commits from
+#   --base SHA                  the target branch's tip
+#   --head SHA                  the pull request's current head
+#   --reviews FILE              the pull request's reviews, oldest first,
+#                               one per line: login, state, commit SHA
+#                               and review id, split by tabs, with the
+#                               states GitHub's API gives
+#   --dismissed-approvals FILE  the ids of the dismissed reviews that
+#                               were approvals, one per line
+#   --comment DIR               write the comment to DIR/body.md, if
+#                               there is one
+#
+# GitHub gives every dismissed review the state DISMISSED, so the ids
+# tell a dismissed approval from a dismissed request for changes. A
+# reviewer whose latest approval, request for changes or dismissed
+# review is a dismissed approval gets a section in the comment. Their
+# approved head's own commits are replayed with `git rebase
+# --autosquash` onto the current head's merge base with the base, and
+# compared by `git range-diff` with the current head's, whose own
+# fixups are folded in the same way, so that a fixup's change shows in
+# the commit it fixes.
+# No dismissed approval, no comment.
+#
+# Only git reads the commits, in a new repository with no hooks, no
+# filters and no attributes from the commits, under no user or system
+# configuration, so nothing from the pull request runs.
+#
+# The output says how the comment was made.
+#
+# Requires: git >= 2.40 (GIT_ATTR_SOURCE, GIT_CONFIG_COUNT), the POSIX
+# awk, cmp, cut, paste, sed, sort and wc, and head -c, which GNU, BSD
+# and BusyBox head all have.
+#
+# Exit status: 0 the comment, if any, is written; 2 the script could not
+# run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+readonly ROOT
+# A failed `.` exits 1 in some shells; check first, so the script exits 2.
+[ -r "${ROOT}/scripts/lib/common.sh" ] || {
+  printf 'approval-diff: cannot read scripts/lib/common.sh\n' >&2
+  exit 2
+}
+# shellcheck source=lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+PROG=approval-diff
+readonly PROG
+
+# The empty tree, as GIT_ATTR_SOURCE: git then reads no .gitattributes
+# from the commits, so no merge driver or text conversion they name
+# changes the replay.
+readonly EMPTY_TREE=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+# GitHub's limit on a comment is 65536 characters; bytes are counted, so
+# the comment stays under it whatever it holds.
+readonly LIMIT=65000
+# shellcheck disable=SC2016 # the backticks are Markdown's
+readonly CUT='The comment is cut here: it was longer than GitHub allows. Run `git range-diff` to see the rest.'
+
+REMOTE='' BASE='' HEAD='' REVIEWS='' DISMISSED='' COMMENT=''
+# The scratch repository, the merge base, and the results the helpers
+# set, since a function called in a condition would turn set -e off.
+R='' MERGE_BASE='' FOLDED='' FETCHED='' REPLAYED='' SAME=''
+
+usage() {
+  cat << 'EOF'
+Usage: scripts/approval-diff --remote URL --base SHA --head SHA
+         --reviews FILE --dismissed-approvals FILE --comment DIR
+
+Writes DIR/body.md, showing what changed since each approval GitHub
+dismissed, when there is one.
+--reviews lines: login, state, commit SHA, review id, split by tabs,
+oldest first.
+--dismissed-approvals lines: the id of a dismissed review that was an
+approval.
+Exit status: 0 done, 2 the script could not run.
+EOF
+}
+
+# check_sha <option> <value>: stop unless the value is a full SHA-1 or
+# SHA-256 in lower case.
+check_sha() {
+  case "${#2}:$2" in
+    *:*[!0-9a-f]*) die "$1 is not a full SHA: $2" ;;
+    40:* | 64:*) ;;
+    *) die "$1 is not a full SHA: $2" ;;
+  esac
+}
+
+parse_args() {
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      --remote | --base | --head | --reviews | --dismissed-approvals | --comment)
+        [ "$#" -ge 2 ] || die "$1 needs a value"
+        case "$2" in
+          -*) die "$1 value must not start with -: $2" ;;
+          *) ;;
+        esac
+        case "$1" in
+          --remote) REMOTE=$2 ;;
+          --base) BASE=$2 ;;
+          --head) HEAD=$2 ;;
+          --reviews) REVIEWS=$2 ;;
+          --dismissed-approvals) DISMISSED=$2 ;;
+          *) COMMENT=$2 ;;
+        esac
+        shift 2
+        ;;
+      *)
+        usage >&2
+        die "unknown argument: $1"
+        ;;
+    esac
+  done
+  if [ -z "${REMOTE}" ] || [ -z "${BASE}" ] || [ -z "${HEAD}" ] ||
+    [ -z "${REVIEWS}" ] || [ -z "${DISMISSED}" ] || [ -z "${COMMENT}" ]; then
+    usage >&2
+    die "--remote, --base, --head, --reviews, --dismissed-approvals and --comment are required"
+  fi
+  check_sha --base "${BASE}"
+  check_sha --head "${HEAD}"
+  [ -r "${REVIEWS}" ] || die "cannot read reviews file: ${REVIEWS}"
+  [ -r "${DISMISSED}" ] || die "cannot read dismissed approvals file: ${DISMISSED}"
+  [ -d "${COMMENT}" ] || die "not a directory: ${COMMENT}"
+}
+
+# isolate_git: make every git command below read no user or system
+# configuration and no attributes from the commits, run no hooks, editor
+# or pager, and sign nothing, with a fixed identity for the commits the
+# replay makes. The variables that point git at another repository are
+# cleared.
+isolate_git() {
+  local vars v
+  vars=$(git rev-parse --local-env-vars) || die "cannot run git"
+  # shellcheck disable=SC2086 # one variable name per word
+  for v in ${vars}; do unset "${v}"; done
+  GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 GIT_ATTR_SOURCE=${EMPTY_TREE}
+  GIT_TERMINAL_PROMPT=0 GIT_EDITOR=true GIT_SEQUENCE_EDITOR=true GIT_PAGER=cat
+  GIT_CONFIG_COUNT=6
+  GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null
+  GIT_CONFIG_KEY_1=core.fsmonitor GIT_CONFIG_VALUE_1=false
+  GIT_CONFIG_KEY_2=user.name GIT_CONFIG_VALUE_2=approval-diff
+  GIT_CONFIG_KEY_3=user.email GIT_CONFIG_VALUE_3=approval-diff@invalid
+  GIT_CONFIG_KEY_4=commit.gpgsign GIT_CONFIG_VALUE_4=false
+  GIT_CONFIG_KEY_5=advice.detachedHead GIT_CONFIG_VALUE_5=false
+  export GIT_CONFIG_GLOBAL GIT_CONFIG_NOSYSTEM GIT_ATTR_SOURCE GIT_TERMINAL_PROMPT \
+    GIT_EDITOR GIT_SEQUENCE_EDITOR GIT_PAGER GIT_CONFIG_COUNT \
+    GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0 GIT_CONFIG_KEY_1 GIT_CONFIG_VALUE_1 \
+    GIT_CONFIG_KEY_2 GIT_CONFIG_VALUE_2 GIT_CONFIG_KEY_3 GIT_CONFIG_VALUE_3 \
+    GIT_CONFIG_KEY_4 GIT_CONFIG_VALUE_4 GIT_CONFIG_KEY_5 GIT_CONFIG_VALUE_5
+}
+
+# fetch <sha>: fetch one commit by its SHA; set FETCHED to yes, or to no
+# if the remote does not serve it.
+fetch() {
+  FETCHED=no
+  if git -C "${R}" fetch -q --no-tags --no-write-fetch-head -- "${REMOTE}" "$1" \
+    2> "${SCRATCH}/fetch.err" && git -C "${R}" cat-file -e "$1^{commit}" 2> /dev/null; then
+    FETCHED=yes
+  fi
+}
+
+# dismissed: print the dismissed approvals, newest first, one per line
+# as login and approved SHA, split by tabs. Only a reviewer's latest
+# approval, request for changes or dismissed review counts: a new
+# approval, a request for changes, or a dismissed one, ends the need to
+# show what changed. Logins are compared without case.
+dismissed() {
+  local tab
+  tab=$(printf '\t')
+  # Copies under fixed names, so FILENAME tells the files apart (an
+  # empty one has no FNR == 1) whatever the paths hold.
+  cp -- "${DISMISSED}" "${SCRATCH}/dismissed.ids" || die "cannot read the dismissed approvals"
+  cp -- "${REVIEWS}" "${SCRATCH}/reviews.tsv" || die "cannot read the reviews"
+  awk -F "${tab}" -v ids="${SCRATCH}/dismissed.ids" '
+    FILENAME == ids {
+      sub(/\r$/, "")
+      if ($1 != "") approval[$1] = 1
+      next
+    }
+    {
+      sub(/\r$/, "")
+      login = tolower($1)
+      if ($2 == "DISMISSED" && ($4 in approval)) { sha[login] = $3; when[login] = FNR; name[login] = $1 }
+      else if ($2 == "APPROVED" || $2 == "CHANGES_REQUESTED" || $2 == "DISMISSED") delete sha[login]
+    }
+    END {
+      # A missing SHA is printed as -, since read would merge two tabs.
+      for (l in sha) printf "%d\t%s\t%s\n", when[l], name[l], (sha[l] == "" ? "-" : sha[l])
+    }
+  ' "${SCRATCH}/dismissed.ids" "${SCRATCH}/reviews.tsv" > "${SCRATCH}/dismissed.raw" || die "cannot read the reviews"
+  sort -t "${tab}" -k1,1nr "${SCRATCH}/dismissed.raw" > "${SCRATCH}/dismissed.sorted" ||
+    die "cannot sort the reviews"
+  cut -f 2- "${SCRATCH}/dismissed.sorted" || die "cannot read the reviews"
+}
+
+# replay <sha> [<onto>]: replay a head's own commits, those the base
+# does not have, with their fixups folded in, onto the current head's
+# merge base or onto <onto>. Set REPLAYED to the result, or to nothing
+# on a conflict; stop on any other failure.
+replay() {
+  local state
+  REPLAYED=''
+  git -C "${R}" checkout -q --detach "$1" || die "cannot check out $1"
+  if git -C "${R}" rebase -q -i --autosquash --empty=drop --onto "${2:-${MERGE_BASE}}" "${BASE}" \
+    > "${SCRATCH}/rebase.log" 2>&1; then
+    REPLAYED=$(git -C "${R}" rev-parse HEAD) || die "cannot read the replay"
+    return 0
+  fi
+  # A conflict leaves the rebase stopped; any other failure does not.
+  state=$(git -C "${R}" rev-parse --git-path rebase-merge) || die "cannot read the replay"
+  case "${state}" in
+    /*) ;;
+    *) state="${R}/${state}" ;;
+  esac
+  [ -d "${state}" ] || die "cannot replay $1: $(cat "${SCRATCH}/rebase.log" || :)"
+  git -C "${R}" rebase --abort > /dev/null 2>&1 || die "cannot abort the replay of $1"
+}
+
+# same_commits <replayed head>: set SAME to yes if the replay's commits
+# match the folded current head's in number, order, tree and message,
+# else no.
+same_commits() {
+  local a ta b tb n m
+  SAME=no
+  git -C "${R}" log --reverse --format='%H %T' "${MERGE_BASE}..$1" > "${SCRATCH}/replay.list" ||
+    die "cannot list the replay"
+  git -C "${R}" log --reverse --format='%H %T' "${MERGE_BASE}..${FOLDED}" > "${SCRATCH}/head.list" ||
+    die "cannot list the head"
+  n=$(wc -l < "${SCRATCH}/replay.list")
+  m=$(wc -l < "${SCRATCH}/head.list")
+  [ "${n}" -eq "${m}" ] || return 0
+  paste -d ' ' "${SCRATCH}/replay.list" "${SCRATCH}/head.list" > "${SCRATCH}/pairs"
+  while read -r a ta b tb; do
+    [ "${ta}" = "${tb}" ] || return 0
+    git -C "${R}" cat-file commit "${a}" > "${SCRATCH}/a.raw" || die "cannot read ${a}"
+    git -C "${R}" cat-file commit "${b}" > "${SCRATCH}/b.raw" || die "cannot read ${b}"
+    sed '1,/^$/d' "${SCRATCH}/a.raw" > "${SCRATCH}/a.msg"
+    sed '1,/^$/d' "${SCRATCH}/b.raw" > "${SCRATCH}/b.msg"
+    cmp -s "${SCRATCH}/a.msg" "${SCRATCH}/b.msg" || return 0
+  done < "${SCRATCH}/pairs"
+  SAME=yes
+}
+
+# fence <file>: print a code fence longer than any run of backticks in
+# the file, and at least three long.
+fence() {
+  awk '
+    {
+      line = $0
+      while (match(line, /`+/)) {
+        if (RLENGTH > max) max = RLENGTH
+        line = substr(line, RSTART + RLENGTH)
+      }
+    }
+    END {
+      n = (max >= 3 ? max + 1 : 3)
+      s = ""
+      for (i = 0; i < n; i++) s = s "`"
+      print s
+    }
+  ' "$1"
+}
+
+# section <n> <login> <approved sha>: write the section for dismissed
+# approval n to SCRATCH/section.n, and its range-diff, if any, to
+# SCRATCH/section.n.diff.
+section() {
+  local n login sha short head_short from how
+  n=$1 login=$2 sha=$3
+  short=$(printf '%.12s' "${sha}")
+  head_short=$(printf '%.12s' "${HEAD}")
+  replay "${sha}"
+  if [ -n "${REPLAYED}" ]; then
+    same_commits "${REPLAYED}"
+    if [ "${SAME}" = yes ]; then
+      printf '<details>\n<summary>@%s approved %s; the head is now %s</summary>\n\n%s\n\n</details>\n' \
+        "${login}" "${short}" "${head_short}" \
+        "Replayed onto the current base, the approved commits match the current head's, its fixups folded in: nothing changed." \
+        > "${SCRATCH}/section.${n}"
+      return 0
+    fi
+    from=${MERGE_BASE}
+    how="replayed onto the current base"
+    sha=${REPLAYED}
+  else
+    # On their own base, so only the fixups among themselves can conflict.
+    from=$(git -C "${R}" merge-base "${sha}" "${BASE}") || die "no merge base for ${sha}"
+    how="as approved, since they do not replay cleanly"
+    replay "${sha}" "${from}"
+    if [ -n "${REPLAYED}" ]; then
+      sha=${REPLAYED}
+      how="as approved with their fixups folded in, since they conflict with the current base"
+    fi
+  fi
+  # GitHub colours a diff block by each line's first character: each
+  # commit's header becomes a hunk header, and the patch lines lose their
+  # four spaces of indent, so the range-diff's own - or + comes first.
+  git -C "${R}" range-diff --no-color --creation-factor=100 "${from}..${sha}" \
+    "${MERGE_BASE}..${FOLDED}" > "${SCRATCH}/range.diff" || die "git range-diff failed"
+  sed -e 's/^\([0-9-][0-9]*: .*\)$/@@ \1 @@/' -e 's/^    //' "${SCRATCH}/range.diff" \
+    > "${SCRATCH}/section.${n}.diff" || die "cannot rewrite the range-diff"
+  # shellcheck disable=SC2016 # the backticks are Markdown's
+  printf '<details>\n<summary>@%s approved %s; the head is now %s</summary>\n\nThe approved commits, %s, compared by `git range-diff` with the current head, its fixups folded in: red lines are from the approved commits, green lines from the current head.\n\n' \
+    "${login}" "${short}" "${head_short}" "${how}" > "${SCRATCH}/section.${n}"
+}
+
+# gone <n> <login> <approved sha>: write the section for dismissed
+# approval n, whose approved head GitHub no longer serves.
+gone() {
+  local what
+  what="The approved head was $3"
+  if [ "$3" = - ]; then what="GitHub gave no commit for the approval"; fi
+  printf '<details>\n<summary>@%s approved a commit GitHub no longer serves</summary>\n\n%s, so this comment cannot show what changed since.\n\n</details>\n' \
+    "$2" "${what}" > "${SCRATCH}/section.$1"
+}
+
+# write_comment <dir>: join the sections into dir/body.md, cut to fit
+# GitHub's limit.
+write_comment() {
+  local body n size room diff fence_ len keep tag
+  body="$1/body.md"
+  {
+    printf '<!-- approval-diff head=%s -->\n### What changed since the approval\n\n' "${HEAD}"
+    printf 'These approvals were dismissed, so the pull request needs a new one.\n'
+    printf 'Each section shows what changed between the approved commits and the current head.\n\n'
+  } > "${body}"
+  n=1
+  while [ -f "${SCRATCH}/section.${n}" ]; do
+    size=$(wc -c < "${body}")
+    # Room for the section's diff, after its heading, the fences, the cut
+    # note and a margin.
+    room=$((LIMIT - size - 600))
+    if [ "${room}" -le 0 ]; then
+      printf '%s\n' "${CUT}" >> "${body}"
+      return 0
+    fi
+    # The newest section opens by default; the rest stay collapsed.
+    tag='<details>'
+    if [ "${n}" -eq 1 ]; then tag='<details open>'; fi
+    diff="${SCRATCH}/section.${n}.diff"
+    if [ ! -f "${diff}" ]; then
+      { sed "1s/^<details>\$/${tag}/" "${SCRATCH}/section.${n}" && printf '\n'; } >> "${body}"
+      n=$((n + 1))
+      continue
+    fi
+    fence_=$(fence "${diff}")
+    len=$(wc -c < "${diff}")
+    keep=$((room - ${#fence_} * 2 - 4))
+    if [ "${keep}" -le 0 ]; then
+      printf '%s\n' "${CUT}" >> "${body}"
+      return 0
+    fi
+    {
+      sed "1s/^<details>\$/${tag}/" "${SCRATCH}/section.${n}"
+      printf '%sdiff\n' "${fence_}"
+      if [ "${len}" -gt "${keep}" ]; then
+        # Cut at a line end, so no character is split.
+        head -c "${keep}" "${diff}" | sed '$d'
+        printf '%s\n\n</details>\n\n%s\n' "${fence_}" "${CUT}"
+      else
+        cat -- "${diff}"
+        printf '%s\n\n</details>\n\n' "${fence_}"
+      fi
+    } >> "${body}"
+    [ "${len}" -le "${keep}" ] || return 0
+    n=$((n + 1))
+  done
+}
+
+main() {
+  local version tab login sha n
+  parse_args "$@"
+  make_scratch
+  isolate_git
+
+  R="${SCRATCH}/repo"
+  mkdir -- "${R}" || die "cannot create a repository"
+  git -C "${R}" init -q --template= || die "cannot create a repository"
+  version=$(git version) || die "cannot run git"
+
+  fetch "${BASE}"
+  [ "${FETCHED}" = yes ] || die "cannot fetch the base ${BASE}: $(cat "${SCRATCH}/fetch.err" || :)"
+  fetch "${HEAD}"
+  [ "${FETCHED}" = yes ] || die "cannot fetch the head ${HEAD}: $(cat "${SCRATCH}/fetch.err" || :)"
+  MERGE_BASE=$(git -C "${R}" merge-base "${HEAD}" "${BASE}") ||
+    die "the head ${HEAD} shares no history with the base ${BASE}"
+  readonly MERGE_BASE
+  # The current head with its fixups folded in, or as it is if they do
+  # not fold cleanly.
+  FOLDED=${HEAD}
+  replay "${HEAD}"
+  if [ -n "${REPLAYED}" ]; then FOLDED=${REPLAYED}; fi
+  readonly FOLDED
+
+  printf '%s\nbase %s, head %s, merge base %s\n' "${version}" "${BASE}" "${HEAD}" "${MERGE_BASE}"
+  printf 'head with its fixups folded in %s\n' "${FOLDED}"
+  dismissed > "${SCRATCH}/dismissed"
+
+  tab=$(printf '\t')
+  n=0
+  # The file is read on descriptor 3, so no command in the loop can read
+  # its lines.
+  while IFS="${tab}" read -r login sha <&3; do
+    n=$((n + 1))
+    printf 'dismissed approval of %s, by %s\n' "${sha}" "${login}"
+    # A missing or malformed SHA counts as an approved head that is gone.
+    case "${#sha}:${sha}" in
+      *:*[!0-9a-f]*) FETCHED=no ;;
+      40:* | 64:*) fetch "${sha}" ;;
+      *) FETCHED=no ;;
+    esac
+    if [ "${FETCHED}" = yes ]; then
+      section "${n}" "${login}" "${sha}"
+    else
+      gone "${n}" "${login}" "${sha}"
+    fi
+  done 3< "${SCRATCH}/dismissed"
+
+  if [ "${n}" -eq 0 ]; then
+    printf 'no dismissed approval, so no comment\n'
+    return 0
+  fi
+  write_comment "${COMMENT}"
+  printf 'comment written for %s dismissed approval(s)\n' "${n}"
+}
+
+main "$@"

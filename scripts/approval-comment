@@ -1,0 +1,212 @@
+#!/bin/sh
+# Posts the approval diff comment (ADR 6 item 5) on a pull request.
+# .github/workflows/approval.yml runs it from main's checkout, with
+# GH_TOKEN set to the workflow's token for gh;
+# docs/reference/approval-diff.md describes the diff comment.
+# POSIX sh (ADR 5): it must run under dash, macOS sh and Git Bash, but
+# in practice it runs only in CI.
+#
+# Usage: scripts/approval-comment --repo OWNER/NAME --run ID --head SHA
+#          --head-repo OWNER/NAME --image IMAGE --server URL
+#
+#   --repo OWNER/NAME       the repository the pull request is in
+#   --run ID                the relay run, whose artifact holds the
+#                           pull request number; digits only
+#   --head SHA              the head commit the relay ran for
+#   --head-repo OWNER/NAME  the repository that head came from
+#   --image IMAGE           the container image, pinned by digest, that
+#                           scripts/approval-diff runs in
+#   --server URL            the GitHub server, such as
+#                           https://github.com
+#
+# It checks the relay's number against the pull request, reads its
+# reviews and which dismissed reviews were approvals, runs
+# scripts/approval-diff in the image, where only git reads the pull
+# request's commits, and posts what it writes. Each diff comment is a
+# snapshot for one head: it posts a new one, never edits one, and
+# hides the older ones as outdated, also once no dismissed approval is
+# left.
+#
+# Requires: gh, jq and docker.
+#
+# Exit status: 0 done, or nothing to do; 2 the script could not run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+readonly ROOT
+# A failed `.` exits 1 in some shells; check first, so the script exits 2.
+[ -r "${ROOT}/scripts/lib/common.sh" ] || {
+  printf 'approval-comment: cannot read scripts/lib/common.sh\n' >&2
+  exit 2
+}
+# shellcheck source=lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+PROG=approval-comment
+readonly PROG
+
+readonly MARKER='<!-- approval-diff head='
+
+REPO='' RUN='' HEAD='' HEAD_REPO='' IMAGE='' SERVER=''
+
+usage() {
+  cat << 'EOF'
+Usage: scripts/approval-comment --repo OWNER/NAME --run ID --head SHA
+         --head-repo OWNER/NAME --image IMAGE --server URL
+
+Posts the approval diff comment on the pull request the relay run saved.
+Exit status: 0 done, or nothing to do; 2 the script could not run.
+EOF
+}
+
+parse_args() {
+  local digest
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      --repo | --run | --head | --head-repo | --image | --server)
+        [ "$#" -ge 2 ] || die "$1 needs a value"
+        case "$2" in
+          -*) die "$1 value must not start with -: $2" ;;
+          *) ;;
+        esac
+        case "$1" in
+          --repo) REPO=$2 ;;
+          --run) RUN=$2 ;;
+          --head) HEAD=$2 ;;
+          --head-repo) HEAD_REPO=$2 ;;
+          --image) IMAGE=$2 ;;
+          *) SERVER=$2 ;;
+        esac
+        shift 2
+        ;;
+      *)
+        usage >&2
+        die "unknown argument: $1"
+        ;;
+    esac
+  done
+  if [ -z "${REPO}" ] || [ -z "${RUN}" ] || [ -z "${HEAD}" ] ||
+    [ -z "${HEAD_REPO}" ] || [ -z "${IMAGE}" ] || [ -z "${SERVER}" ]; then
+    usage >&2
+    die "--repo, --run, --head, --head-repo, --image and --server are required"
+  fi
+  case "${RUN}" in
+    *[!0-9]*) die "--run is not a run id: ${RUN}" ;;
+    *) ;;
+  esac
+  # The image's packages are trusted only at the digest pinned on main.
+  case "${IMAGE}" in
+    *@sha256:*) ;;
+    *) die "--image is not pinned by digest: ${IMAGE}" ;;
+  esac
+  digest=${IMAGE##*@sha256:}
+  case "${#digest}:${digest}" in
+    *:*[!0-9a-f]*) die "--image is not pinned by digest: ${IMAGE}" ;;
+    64:*) ;;
+    *) die "--image is not pinned by digest: ${IMAGE}" ;;
+  esac
+}
+
+# hide <node id>: hide one comment as outdated; a failure is reported
+# but does not stop the script, since a visible old comment does no
+# harm.
+hide() {
+  # shellcheck disable=SC2016 # GraphQL variables, not shell
+  gh api graphql -f id="$1" \
+    -f query='mutation($id: ID!) { minimizeComment(input: { subjectId: $id, classifier: OUTDATED }) { minimizedComment { isMinimized } } }' \
+    > /dev/null || printf '%s: could not hide comment %s\n' "${PROG}" "$1" >&2
+}
+
+main() {
+  local number pr_head pr_repo base_ref state base node found tab this keep
+  parse_args "$@"
+  make_scratch
+  mkdir -- "${SCRATCH}/comment" || die "cannot create a directory"
+
+  gh run download "${RUN}" -R "${REPO}" -n approval-relay -D "${SCRATCH}/relay" ||
+    die "cannot download the relay's artifact"
+  number=$(head -n 1 "${SCRATCH}/relay/number") || die "the relay saved no pull request number"
+  case "${number}" in
+    '' | *[!0-9]*) die "the relay saved no pull request number" ;;
+    *) ;;
+  esac
+
+  # The relay ran the pull request's own copy of its workflow, so only
+  # the number is taken from it, and only for the head it ran for.
+  gh api "repos/${REPO}/pulls/${number}" > "${SCRATCH}/pr.json" ||
+    die "cannot read pull request ${number}"
+  pr_head=$(jq -r .head.sha "${SCRATCH}/pr.json") || die "cannot read pull request ${number}"
+  pr_repo=$(jq -r .head.repo.full_name "${SCRATCH}/pr.json") || die "cannot read pull request ${number}"
+  base_ref=$(jq -r .base.ref "${SCRATCH}/pr.json") || die "cannot read pull request ${number}"
+  state=$(jq -r .state "${SCRATCH}/pr.json") || die "cannot read pull request ${number}"
+  if [ "${pr_head}" != "${HEAD}" ] || [ "${pr_repo}" != "${HEAD_REPO}" ]; then
+    printf 'pull request %s moved on to %s, or its head is not the relay'"'"'s; its own run comments\n' \
+      "${number}" "${pr_head}"
+    return 0
+  fi
+  if [ "${base_ref}" != main ] || [ "${state}" != open ]; then
+    printf 'pull request %s is closed or does not target main\n' "${number}"
+    return 0
+  fi
+
+  # A dismissed review's state is DISMISSED whatever it was; the
+  # timeline says which ones were approvals, and approval-diff joins
+  # the two.
+  # shellcheck disable=SC2016 # GraphQL variables, not shell
+  gh api graphql --paginate -F owner="${REPO%%/*}" -F name="${REPO#*/}" -F number="${number}" \
+    -f query='query($owner: String!, $name: String!, $number: Int!, $endCursor: String) {
+      repository(owner: $owner, name: $name) { pullRequest(number: $number) {
+        timelineItems(itemTypes: [REVIEW_DISMISSED_EVENT], first: 100, after: $endCursor) {
+          pageInfo { hasNextPage endCursor }
+          nodes { ... on ReviewDismissedEvent { previousReviewState review { databaseId } } }
+        } } } }' \
+    --jq '.data.repository.pullRequest.timelineItems.nodes[] | select(.previousReviewState == "APPROVED") | .review.databaseId // empty' \
+    > "${SCRATCH}/dismissed-approvals" || die "cannot read the dismissed reviews"
+  gh api --paginate "repos/${REPO}/pulls/${number}/reviews" \
+    --jq '.[] | [.user.login, .state, .commit_id // "", .id] | @tsv' \
+    > "${SCRATCH}/reviews" || die "cannot read the reviews"
+  base=$(gh api "repos/${REPO}/git/ref/heads/main" --jq .object.sha) || die "cannot read main"
+
+  # Only git, from the image's signed packages, reads the pull
+  # request's commits.
+  docker run --rm --network bridge \
+    -v "${ROOT}:/src:ro" -v "${SCRATCH}:/work" \
+    "${IMAGE}" sh -c 'apk add --no-cache -q git > /dev/null || exit 2; exec /src/scripts/approval-diff "$@"' sh \
+    --remote "${SERVER}/${REPO}.git" --base "${base}" --head "${HEAD}" \
+    --reviews /work/reviews --dismissed-approvals /work/dismissed-approvals \
+    --comment /work/comment || die "scripts/approval-diff failed"
+
+  gh api --paginate "repos/${REPO}/issues/${number}/comments" \
+    --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("'"${MARKER}"'"))) | [.node_id, (.body | split("\n")[0])] | @tsv' \
+    > "${SCRATCH}/ours" || die "cannot read the comments"
+  tab=$(printf '\t')
+  this="${MARKER}${HEAD} -->"
+  found=$(awk -F "${tab}" -v this="${this}" '$2 == this { f = 1 } END { print (f ? "yes" : "no") }' \
+    "${SCRATCH}/ours") || die "cannot read the comments"
+  # While an approval is dismissed, the diff comment for this head stays
+  # and every other one is hidden; once no approval is dismissed, every
+  # one is hidden.
+  keep=''
+  if [ -s "${SCRATCH}/comment/body.md" ]; then keep=${this}; fi
+  awk -F "${tab}" -v keep="${keep}" '$2 != keep { print $1 }' \
+    "${SCRATCH}/ours" > "${SCRATCH}/older" || die "cannot read the comments"
+  if [ -s "${SCRATCH}/comment/body.md" ]; then
+    if [ "${found}" = yes ]; then
+      printf 'pull request %s already has a diff comment for %s\n' "${number}" "${HEAD}"
+    else
+      gh api -X POST "repos/${REPO}/issues/${number}/comments" \
+        -F body=@"${SCRATCH}/comment/body.md" > /dev/null || die "cannot post the diff comment"
+      printf 'posted a diff comment for %s\n' "${HEAD}"
+    fi
+  fi
+  # Read on descriptor 3, so gh cannot read the list.
+  while read -r node <&3; do
+    hide "${node}"
+  done 3< "${SCRATCH}/older"
+}
+
+main "$@"

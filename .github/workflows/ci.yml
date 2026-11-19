@@ -129,6 +129,28 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: mise run --continue-on-error --output prefix check:os
 
+  # In CI, scripts/approval-diff runs only in the alpine image of
+  # .github/workflows/approval.yml, under BusyBox, so its suite runs
+  # there too, with git and bats from that Alpine release, not the
+  # bats pinned in mise.toml (ADR 6 item 5). It is not a gate task, so
+  # mise run check leaves it out. Keep the image in step with that
+  # file.
+  approval-alpine:
+    name: approval suite (alpine)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: approval suite
+        env:
+          IMAGE: docker.io/library/alpine@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf # 3.24
+        run: |
+          docker run --rm -v "${GITHUB_WORKSPACE}:/src:ro" "${IMAGE}" \
+            sh -c 'apk add --no-cache -q git bash bats > /dev/null && cp -R /src /tmp/src && cd /tmp/src && bats test/approval.bats'
+
   # The private term tier (ADR 4), in its own job so that no other job
   # sees the secret. The secret lives in the private-terms environment,
   # which holds each run until a maintainer approves it: a pull request's

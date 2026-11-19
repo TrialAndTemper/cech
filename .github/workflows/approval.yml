@@ -1,0 +1,61 @@
+# The second half of the approval diff comment (ADR 6 item 5, ADR 5 item
+# 6). GitHub runs a workflow_run workflow from the default branch, so
+# this file and the script it runs are always main's, whatever a pull
+# request changes. It reads the pull request whose number
+# .github/workflows/approval-relay.yml saved, runs scripts/approval-diff
+# on it in a container where only git touches the pull request's
+# commits, and, when GitHub has dismissed an approval, posts the diff
+# comment showing what changed since. It posts no status, so it never
+# blocks a merge. docs/reference/approval-diff.md describes the diff
+# comment.
+name: approval
+
+on:
+  # zizmor flags workflow_run as dangerous: this job gets a write token
+  # and starts after the pull request's own copy of the relay workflow,
+  # approval-relay.yml. Here the job checks out and runs only main's
+  # code. From the relay it takes only the pull request number the relay
+  # saved as an artifact, and uses it only after checking that the pull
+  # request's head is the same commit, from the same repository, as the
+  # one the relay ran for.
+  workflow_run: # zizmor: ignore[dangerous-triggers]
+    workflows: [approval relay]
+    types: [completed]
+
+permissions: {}
+
+# One run at a time per branch, so two runs do not post the same comment.
+concurrency:
+  group: approval-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+jobs:
+  post:
+    name: post
+    # A cancelled relay run was replaced by a newer one, which comments.
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      actions: read # download the relay's artifact
+      contents: read # check out main
+      pull-requests: write # read reviews, post and hide comments
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+      # The official alpine image; apk installs git from that release's
+      # signed packages, and the script prints git's version.
+      IMAGE: docker.io/library/alpine@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf # 3.24
+    steps:
+      # main's code: the scripts.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: comment
+        run: |
+          scripts/approval-comment --repo "${GITHUB_REPOSITORY}" --run "${RUN_ID}" \
+            --head "${HEAD_SHA}" --head-repo "${HEAD_REPO}" --image "${IMAGE}" \
+            --server "${GITHUB_SERVER_URL}"
