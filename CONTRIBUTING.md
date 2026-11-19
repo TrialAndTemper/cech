@@ -237,7 +237,10 @@ A vulnerability report itself goes through [SECURITY.md](SECURITY.md), not an is
   The commit gate fails while any `fixup!`, `squash!` or `amend!` commit remains.
 - Folding the fixups in, or rebasing with no conflict, keeps the approval: GitHub's rule for stale approvals decides ([how](docs/reference/approval-diff.md)).
   A change made while folding, such as a resolved conflict, makes GitHub dismiss the approval, and the approval diff comment on the pull request then shows the reviewer what changed since they approved.
-- Pull requests are merged by rebase only, so `main` keeps your commits as they are, in a straight line.
+- A maintainer adds the pull request to the merge queue.
+  The queue runs the gates on the latest `main`, then merges by rebase, so `main` keeps your commits in a straight line.
+  A branch needs a rebase only for a real conflict.
+- A reviewer who withdraws an approval while the pull request waits in the queue also removes it from the queue.
 
 ## Keep CECH vendor-neutral
 
@@ -267,8 +270,17 @@ Being named a plugin's owner or maintainer ([ADR 13](docs/adr/0013-attribution.m
 Code owners get review requests for their plugins, and a code owner's approval is required to merge.
 
 Two rulesets guard `main`.
-The gate ruleset holds the gates and branch rules, and nobody bypasses it; to repair `main` or a gate, an organisation owner may lift it for that change and opens an issue saying what was done and why.
-The review ruleset requires the code owner's approval and dismisses stale approvals; while the maintainers team has one member, they bypass it on their own pull requests ([ADR 5](docs/adr/0005-gates-and-tool-pins.md) item 3).
+The gate ruleset holds the gates, the branch rules and the merge queue, and nobody bypasses it; to repair `main` or a gate, an organisation owner may lift it for that change and opens an issue saying what was done and why.
+The review ruleset requires the code owner's approval and dismisses stale approvals.
+The maintainers team is exempt from it, so a maintainer can queue their own pull request without review ([ADR 5](docs/adr/0005-gates-and-tool-pins.md) item 3).
+To queue one:
+
+```sh
+gh api graphql -f query='mutation($id:ID!){enqueuePullRequest(input:{pullRequestId:$id}){mergeQueueEntry{state}}}' \
+  -f id="$(gh pr view <number> --json id -q .id)"
+```
+
+`gh pr merge` does not queue a pull request while auto-merge is off.
 
 CI reads the private list from the secret `PRIVATE_TERMS` in the `private-terms` environment, one regular expression per line.
 The `private terms` job uses it on pushes to `main` and on pull requests from branches in this repository, and there an empty or missing secret fails the run.

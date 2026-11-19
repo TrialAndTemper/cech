@@ -29,12 +29,12 @@ Probed with mise 2026.10.3 on 2026-10-19:
    Each gate is a mise task, and one task runs them all, so contributors and CI run the same thing.
    Gate scripts are POSIX sh, so on Windows they run under Git Bash.
 2. **CI is the authority.**
-   CI runs the gate tasks on every pull request and push to `main`, on Linux, macOS and Windows, so a new gate needs no workflow change.
+   CI runs the gate tasks on every pull request, merge queue entry and push to `main`, on Linux, macOS and Windows, so a new gate needs no workflow change.
    A ruleset on `main` requires the gates to pass before merge.
    A gate that needs a secret, such as the private term tier ([ADR 4](0004-vendor-neutrality.md)), is required only where the secret reaches, and is skipped locally without it.
    A rule CI cannot check is guidance in the contributing guide, not described as enforced.
 3. **Bypass.**
-   Review may be bypassed while CECH has one maintainer, and the gates only to repair `main` or a gate, with an issue saying why.
+   The maintainers team is exempt from review ([ADR 6](0006-change-record.md)), and the gates are bypassed only to repair `main` or a gate, with an issue saying why.
 4. **Hooks are a convenience.**
    Optional git hooks run some of the gates before a commit; no rule exists only in a hook.
 5. **The gates.**
