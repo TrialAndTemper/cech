@@ -78,3 +78,22 @@ For copies made with a skill installer from a private source:
 
 - do not share them through a skills.sh pack: its docs call a pack "unlisted, not access-controlled", so anyone with its link can install it;
 - set `DISABLE_TELEMETRY=1` for every `npx skills` command, which otherwise can send source and skill names (checked in `skills` 1.7.4).
+
+## Measuring CECH's skills
+
+No CECH plugin, skill, hook or command sends telemetry ([ADR 8](../adr/0008-a-marketplace-you-extend-not-fork.md) item 5).
+An organisation can measure CECH's skills, or an extension's, in its own harness telemetry, sent to an endpoint it chooses.
+What follows was checked on 2026-11-18 against the [Claude Code monitoring docs](https://code.claude.com/docs/en/monitoring-usage) and the [Codex advanced config docs](https://learn.chatgpt.com/docs/config-file/config-advanced).
+
+### Claude Code
+
+- Telemetry is on with `CLAUDE_CODE_ENABLE_TELEMETRY=1` and an exporter, such as `OTEL_LOGS_EXPORTER=otlp` and `OTEL_METRICS_EXPORTER=otlp` with the `OTEL_EXPORTER_OTLP_*` endpoint settings.
+- `OTEL_LOG_TOOL_DETAILS=1` shows CECH's skills and plugins by name, and every other tool's and plugin's too; without it, a third-party skill is logged as `custom_skill` on `claude_code.skill_activated` and as `third-party` on the token and cost metrics, and a third-party plugin as `third-party`.
+- The `claude_code.skill_activated` event names the skill in `skill.name`, and `claude_code.plugin_loaded` names the plugin, its marketplace and, with `OTEL_LOG_TOOL_DETAILS=1`, its version.
+- The token and cost metrics carry `skill.name` and `plugin.name`, so use can be grouped by CECH skill.
+- A CECH plugin's version is its catalogue release ([Release builds](#release-builds)), so `plugin.version` ties a change in a metric to a release.
+
+### Codex
+
+- Telemetry is on with an `[otel]` table in `config.toml` that names an exporter, `otlp-http` or `otlp-grpc`.
+- The `skill.injected` metric counts the skills Codex adds to a run, by skill and status; Codex logs no event per skill load and no skill version.
