@@ -1,6 +1,6 @@
 # Research for eval runs: telemetry, run counts and eval tools
 
-Findings for the change that builds `cech eval`'s runs ([ADR 25](../../docs/adr/0025-evals.md) item 6) and the release check.
+Findings for the change that builds `cech eval`'s runs ([ADR 25](../../docs/adr/0025-evals.md) item 6) and the release check ([ADR 26](../../docs/adr/0026-the-release-check.md)).
 Each was checked on 2026-11-18 against the source it links, unless it says otherwise.
 The notes for the runner in [the evals brief](../done/2026-10-29-evals/brief.md) still hold.
 
@@ -62,3 +62,22 @@ What telemetry can give CECH is measurement of its own runs: with OpenTelemetry 
   `benchmark` runs scenarios through `codex exec` with shell-command checks, but has no arm without the plugin, no routing and no repeated runs, and keeps each run's log without grading it again; `compare` diffs two scores.
   mise cannot pin it to an exact version (ADR 5 item 8), and its checks are partly its authors' advice and partly Claude Code's frontmatter keys, none of them probed against Codex (ADR 9 item 3), so CECH does not use it.
   Its offline checks of a skill's structure suit `cech validate`, for both harnesses, each Codex rule backed by a probe; its shell checks resemble the script grader of ADR 25 item 4, but run live in the run's folder, not offline against recordings.
+
+## Questions and decisions
+
+Each question was put to a person with a recommendation, and decided on 2026-11-18 unless it says otherwise.
+
+1. Should runs record tokens, cost, time and retries from the harnesses' telemetry?
+   Decided: yes, in the run results only, never in recordings, which keep what graders read ([ADR 26](../../docs/adr/0026-the-release-check.md) item 6, [spec](spec.md) criterion 12).
+2. Should a release that changes a skill also run the last released version as a third arm?
+   Decided, with question 3: yes, and gated, so a skill does not get worse unnoticed ([ADR 26](../../docs/adr/0026-the-release-check.md) items 2 and 3, [spec](spec.md) criterion 8).
+3. Should critical content cases run more than three times, with clustered intervals and pass^k in the report?
+   Decided, with question 2: runs start at five per arm and grow, up to a cap, until a sequential probability ratio test tells no difference from a difference of at least the threshold; the threshold, confidence, cap and budget are set in the runner's spec from measured cost ([ADR 26](../../docs/adr/0026-the-release-check.md) items 4 and 5, [spec](spec.md) criteria 1 to 10); pass^k is left out of the report.
+4. Should a grader be able to run a script on the files a run wrote, for formats such as `.docx`?
+   Decided: yes, checked offline against the recordings like any other grader ([ADR 25](../../docs/adr/0025-evals.md) item 4); it is built with the first plugin that writes such files.
+5. Should CECH ship anything that sends telemetry to CECH?
+   Decided: no, nothing is sent automatically ([ADR 8](../../docs/adr/0008-a-marketplace-you-extend-not-fork.md) item 5), and question 7 covers summaries shared by hand; the marketplace reference says how an organisation measures CECH's skills in its own telemetry.
+6. Should the report show what each skill's description costs, since every session loads it?
+   Decided on 2026-11-20: yes, as a size and as the input tokens its plugin adds, measured from the runs, not a gate ([spec](spec.md) criteria 11, 13 and 14); the offline checks of a skill's structure that Plugin Eval suggests go to `cech validate`, not to this change.
+7. Should organisations be able to opt in to sharing telemetry, so CECH gains data on its skills' use?
+   Decided on 2026-11-20: yes, as a summary that `cech` makes from the organisation's own export, with counts and medians per skill and version and no IDs, prompts or paths, which the organisation reads and submits by hand; nothing is sent automatically ([ADR 8](../../docs/adr/0008-a-marketplace-you-extend-not-fork.md) item 7); the command and an issue form for summaries are a later change, not this one.
