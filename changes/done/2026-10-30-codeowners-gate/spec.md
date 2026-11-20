@@ -1,6 +1,8 @@
 # Code owners gate
 
-A gate, `scripts/check-codeowners`, run as `mise run lint:codeowners` and so by `mise run check:os`, fails on the code owners errors that GitHub reports, such as an owner without write access; [CONTRIBUTING.md](../../CONTRIBUTING.md#for-maintainers) says what happens then.
+Implemented 2026-11-20; not maintained: the code and its tests are current.
+
+A gate, `scripts/check-codeowners`, run as `mise run lint:codeowners` and so by `mise run check:os`, fails on the code owners errors that GitHub reports, such as an owner without write access; [CONTRIBUTING.md](../../../CONTRIBUTING.md#for-maintainers) says what happens then.
 GitHub answers a public repository without a token too, but the gate uses one, which raises the rate limit on shared runners and reads a private repository, so it follows ADR 5's rule for gates that need a secret.
 [Issue #32](https://github.com/TrialAndTemper/cech/issues/32) asks for it.
 
