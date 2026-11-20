@@ -1,0 +1,183 @@
+#!/bin/sh
+# Code owners gate (ADR 13), run as `mise run lint:codeowners`: fails
+# when GitHub reports errors in the code owners file of the commit under
+# test, such as an owner without write access; CONTRIBUTING.md (For
+# maintainers) says what happens then. POSIX sh (ADR 5): it must run
+# under dash, macOS sh and Git Bash.
+#
+# Only GitHub knows who has write access, so the gate asks its API for
+# the errors in commit GITHUB_SHA of GITHUB_REPOSITORY, with
+# GITHUB_TOKEN. GitHub Actions sets GITHUB_REPOSITORY and GITHUB_SHA, and
+# CI's check step passes the job's token as GITHUB_TOKEN; GITHUB_SHA is
+# the commit CI checks out, which in a pull request is its merge commit
+# and in the merge queue the queue's. GitHub answers for a public
+# repository without a token too, but a token raises the rate limit on
+# shared runners and reads a private repository. The gate needs a
+# token, so it follows ADR 5's rule for gates that need a secret: it
+# runs wherever the token reaches and is skipped without it. The job's
+# token is not a repository secret, and fork pull requests and the merge
+# queue get it too, read-only, so the gate runs on every CI run, where
+# a missing or empty variable is an error (GITHUB_ACTIONS=true).
+# Elsewhere it is skipped unless all three are set, as for a run by hand
+# against a pushed commit.
+#
+# GitHub reads the first of .github/CODEOWNERS, CODEOWNERS and
+# docs/CODEOWNERS that exists. When the commit has none, the gate passes
+# without asking: GitHub would answer 404, as it does for a repository
+# the token cannot read. When it has one, every answer but a 200 with a
+# list of errors stops the gate, and each error is a finding.
+#
+# Usage: mise run lint:codeowners
+#
+# Requires: git, curl, and jq (pinned in mise.toml; `mise run` puts it
+# on PATH). GITHUB_API_URL, which Actions sets, defaults to
+# https://api.github.com.
+#
+# Exit status: 0 clean or skipped, 1 findings, 2 the check could not run.
+
+set -eu
+
+ROOT=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+readonly ROOT
+# A failed `.` exits 1 in some shells; 1 means findings, so check first.
+[ -r "${ROOT}/scripts/lib/common.sh" ] || {
+  printf 'codeowners: cannot read scripts/lib/common.sh\n' >&2
+  exit 2
+}
+# shellcheck source=lib/common.sh
+. "${ROOT}/scripts/lib/common.sh"
+PROG=codeowners
+readonly PROG
+
+usage() {
+  cat << 'EOF'
+Usage: mise run lint:codeowners (scripts/check-codeowners)
+
+Fails when GitHub reports errors in the code owners file of commit
+GITHUB_SHA in GITHUB_REPOSITORY, read with GITHUB_TOKEN. Skipped
+outside GitHub Actions unless all three are set.
+
+Exit status: 0 clean or skipped, 1 findings, 2 the check could not run.
+EOF
+}
+
+main() {
+  local api sha repo file f status n nl cr
+
+  if [ "$#" -gt 0 ]; then
+    case "$1" in
+      -h | --help)
+        [ "$#" -eq 1 ] || {
+          usage >&2
+          die "unexpected argument: $2"
+        }
+        usage
+        exit 0
+        ;;
+      *)
+        usage >&2
+        die "unexpected argument: $1"
+        ;;
+    esac
+  fi
+
+  sha=${GITHUB_SHA:-}
+  repo=${GITHUB_REPOSITORY:-}
+  if [ -z "${GITHUB_TOKEN:-}" ] || [ -z "${sha}" ] || [ -z "${repo}" ]; then
+    if [ "${GITHUB_ACTIONS:-}" = true ]; then
+      die "GITHUB_TOKEN, GITHUB_REPOSITORY and GITHUB_SHA must be set in GitHub Actions"
+    fi
+    printf 'codeowners: skipped: set GITHUB_TOKEN, GITHUB_REPOSITORY and GITHUB_SHA to run it\n'
+    exit 0
+  fi
+  # The token goes into curl's config inside double quotes, which a
+  # quote, a backslash or a line break would end or change.
+  nl='
+'
+  cr=$(printf '\r')
+  case "${GITHUB_TOKEN}" in
+    *'"'* | *\\* | *"${nl}"* | *"${cr}"*)
+      die "GITHUB_TOKEN holds a quote, a backslash or a line break"
+      ;;
+    *) ;;
+  esac
+  # Both go into the URL unescaped, so only safe characters pass.
+  case "${sha}" in
+    *[!0-9a-f]*) die "GITHUB_SHA is not a commit id: ${sha}" ;;
+    *) ;;
+  esac
+  case "${repo}" in
+    */*/* | /* | */ | ./* | ../* | */. | */.. | *[!A-Za-z0-9._/-]*) die "GITHUB_REPOSITORY is not owner/name: ${repo}" ;;
+    */*) ;;
+    *) die "GITHUB_REPOSITORY is not owner/name: ${repo}" ;;
+  esac
+  api=${GITHUB_API_URL:-https://api.github.com}
+  command -v git > /dev/null 2>&1 || die "git not found"
+  command -v curl > /dev/null 2>&1 || die "curl not found"
+  command -v jq > /dev/null 2>&1 ||
+    die "jq not found; run the check through mise run, which puts the pinned jq on PATH"
+
+  cd -- "${ROOT}"
+  git cat-file -e "${sha}^{commit}" 2> /dev/null ||
+    die "commit ${sha} is not in this clone"
+  # ls-tree lists the files that exist in tree order; the loop takes the
+  # first in GitHub's order, and the output names that file.
+  make_scratch
+  git ls-tree --name-only "${sha}" -- .github/CODEOWNERS CODEOWNERS docs/CODEOWNERS \
+    > "${SCRATCH}/found" || die "cannot list the files of ${sha}"
+  file=''
+  for f in .github/CODEOWNERS CODEOWNERS docs/CODEOWNERS; do
+    if grep -qxF -- "${f}" "${SCRATCH}/found"; then
+      file=${f}
+      break
+    fi
+  done
+  if [ -z "${file}" ]; then
+    printf 'codeowners: ok (no code owners file in %s)\n' "${sha}"
+    exit 0
+  fi
+
+  # -q, which must come first, keeps out the user's .curlrc. The token
+  # goes to curl on standard input, not on the command line, where other
+  # processes could read it, nor in a file path, which Git Bash may not
+  # convert for a Windows curl.
+  status=$(printf 'header = "Authorization: Bearer %s"\n' "${GITHUB_TOKEN}" |
+    curl -q --config - --silent --show-error --retry 2 --max-time 60 \
+      --header 'Accept: application/vnd.github+json' \
+      --header 'X-GitHub-Api-Version: 2022-11-28' \
+      --output "${SCRATCH}/body" --write-out '%{http_code}' \
+      --url "${api}/repos/${repo}/codeowners/errors?ref=${sha}") ||
+    die "cannot reach the GitHub API at ${api}"
+  if [ "${status}" != 200 ]; then
+    printf 'codeowners: GitHub answered %s for %s at %s:\n' "${status}" "${file}" "${sha}" >&2
+    cut -c 1-300 "${SCRATCH}/body" | awk 'NR <= 10 { print "codeowners: " $0 }' >&2 || true
+    die "cannot read the code owners errors"
+  fi
+  jq -e '.errors | if type == "array" then length else error("not a list") end' \
+    "${SCRATCH}/body" > "${SCRATCH}/n" ||
+    die "GitHub's answer has no list of errors"
+  # jq on Windows may end its lines with CR.
+  n=$(tr -d '\r' < "${SCRATCH}/n")
+  case "${n}" in
+    '' | *[!0-9]*) die "GitHub's answer has no list of errors" ;;
+    *) ;;
+  esac
+  if [ "${n}" -gt 0 ]; then
+    # Path and line lead, as in the other gates' findings. GitHub's
+    # message repeats the line number, and then quotes the line with a
+    # caret under the fault; only its first line is printed, so the quoted
+    # line stays out of the log. Each printed line starts with
+    # "codeowners: ", so none can be a workflow command.
+    # The count above decides the exit status, so a line jq cannot print
+    # must not change it; jq's own message still reaches stderr.
+    jq -r '.errors[] | if type == "object"
+      then "codeowners: \(.path // "?"):\(.line // "?"): \([.message, .kind] | map(select(. != null) | tostring | (split("\n")[0] // "") | rtrimstr("\r") | select(. != "")) | .[0] // "error")" | gsub("[\r\n]"; " ")
+      else "codeowners: ?:?: error" end' "${SCRATCH}/body" >&2 || true
+    printf 'codeowners: findings in %s: %s; fix them, or ask a CECH maintainer for write access\n' \
+      "${file}" "${n}" >&2
+    exit 1
+  fi
+  printf 'codeowners: ok (%s at %s)\n' "${file}" "${sha}"
+}
+
+main "$@"
