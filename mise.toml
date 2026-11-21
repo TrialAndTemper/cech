@@ -26,6 +26,7 @@ go = "1.27.3"
 "go:golang.org/x/vuln/cmd/govulncheck" = "1.9.0"
 "go:github.com/google/go-licenses/v2" = "2.0.1"
 golangci-lint = "2.14.0"
+jq = "1.8.2"
 lychee = "0.24.2"
 rumdl = "0.2.79"
 shellcheck = "0.11.0"
@@ -100,6 +101,13 @@ run = ["actionlint .github/workflows/*.y*ml", "zizmor --offline --pedantic --str
 [tasks."lint:adr"]
 description = "Check the ADRs: numbering, the index, and length"
 run = "scripts/check-adr"
+
+# It asks GitHub, so it needs the network and a token: it runs in GitHub
+# Actions, and elsewhere only when GITHUB_TOKEN, GITHUB_REPOSITORY and
+# GITHUB_SHA are set.
+[tasks."lint:codeowners"]
+description = "Check the code owners errors that GitHub reports for a pushed commit"
+run = "scripts/check-codeowners"
 
 [tasks."lint:go"]
 description = "go vet, golangci-lint and go mod tidy -diff on the CLI"
@@ -187,8 +195,8 @@ run = [
 
 # The pre-commit task checks what is staged: scripts/staged-tree
 # runs each lint and format check in a checkout of the index. It
-# skips the link and vulnerability checks, which need the network, and
-# the tests.
+# skips the checks that need the network (links, vulnerabilities and
+# code owners) and the tests.
 [tasks.pre-commit]
 description = "pre-commit hook: the term check, lint and format check on the staged tree"
 run = [

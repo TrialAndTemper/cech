@@ -58,7 +58,7 @@ This runs every gate, as CI does.
 | --- | --- |
 | `commits` | commit message format and sign-off |
 | `terms` | names and data that must not be in the repository |
-| `lint` | Markdown, ADR numbering, index and length, shell scripts, workflows and the CLI's Go code |
+| `lint` | Markdown, ADR numbering, index and length, shell scripts, workflows, the CLI's Go code, and the code owners errors GitHub reports |
 | `format:check` | formatting of Markdown, shell scripts and Go code |
 | `test` | the tests of the CLI, and of the gate scripts (not on Windows) |
 | `docs:check` | links in the Markdown, YAML and text files; needs the network |
@@ -75,6 +75,16 @@ GITHUB_TOKEN=$(gh auth token) mise run docs:check
 ```
 
 With a token, lychee checks only that a GitHub repository exists, not the file or heading a link names.
+
+The code owners check asks GitHub for the errors it reports in the code owners file of a pushed commit, such as an owner without write access; [For maintainers](#for-maintainers) says what happens then.
+It needs no repository secret, so unlike the private term tier, CI runs it on fork pull requests and in the merge queue too.
+Elsewhere it is skipped unless `GITHUB_TOKEN`, `GITHUB_REPOSITORY` and `GITHUB_SHA` are set, and then it needs the network.
+The commit must be in `TrialAndTemper/cech`, for example as the head of an open pull request: GitHub checks write access to the repository named, so a fork's answer says nothing about CECH's.
+
+```sh
+GITHUB_TOKEN=$(gh auth token) GITHUB_REPOSITORY=TrialAndTemper/cech \
+  GITHUB_SHA=$(git rev-parse HEAD) mise run lint:codeowners
+```
 
 CI runs the gates on every pull request and every push to `main`: `mise run check:os`, every gate but `commits`, on Linux, macOS and Windows, and `commits` once on Linux, in its own job.
 It also runs the private term tier where its secret reaches.
@@ -267,6 +277,7 @@ Without a list this tier is skipped; set `CECH_REQUIRE_PRIVATE_TERMS=1` to make 
 ### For maintainers
 
 Being named a plugin's owner or maintainer ([ADR 13](docs/adr/0013-attribution.md)) is a request for write access: a CECH maintainer grants it, or the name is removed before merge.
+`lint:codeowners` fails while the code owners file names someone without write access.
 Code owners get review requests for their plugins, and a code owner's approval is required to merge.
 
 Two rulesets guard `main`.

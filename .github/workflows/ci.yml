@@ -123,9 +123,11 @@ jobs:
 
       # Each gate in check:os keeps running after another fails, so one run
       # reports every failing gate, each line prefixed with its task.
-      # The token is for lychee, in docs:check: it sends the token only to
-      # GitHub, which rate-limits calls with a token less than anonymous
-      # calls from shared runners. Every gate sees it, but the job's
+      # The token is for lychee, in docs:check, and for lint:codeowners.
+      # lychee sends it only to GitHub, which rate-limits calls with a
+      # token less than anonymous calls from shared runners.
+      # lint:codeowners asks GitHub's API with it; scripts/check-codeowners
+      # says why it needs no secret. Every gate sees it, but the job's
       # read-only permission lets it only read the repository, and it
       # expires with the job.
       - name: check
