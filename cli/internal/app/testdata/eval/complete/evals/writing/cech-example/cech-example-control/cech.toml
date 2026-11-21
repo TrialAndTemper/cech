@@ -1,0 +1,10 @@
+family = "control"
+expect = "same"
+
+[recordings.claude-code]
+pass = ["right"]
+fail = ["wrong"]
+
+[recordings.codex]
+pass = ["right"]
+fail = ["wrong"]

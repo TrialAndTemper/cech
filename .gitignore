@@ -22,3 +22,7 @@ mise.*.local.toml
 .lycheecache
 # rumdl's cache. rumdl also ignores it with its own .gitignore inside.
 .rumdl_cache/
+
+# Results of claude plugin eval runs (ADR 25), at the root or in a
+# fixture marketplace; they hold local paths. Never committed.
+**/evals/results/

@@ -17,6 +17,7 @@ Words the ADRs use, in short:
 - **Gate:** a check that a change must pass before it merges ([ADR 5](0005-gates-and-tool-pins.md)).
 - **Probe:** a repeatable check of how a harness behaves ([ADR 9](0009-native-harness-features-first.md)).
 - **Managed marketplace:** one that a project's `.cech/config.toml` lists ([ADR 19](0019-per-project-plugin-enablement.md)).
+- **Eval case:** a prompt with its graders, which test what a skill changes or whether it loads ([ADR 25](0025-evals.md)).
 - **Native files:** the harnesses' project settings, `.claude/settings.json` and `.codex/config.toml` ([ADR 19](0019-per-project-plugin-enablement.md)).
 
 ## Records
@@ -69,3 +70,5 @@ Words the ADRs use, in short:
     - How a skill forked from an upstream project keeps its notices and takes in updates.
 24. [What a version change means](0024-what-a-version-change-means.md)
     - What each kind of release may change, for the catalogue and the CLI.
+25. [Evals](0025-evals.md)
+    - Eval cases beside each plugin, an offline gate on them, and the runner that drives both harnesses.

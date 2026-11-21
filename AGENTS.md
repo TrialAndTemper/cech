@@ -3,8 +3,9 @@
 ## Where am I?
 
 The root of CECH, a marketplace of agent skills for Claude Code and Codex that organisations extend rather than fork ([README](README.md)).
-It has no skills yet: the tree holds the decision records, the pages on what CECH does now, a first `cech` CLI that prints its version and generates a marketplace's files, the gates that check every change, and their tests.
-This is the only `AGENTS.md`, so it answers for every path.
+It has no skills yet: the tree holds the decision records, the pages on what CECH does now, a first `cech` CLI that prints its version, generates a marketplace's files and checks a marketplace's eval cases, the gates that check every change, and their tests.
+This is the only `AGENTS.md` layer, so it answers for every path.
+An `AGENTS.md` in an eval fixture project (`project/` or `project.staged/`), whether under `evals/` or in a fixture marketplace under `cli/internal/app/testdata/`, is test data for eval runs, not a layer.
 
 ## What belongs to this layer?
 
@@ -38,6 +39,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | A CLI command or package, with its Go tests | `cli/` | [ADR 15](docs/adr/0015-the-cech-cli.md); [ADR 18](docs/adr/0018-generated-files.md) for what `cech build` reads and writes |
 | The catalogue's namespace, description, owner or code owners team, or the roles it defines, then `mise run build:fix` | `data/marketplace.toml` | [ADR 17](docs/adr/0017-repository-data-and-state.md) item 7 |
 | Adding, removing or merging one of CECH's categories, then `mise run build:fix` | `cli/internal/marketplace/categories.toml` | [ADR 12](docs/adr/0012-categories-and-names.md) item 1; [ADR 24](docs/adr/0024-what-a-version-change-means.md) for removing or merging |
+| A plugin's evals: its fixture project, routing rows and cases, each case with its `cech.toml` and recorded runs of both harnesses, checked by `mise run lint:evals` | `evals/<category>/<plugin>/` | [ADR 25](docs/adr/0025-evals.md) item 2, [evals](docs/reference/evals.md) |
 | A Go dependency, with its reason on its line | `cli/go.mod` | [ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1 |
 | A public term rule or an allowlisted email address | `checks/terms/` | [ADR 4](docs/adr/0004-vendor-neutrality.md) |
 | A tool pin or a task, then `mise lock` for a pin | `mise.toml` | [ADR 5](docs/adr/0005-gates-and-tool-pins.md) for a pin, [ADR 5](docs/adr/0005-gates-and-tool-pins.md) item 1 for a task |
@@ -63,12 +65,12 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | `mise.toml` | Exact tool pins and every task; the single entry point for the gates |
 | `mise.lock` | Downloads and checksums for each pin and platform, or only the version of a pin built from source, written by `mise lock` |
 | `.github/` | The CI workflow, the approval diff, vulnerability check and harness probe workflows, issue forms, pull request template, and the code owners file that `cech build` generates |
-| `.rumdl.toml` | Markdown lint and format settings: sentence per line, no line limit |
-| `lychee.toml` | Link check settings |
+| `.rumdl.toml` | Markdown lint and format settings: sentence per line, no line limit; leaves out eval recordings and routing rows, and lets eval prompts and graders start without a heading |
+| `lychee.toml` | Link check settings: file types, hidden files, and the paths left out (`.git/`, eval recordings) |
 | `.shellcheckrc` | shellcheck settings for every shell file |
 | `.editorconfig` | Encoding, indentation and the shfmt dialect per path |
 | `.gitattributes` | LF line endings for every text file, which the scripts need on Windows |
-| `.gitignore` | Keeps private notes, local overrides and tool caches out of git |
+| `.gitignore` | Keeps private notes, local overrides, tool caches and eval run results out of git |
 | `README.md` | What CECH is and its status; no install steps until there is something to install |
 | `CONTRIBUTING.md` | The full contributor rules this file routes to |
 | `SECURITY.md` | How to report a vulnerability privately |

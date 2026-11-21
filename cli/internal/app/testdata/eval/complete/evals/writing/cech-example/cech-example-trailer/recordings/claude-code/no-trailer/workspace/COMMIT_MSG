@@ -1,0 +1,3 @@
+Fix the last page of the pager
+
+The page loop stopped one item early, so a last page of one item was lost.

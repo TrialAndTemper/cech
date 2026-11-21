@@ -58,7 +58,7 @@ This runs every gate, as CI does.
 | --- | --- |
 | `commits` | commit message format and sign-off |
 | `terms` | names and data that must not be in the repository |
-| `lint` | Markdown, ADR numbering, index and length, shell scripts, workflows and the CLI's Go code |
+| `lint` | Markdown, ADR numbering, index and length, shell scripts, workflows, the CLI's Go code and the eval folders |
 | `format:check` | formatting of Markdown, shell scripts and Go code |
 | `test` | the tests of the CLI, and of the gate scripts (not on Windows) |
 | `docs:check` | links in the Markdown, YAML and text files; needs the network |
@@ -115,6 +115,10 @@ Change the source, then let `mise run build:fix` rewrite the generated files wit
 A new Go dependency says on its line in `cli/go.mod` why it is there ([ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1), and `lint:licenses` checks its licence.
 Upgrade a module only for a fix or a feature the CLI needs.
 Output that scripts rely on ([the CLI reference](docs/reference/cli.md)) has golden files.
+
+`mise run lint:evals`, the eval gate, builds `cech` from the checkout, as `build:check` does, and runs `cech eval --check` on the eval folders in `evals/` ([ADR 25](docs/adr/0025-evals.md) item 5).
+It runs no model: it checks each plugin's fixture project and routing rows, each case's files and `cech.toml`, the cases each plugin needs, and that each recorded run passes or fails as its `cech.toml` declares, by the case's deterministic graders or, for a trigger case, by the harness's load detector.
+[Evals](docs/reference/evals.md) says what an eval folder holds and how a recorded run is trimmed.
 
 ### Optional git hooks
 

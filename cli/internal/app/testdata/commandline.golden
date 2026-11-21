@@ -7,6 +7,7 @@ Usage:
 Available Commands:
   build       write the files generated from a marketplace's sources
   completion  print the completion script of a shell
+  eval        check a marketplace's eval cases without a model
   help        print the help of cech or of a command
   version     print the version of cech
 
@@ -50,6 +51,23 @@ Flags:
   -h, --help   help for completion
 
 Use "cech completion [command] --help" for more information about a command.
+=== cech eval
+Check a marketplace's eval folders in evals/ without running a model
+(ADR 25): each plugin's fixture project and routing rows, its cases'
+prompt.md, graders and cech.toml, and the cases each plugin needs. Each
+recorded run of Claude Code and Codex must pass or fail as its
+cech.toml declares, by the case's deterministic graders or, for a
+trigger case, by the harness's load detector. It prints each finding
+as <path>: <problem>.
+
+Usage:
+  cech eval [flags]
+
+Flags:
+      --check              check the cases; cech eval runs only with --check
+  -C, --directory string   run in this directory, the marketplace's root, instead of the current one (default ".")
+  -h, --help               help for eval
+      --json               print one JSON object with whether it passed, the numbers of cases and recordings found, the findings, and the errors that kept it from checking something
 === cech help
 Print the help of cech, or of the command named, as cech help completion bash.
 

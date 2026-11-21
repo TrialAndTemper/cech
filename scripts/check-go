@@ -1,12 +1,13 @@
 #!/bin/sh
 # Go gates for the cech CLI in cli/ (ADR 16): lint, licence check, format check, tests,
-# the vulnerability check of ADR 16 item 3 and the check of the
-# generated files of ADR 18, run as `mise run lint`, `mise run lint:licenses`,
-# `mise run format:check`, `mise run format:fix`, `mise run test`,
-# `mise run vuln`, `mise run build:check` and `mise run build:fix`.
+# the vulnerability check of ADR 16 item 3, the check of the generated
+# files of ADR 18 and the eval gate of ADR 25, run as `mise run lint`,
+# `mise run lint:licenses`, `mise run format:check`, `mise run format:fix`,
+# `mise run test`, `mise run vuln`, `mise run build:check`,
+# `mise run build:fix` and `mise run lint:evals`.
 # POSIX sh (ADR 5): it must run under dash, macOS sh and Git Bash.
 #
-# Usage: scripts/check-go lint | licenses | format | fix | test | vuln | build | build-fix
+# Usage: scripts/check-go lint | licenses | format | fix | test | vuln | build | build-fix | evals
 #
 #   lint    go vet, golangci-lint (cli/.golangci.yml), and go mod tidy
 #           -diff, which fails if go.mod or go.sum is not tidy
@@ -24,6 +25,8 @@
 #   build-fix
 #           cech build on the repository, with the same cech, to rewrite
 #           the generated files
+#   evals   cech eval --check on the repository's eval cases (ADR 25),
+#           with the same cech
 #
 # The tools run in cli/ with GOTOOLCHAIN=local, so only the Go that mise
 # pins runs and go never downloads another toolchain, and with
@@ -54,8 +57,8 @@ STATUS=0
 
 usage() {
   cat << 'EOF'
-Usage: mise run lint | lint:licenses | format:check | format:fix | test | vuln | build:check | build:fix
-       (scripts/check-go lint | licenses | format | fix | test | vuln | build | build-fix)
+Usage: mise run lint | lint:licenses | format:check | format:fix | test | vuln | build:check | build:fix | lint:evals
+       (scripts/check-go lint | licenses | format | fix | test | vuln | build | build-fix | evals)
 
   lint     go vet, golangci-lint and go mod tidy -diff
   licenses check the CLI command's dependencies for disallowed or
@@ -69,6 +72,8 @@ Usage: mise run lint | lint:licenses | format:check | format:fix | test | vuln |
            from this checkout
   build-fix
            cech build on the repository, with the same cech
+  evals    cech eval --check on the repository's eval cases, with the
+           same cech
 
 Exit status: 0 clean, 1 findings, 2 the check could not run.
 EOF
@@ -100,7 +105,7 @@ main() {
   local mode race cgo goos goarch probe cech
 
   case "${1:-}" in
-    lint | licenses | format | fix | test | vuln | build | build-fix) mode=$1 ;;
+    lint | licenses | format | fix | test | vuln | build | build-fix | evals) mode=$1 ;;
     -h | --help)
       usage
       exit 0
@@ -186,7 +191,7 @@ main() {
       step 1 go test ${race:+"${race}"} ./...
       ;;
     vuln) step 3 govulncheck ./... ;;
-    build | build-fix)
+    build | build-fix | evals)
       make_scratch
       cech="${SCRATCH}/cech$(go env GOEXE)" || die "go env failed"
       # -buildvcs=false: go build fails where it finds a repository that
@@ -195,9 +200,11 @@ main() {
       # not build, a finding.
       step 1 go build -buildvcs=false -o "${cech}" ./cmd/cech
       # cech exits 1 for files that differ, for sources it cannot build
-      # from and for a write that failed, all findings; 2 and 3 mean it
-      # could not decide.
-      if [ "${STATUS}" = 0 ] && [ "${mode}" = build ]; then
+      # from, for a write that failed and for eval cases that break a
+      # rule, all findings; 2 and 3 mean it could not decide.
+      if [ "${STATUS}" = 0 ] && [ "${mode}" = evals ]; then
+        step 1 "${cech}" eval --check -C "${ROOT}"
+      elif [ "${STATUS}" = 0 ] && [ "${mode}" = build ]; then
         step 1 "${cech}" build --check -C "${ROOT}"
         [ "${STATUS}" = 0 ] ||
           printf 'go: once the sources are right, mise run build:fix rewrites the generated files\n' >&2

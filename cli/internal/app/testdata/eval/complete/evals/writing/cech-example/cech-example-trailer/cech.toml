@@ -1,0 +1,12 @@
+family = "content"
+expect = "better"
+critical = true
+claim = "A commit message ends with a Change-Kind trailer that matches the change."
+
+[recordings.claude-code]
+pass = ["real-run", "trailer"]
+fail = ["no-trailer"]
+
+[recordings.codex]
+pass = ["trailer"]
+fail = ["no-trailer"]

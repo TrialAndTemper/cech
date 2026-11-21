@@ -101,6 +101,12 @@ run = ["actionlint .github/workflows/*.y*ml", "zizmor --offline --pedantic --str
 description = "Check the ADRs: numbering, the index, and length"
 run = "scripts/check-adr"
 
+# cech eval --check (ADR 25) on the eval cases in evals/, with the CLI
+# built from the checkout.
+[tasks."lint:evals"]
+description = "Lint the eval folders and test their graders, and the harnesses' load detectors, on recorded runs"
+run = "scripts/check-go evals"
+
 [tasks."lint:go"]
 description = "go vet, golangci-lint and go mod tidy -diff on the CLI"
 run = "scripts/check-go lint"

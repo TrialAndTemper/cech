@@ -141,6 +141,23 @@ commit_with_hooks() {
   assert_output_has "yaml-missing-guide.md"
 }
 
+# Guards the exclude_path for eval recordings in lychee.toml, or a
+# lychee bump's reading of it, leaving out more than evals/**/recordings/,
+# so a broken link elsewhere would pass.
+@test "docs:check task leaves out eval recordings" {
+  local rec=evals/writing/acme-x/acme-x-case/recordings/codex/run/workspace
+  mkdir -p "${rec}"
+  printf '# Note\n\nSee [the guide](recording-missing-guide.md).\n' > "${rec}/note.md"
+  g add evals
+  run mise run docs:check -- --offline
+  assert_status 0
+  cp "${rec}/note.md" note.md
+  g add note.md
+  run mise run docs:check -- --offline
+  assert_status 2
+  assert_output_has "recording-missing-guide.md"
+}
+
 # Guards a rumdl bump after which fmt --check exits 0 on a file it would
 # rewrite.
 @test "format:check:markdown task fails on a file it would rewrite" {
@@ -149,6 +166,44 @@ commit_with_hooks() {
   run mise run format:check:markdown
   assert_status 1
   assert_output_has "note.md"
+}
+
+# Guards the eval exclusions in .rumdl.toml, or a rumdl bump's reading
+# of their globs, leaving out more than evals/**/recordings/ and
+# evals/**/routing.md, so a badly written file elsewhere would pass.
+@test "Markdown checks leave out eval recordings and routing rows" {
+  local rec=evals/writing/acme-x/acme-x-case/recordings/codex/run/workspace
+  mkdir -p "${rec}"
+  printf 'One sentence. Another sentence.\n' > "${rec}/note.md"
+  printf '| A commit message | the acme-x skill |\n' > evals/writing/acme-x/routing.md
+  g add evals
+  run mise run lint:markdown
+  assert_status 0
+  run mise run format:check:markdown
+  assert_status 0
+  # The same files elsewhere fail: both fail the lint, and note.md, two
+  # sentences on a line, fails the format check too.
+  cp "${rec}/note.md" note.md
+  cp evals/writing/acme-x/routing.md routing.md
+  g add note.md routing.md
+  run mise run lint:markdown
+  assert_failed
+  assert_output_has "note.md"
+  assert_output_has "routing.md"
+  run mise run format:check:markdown
+  assert_failed
+  assert_output_has "note.md"
+}
+
+# Guards .gitignore listing evals/results/ only at the root, so the
+# results claude plugin eval writes in a fixture, which hold local paths,
+# could be committed. Not a task, but spec rule 31 of the evals change
+# asks for it.
+@test ".gitignore keeps eval results out at any depth" {
+  run g check-ignore -q evals/results/run.json
+  assert_status 0
+  run g check-ignore -q cli/internal/app/testdata/eval/complete/evals/results/run.json
+  assert_status 0
 }
 
 # Guards a mise bump after which --continue-on-error exits 0 when a
