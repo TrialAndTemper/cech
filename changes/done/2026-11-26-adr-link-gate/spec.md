@@ -1,5 +1,7 @@
 # ADR link gate
 
+Implemented 2026-11-26; not maintained: the code and its tests are current.
+
 Closes #84: `scripts/check-adr`, run as `mise run lint:adr` and by the pre-commit hook, also holds ADRs to the links rule of ADR 1 item 6.
 
 ## Acceptance criteria
