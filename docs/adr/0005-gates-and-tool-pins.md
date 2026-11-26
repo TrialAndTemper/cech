@@ -34,7 +34,7 @@ Probed with mise 2026.10.3 on 2026-10-19:
    A gate that needs a secret, such as the private term tier ([ADR 4](0004-vendor-neutrality.md)), is required only where the secret reaches, and is skipped locally without it.
    A rule CI cannot check is guidance in the contributing guide, not described as enforced.
 3. **Bypass.**
-   The maintainers team is exempt from review ([ADR 6](0006-change-record.md)), and the gates are bypassed only to repair `main` or a gate, with an issue saying why.
+   The maintainers team is exempt from review, and the gates are bypassed only to repair `main` or a gate, with an issue saying why.
 4. **Hooks are a convenience.**
    Optional git hooks run some of the gates before a commit; no rule exists only in a hook.
 5. **The gates.**
