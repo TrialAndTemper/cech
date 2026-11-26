@@ -58,7 +58,7 @@ This runs every gate, as CI does.
 | --- | --- |
 | `commits` | commit message format and sign-off |
 | `terms` | names and data that must not be in the repository |
-| `lint` | Markdown, ADR numbering, index and length, shell scripts, workflows, the CLI's Go code and the eval folders |
+| `lint` | Markdown, ADR numbering, index, length and links, shell scripts, workflows, the CLI's Go code and the eval folders |
 | `format:check` | formatting of Markdown, shell scripts and Go code |
 | `test` | the tests of the CLI, and of the gate scripts (not on Windows) |
 | `docs:check` | links in the Markdown, YAML and text files; needs the network |
@@ -152,7 +152,7 @@ They save a round trip to CI, but they are a convenience: CI is the authority, a
   A case that takes the same branch of CECH's code as another, with no new kind of input, stays out too.
 - A skill that uses a role ([ADR 21](docs/adr/0021-roles.md)) carries an eval with and without `.cech/roles.toml`, on both harnesses.
 - A skill that reads its file in `.cech/` ([ADR 17](docs/adr/0017-repository-data-and-state.md)) carries an eval with and without that file, on both harnesses.
-- Keep an ADR under 800 words of prose outside fenced code blocks ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 6); `mise run lint:adr` counts them.
+- Keep an ADR under 800 words of prose outside fenced code blocks, and link only to earlier ADRs, except in a `superseded by` status ([ADR 1](docs/adr/0001-record-architecture-decisions.md) item 6); `mise run lint:adr` counts the words and checks the links.
 - Until the first plugin merges, an accepted ADR is edited in place, and the commit says why.
   From then on, it is not rewritten, apart from fixes to typos, links and wording that keep the meaning, which review checks: a refinement goes in a dated amendment note, and a different choice in a new ADR that supersedes it ([ADR 1](docs/adr/0001-record-architecture-decisions.md)).
 
