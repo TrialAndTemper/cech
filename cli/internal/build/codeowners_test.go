@@ -21,10 +21,10 @@ func TestCodeOwners(t *testing.T) {
 # plugin.json; do not edit.
 
 * @Acme/maintainers
-/plugins/tool/d-none/ @bob
-/evals/tool/d-none/ @bob
-/plugins/tool/e-dup/ @Carol @dan
-/evals/tool/e-dup/ @Carol @dan
+/plugins/tool/d-none/ @bob @Acme/maintainers
+/evals/tool/d-none/ @bob @Acme/maintainers
+/plugins/tool/e-dup/ @Carol @dan @Acme/maintainers
+/evals/tool/e-dup/ @Carol @dan @Acme/maintainers
 `
 	if got := string(CodeOwners(m)); got != want {
 		t.Errorf("got\n%s\nwant\n%s", got, want)

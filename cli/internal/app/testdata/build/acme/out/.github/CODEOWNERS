@@ -2,7 +2,7 @@
 # plugin.json; do not edit.
 
 * @acme/skill-maintainers
-/plugins/tool/acme-git/ @dave
-/evals/tool/acme-git/ @dave
-/plugins/writing/acme-prose/ @alice-dev @bob-dev @carol
-/evals/writing/acme-prose/ @alice-dev @bob-dev @carol
+/plugins/tool/acme-git/ @dave @acme/skill-maintainers
+/evals/tool/acme-git/ @dave @acme/skill-maintainers
+/plugins/writing/acme-prose/ @alice-dev @bob-dev @carol @acme/skill-maintainers
+/evals/writing/acme-prose/ @alice-dev @bob-dev @carol @acme/skill-maintainers

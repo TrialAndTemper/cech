@@ -20,6 +20,7 @@ Checked on 2026-10-17 (Claude Code 2.1.302), and, where a line says so, on 2026-
 - A `metadata` map in `SKILL.md`, an [Agent Skills](https://agentskills.io/specification) field, passes too.
 
 [GitHub docs](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners), read on 2026-10-17: code owners must have write access to the repository, the last matching pattern wins, and GitHub reports invalid entries.
+On 2026-11-26 the same page said that a user or team that does not exist or lacks write access is not assigned, and that a line with no valid owner leaves its paths without a code owner, so any user with write access can approve them.
 
 ## Decision
 
@@ -35,7 +36,8 @@ Checked on 2026-10-17 (Claude Code 2.1.302), and, where a line says so, on 2026-
    It counts as an asset of the skill under [ADR 11](0011-one-plugin-one-skill.md).
    Credits are for people, not agents, so `SKILL.md` does not link to the file.
 4. **Generated code owners.**
-   `cech build` generates the code owners file from the manifests and the marketplace's maintainer team, offline, so each plugin's folder and its eval folder are owned by the people its manifest names, and the rest by the team.
+   `cech build` generates the code owners file from the manifests and the marketplace's maintainer team, offline, so each plugin's folder and its eval folder are owned by the people its manifest names and by the team, and the rest by the team alone.
+   The team is on every plugin's lines, so a folder whose named people are all invalid, by a typo, missing write access or a renamed account, still has a code owner.
 5. **Git history is separate.**
    Commit authors and `Co-authored-by:` trailers ([ADR 6](0006-change-record.md)) record who changed what.
    The fields above record who answers for a plugin now.
@@ -44,13 +46,15 @@ Checked on 2026-10-17 (Claude Code 2.1.302), and, where a line says so, on 2026-
 
 - Changing a plugin's owner or maintainers is a change to its manifest, reviewed like any other.
 - Owners and maintainers need GitHub accounts with write access to get review requests.
-- A one-person plugin has no backup reviewer until the team adds one.
+- The team gets review requests for every plugin, and any one code owner's approval is enough, so a member of the team can approve a plugin change without its owner.
 
 ## Options considered
 
 - **A top-level `maintainers` field in `plugin.json`:** fails strict validation (checked above).
 - **`metadata.maintainers` in `SKILL.md`:** it passes too, but splits who answers for a plugin over two files, and the Agent Skills `metadata` map holds only strings, so the names would need a separator.
 - **A hand-written maintainers file or code owners file:** drifts from the manifests.
+- **A gate that checks the names against GitHub:** it checks the whole file, so a GitHub outage or an owner losing access fails unrelated pull requests, and review already covers the names a pull request adds.
+- **The team only on lines whose named people are all invalid:** GitHub does not fall back to an earlier line, and the build runs offline, so it cannot tell which names are invalid.
 - **Owners derived from git history:** commits show who changed a plugin, not who answers for it now, and some come from bots or tools.
 - **Hosts other than GitHub, such as GitLab:** GitLab reads its code owners file from the root, `docs/` or `.gitlab/` ([GitLab docs](https://docs.gitlab.com/user/project/codeowners/), read on 2026-10-31), and each host names its users and groups in its own way, so each needs its own design.
   Supporting one is an addition, which nothing in this record rules out.

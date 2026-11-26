@@ -39,8 +39,8 @@ type Data struct {
 	// CECH is the CECH release an extension builds on, as X.Y.Z or
 	// X.Y.Z-rc.N; it is "" in CECH's own file.
 	CECH string `toml:"cech"`
-	// Team owns every path without a plugin line in the code owners
-	// file, as @org/team (ADR 13 item 4); with none, there is no file.
+	// Team owns every path in the code owners file, plugin lines
+	// included, as @org/team (ADR 13 item 4); with none, there is no file.
 	Team string `toml:"team"`
 	// Owner is the catalogue's owner, which Claude Code requires.
 	Owner Owner `toml:"owner"`
