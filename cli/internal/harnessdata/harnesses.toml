@@ -339,3 +339,33 @@ verified = { version = "0.165.0", date = 2026-10-29 }
 source = "https://learn.chatgpt.com/docs/sandboxing"
 read = 2026-10-29
 version = "0.165.0"
+
+[claude-code-run-loaded]
+harness = "claude-code"
+kind = "behaviour"
+summary = "The system init line of claude -p --output-format stream-json lists the skills, the plugins and the MCP servers the run loaded; cech eval reads what a run loaded from it."
+decision = "ADR 26 item 2"
+probe = """
+With the plugin cech-example installed from a local marketplace into an \
+empty CLAUDE_CONFIG_DIR, run claude -p --output-format stream-json \
+--verbose --model haiku hi, and read the first line whose type is \
+system and subtype is init."""
+expect = "The line's skills list holds cech-example:cech-example, its plugins list holds cech-example, and it has an mcp_servers list."
+verified = { version = "2.1.330", date = 2026-11-27 }
+
+[codex-run-loaded]
+harness = "codex"
+kind = "gap"
+summary = "codex exec --json names no skill, plugin or MCP server a run loaded."
+workaround = """
+Before each run, in the run's container, cech eval runs codex debug \
+prompt-input, whose skills list names each skill the model would see, \
+a plugin's as <plugin>:<skill>, and codex mcp list --json. It takes the \
+plugins from those the arm installs."""
+decision = "ADR 26 item 2"
+probe = """
+With the plugin cech-example installed from a local marketplace into an \
+empty CODEX_HOME, in a project folder, run codex debug prompt-input x \
+and codex mcp list --json."""
+expect = "The prompt input's skills list has a line starting - cech-example:cech-example: with the skill's description, and codex mcp list --json prints a JSON array."
+verified = { version = "0.171.0", date = 2026-11-27 }
