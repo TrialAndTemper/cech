@@ -170,6 +170,7 @@ Commits are the record of the project ([ADR 6](docs/adr/0006-change-record.md)):
   In the body, say why, wrapped at 72 characters.
 - Mark a breaking change with `!` after the scope and a `BREAKING CHANGE:` footer saying what users must do.
 - Add a `Co-authored-by:` trailer for each other author, human or tool.
+- When a commit works on an issue, name the issue in a `Refs: #N` trailer, one for each issue; a closing keyword such as `Closes` goes only in the pull request description.
 - Link only to public pages that last, such as a CECH issue, a spec or an upstream commit.
 
 The `commits` gate checks each commit's header and that its `Signed-off-by:` carries the commit author's email, and fails while a fixup, squash, amend or merge commit remains; reviewers check the rest of these rules.
@@ -202,7 +203,8 @@ A maintainer then gives it one status label at a time, replacing the last:
 | `todo` | Ready: someone could start without more questions |
 | `in progress` | Someone owns it and is working on it |
 
-When an issue is finished, a maintainer removes its status label and closes it with GitHub's reason (completed, not planned or duplicate) and a comment saying what was done or which issue it duplicates.
+When an issue is finished, a maintainer removes its status label.
+The pull request that finishes an issue closes it when it merges ([Pull requests](#pull-requests)); a maintainer closes by hand any other issue, such as a settings change, with GitHub's reason (completed, not planned or duplicate) and a comment saying what was done or which issue it duplicates.
 
 A maintainer may add area labels beside the status, one for each part of the repository the issue touches:
 
@@ -222,6 +224,8 @@ A vulnerability report itself goes through [SECURITY.md](SECURITY.md), not an is
 
 ## Pull requests
 
+- In the description, write `Closes #N` for each issue the pull request finishes, so that merging it closes the issue and links the two.
+  Write `Refs #N` for an issue it does only part of.
 - Rebase your branch on the latest `main` rather than merging `main` into it.
 - Push review fixes as fixup commits, aimed at the commit they fix:
 

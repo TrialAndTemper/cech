@@ -1,8 +1,10 @@
 <!-- A pull request body starts below a title GitHub shows, so it has no heading of its own. -->
 <!-- rumdl-disable-file MD041 -->
-<!-- The commits are the record: say why in each commit message. Here, summarise the change and link the issue or ADR it follows. -->
+<!-- The commits are the record: say why in each commit message. Here, summarise the change and link the ADR it follows. Write `Closes #N` for each issue it finishes and `Refs #N` for one it does only part of; delete the `Closes #` line if it names no issue. -->
 
 ## Summary
+
+Closes #
 
 ## Checklist
 
