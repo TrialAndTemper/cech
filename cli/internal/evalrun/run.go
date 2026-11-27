@@ -28,6 +28,10 @@ type Credential struct {
 	// CLAUDE_CODE_OAUTH_TOKEN, passed to the container by name so its
 	// value is on no command line; empty for a Codex login file.
 	Env string
+	// Value is the credential when it came from the keyring rather than
+	// from Env in cech eval's own environment; it reaches the engine's
+	// environment only.
+	Value string
 	// LoginFile is a refreshed Codex auth.json, copied into the run's
 	// home; empty otherwise.
 	LoginFile string
@@ -159,7 +163,11 @@ func (b *Batch) container(ctx context.Context, r Run, mounts []string, step stri
 	}
 	run = append(run, b.s.Image)
 	run = append(run, args...)
-	return b.e.Start(ctx, nil, b.id, "cech-eval-"+b.id+"-"+r.ID+"-"+step, run...)
+	var env []string
+	if r.Credential.Env != "" && r.Credential.Value != "" {
+		env = []string{r.Credential.Env + "=" + r.Credential.Value}
+	}
+	return b.e.Start(ctx, env, b.id, "cech-eval-"+b.id+"-"+r.ID+"-"+step, run...)
 }
 
 // environment is what a run's container sees, and nothing else.

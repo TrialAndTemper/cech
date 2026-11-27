@@ -171,8 +171,13 @@ func TestEvalUnknownPluginInADirtyTree(t *testing.T) {
 }
 
 // TestCredential checks the order criterion 20 sets: an API key before
-// a subscription, and CODEX_HOME's login.
+// a subscription, the environment before the keyring, and CODEX_HOME's
+// login.
 func TestCredential(t *testing.T) {
+	keyring := map[string]string{}
+	old := fromKeyring
+	fromKeyring = func(name string) (string, error) { return keyring[name], nil }
+	t.Cleanup(func() { fromKeyring = old })
 	for _, v := range []string{"ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN", "CODEX_API_KEY"} {
 		t.Setenv(v, "")
 	}
@@ -189,8 +194,10 @@ func TestCredential(t *testing.T) {
 	if _, err := credential("claude-code"); err == nil {
 		t.Error("claude-code with no credential: no error")
 	}
-	t.Setenv("CLAUDE_CODE_OAUTH_TOKEN", "token")
-	check("claude-code", evalrun.Credential{Kind: "a subscription", Env: "CLAUDE_CODE_OAUTH_TOKEN"})
+	keyring["CLAUDE_CODE_OAUTH_TOKEN"] = "token"
+	check("claude-code", evalrun.Credential{Kind: "a subscription", Env: "CLAUDE_CODE_OAUTH_TOKEN", Value: "token"})
+	keyring["ANTHROPIC_API_KEY"] = "key"
+	check("claude-code", evalrun.Credential{Kind: "an API key", Env: "ANTHROPIC_API_KEY", Value: "key"})
 	t.Setenv("ANTHROPIC_API_KEY", "from-env")
 	check("claude-code", evalrun.Credential{Kind: "an API key", Env: "ANTHROPIC_API_KEY"})
 
@@ -202,8 +209,8 @@ func TestCredential(t *testing.T) {
 		t.Fatal(err)
 	}
 	check("codex", evalrun.Credential{Kind: "a subscription", LoginFile: login})
-	t.Setenv("CODEX_API_KEY", "ckey")
-	check("codex", evalrun.Credential{Kind: "an API key", Env: "CODEX_API_KEY"})
+	keyring["CODEX_API_KEY"] = "ckey"
+	check("codex", evalrun.Credential{Kind: "an API key", Env: "CODEX_API_KEY", Value: "ckey"})
 }
 
 // TestExitFor checks criterion 29's choice between 1 and 3: 3 only when

@@ -493,11 +493,27 @@ func planFor(harness string, cases []releasecheck.Case, s evalrun.Settings, para
 	return planEntry{harness, first, most, minutes(first), minutes(most)}
 }
 
-// credential finds the one credential of a harness in the environment
-// (criterion 20): an API key before a subscription.
+// credential finds the one credential of a harness (criterion 20): an
+// API key before a subscription, and for each, the environment variable
+// before the system keyring's entry of the same name.
 func credential(harness string) (evalrun.Credential, error) {
+	find := func(name, kind string) (evalrun.Credential, bool, error) {
+		if os.Getenv(name) != "" {
+			return evalrun.Credential{Kind: kind, Env: name}, true, nil
+		}
+		v, err := fromKeyring(name)
+		if err != nil || v == "" {
+			return evalrun.Credential{}, false, err
+		}
+		return evalrun.Credential{Kind: kind, Env: name, Value: v}, true, nil
+	}
+	var keyringErr error
 	try := func(name, kind string) (evalrun.Credential, bool) {
-		return evalrun.Credential{Kind: kind, Env: name}, os.Getenv(name) != ""
+		c, ok, err := find(name, kind)
+		if err != nil && keyringErr == nil {
+			keyringErr = err
+		}
+		return c, ok
 	}
 	if harness == evals.HarnessClaude {
 		if c, ok := try("ANTHROPIC_API_KEY", "an API key"); ok {
@@ -506,7 +522,7 @@ func credential(harness string) (evalrun.Credential, error) {
 		if c, ok := try("CLAUDE_CODE_OAUTH_TOKEN", "a subscription"); ok {
 			return c, nil
 		}
-		return evalrun.Credential{}, errors.New("claude-code: no credential: set ANTHROPIC_API_KEY, or CLAUDE_CODE_OAUTH_TOKEN from claude setup-token")
+		return evalrun.Credential{}, noCredential("claude-code: no credential: set ANTHROPIC_API_KEY, or CLAUDE_CODE_OAUTH_TOKEN from claude setup-token, in the environment or in the system keyring under the service cech", keyringErr)
 	}
 	if c, ok := try("CODEX_API_KEY", "an API key"); ok {
 		return c, nil
@@ -521,10 +537,23 @@ func credential(harness string) (evalrun.Credential, error) {
 	}
 	login := filepath.Join(home, "auth.json")
 	if _, err := os.Stat(login); err != nil { // #nosec G703 -- the user's own Codex login
-		return evalrun.Credential{}, errors.New("codex: no credential: set CODEX_API_KEY, or log in with codex login")
+		return evalrun.Credential{}, noCredential("codex: no credential: set CODEX_API_KEY in the environment or in the system keyring under the service cech, or log in with codex login", keyringErr)
 	}
 	return evalrun.Credential{Kind: "a subscription", LoginFile: login}, nil
 }
+
+// noCredential says that a harness has no credential, and why the
+// keyring could not tell, if it could not.
+func noCredential(msg string, keyringErr error) error {
+	if keyringErr != nil {
+		return fmt.Errorf("%s (the keyring: %w)", msg, keyringErr)
+	}
+	return errors.New(msg)
+}
+
+// fromKeyring reads a credential from the system keyring; tests
+// replace it.
+var fromKeyring = evalrun.FromKeyring
 
 // harnessCheck is the release check on one harness.
 type harnessCheck struct {

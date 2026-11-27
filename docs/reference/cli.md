@@ -67,13 +67,14 @@ It pulls the image if the engine does not hold it, and exits 3 if it cannot, the
 Claude Code is not in the image: before the first Claude Code run, `cech eval` installs the version the image pins into `cech/claude-code/` in the user's cache folder (`~/.cache` on Linux, `~/Library/Caches` on macOS), and each run mounts it read-only.
 
 Each harness needs one credential.
-For each variable in the table, in order, `cech eval` looks in the environment; the first one found wins.
+For each variable in the table, in order, `cech eval` looks in the environment and then in the system keyring, under the service `cech` with the variable's name as the user name; the first one found wins.
 
 | Harness | Credential, first found wins |
 | --- | --- |
 | Claude Code | `ANTHROPIC_API_KEY`; else `CLAUDE_CODE_OAUTH_TOKEN`, from `claude setup-token` |
-| Codex | `CODEX_API_KEY`; else the ChatGPT login `auth.json` in `CODEX_HOME`, or `~/.codex`; before the first run, `cech eval` runs `codex login status` on a copy, which is meant to refresh it, and puts the copy back if Codex changed it |
+| Codex | `CODEX_API_KEY`; else the ChatGPT login `auth.json` in `CODEX_HOME`, or `~/.codex`, never in the keyring; before the first run, `cech eval` runs `codex login status` on a copy, which is meant to refresh it, and puts the copy back if Codex changed it |
 
+The keyring is the Secret Service on Linux, the Keychain on macOS and the Credential Manager on Windows; on Linux, `secret-tool store --label="cech: CLAUDE_CODE_OAUTH_TOKEN" service cech username CLAUDE_CODE_OAUTH_TOKEN` stores the token.
 An API key or token is passed to a container as an environment variable, never on a command line or in a file of the run; a ChatGPT login is copied into the run's home as `auth.json`.
 
 It writes each run's results under `evals/results/<commit>/` and the report to `evals/reports/<commit>.md` ([Evals](evals.md#run-results-and-reports)).
