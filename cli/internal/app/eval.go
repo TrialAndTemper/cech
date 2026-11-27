@@ -1,14 +1,17 @@
 package app
 
 import (
+	"context"
 	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"os"
+	"os/signal"
 	"slices"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -16,9 +19,18 @@ import (
 	"github.com/TrialAndTemper/cech/cli/internal/marketplace"
 )
 
-const evalLong = `Check the eval cases in evals/ without running an agent.
+const evalLong = `Run the release check, or with --check check the eval cases in
+evals/ without running an agent.
 
-For each plugin, it checks the fixture project, the routing rows, and
+Without --check, it runs the eval cases of each plugin changed since the
+latest final release, or of each plugin --plugin names, with a model on
+each harness, each run in a fresh container from the eval image, until
+each bar of the release check is clear or has no result. It writes each
+run's results under evals/results/<commit>/ and the report file
+evals/reports/<commit>.md. With --dry-run it prints the runs it would
+make and writes nothing.
+
+With --check, for each plugin, it checks the fixture project, the routing rows, and
 that the plugin has every case it needs. For each case, it checks
 prompt.md and cech.toml with its graders.
 
@@ -48,6 +60,7 @@ type evalResult struct {
 type evalOptions struct {
 	check, asJSON bool
 	dir           string
+	run           runOptions
 }
 
 // newEvalCommand returns cech eval, which prints its results on stdout
@@ -56,24 +69,54 @@ func newEvalCommand(stdout, stderr io.Writer, code *int) *cobra.Command {
 	var opts evalOptions
 	c := &cobra.Command{
 		Use:   "eval",
-		Short: "check the eval cases in evals/ without running an agent",
+		Short: "run the release check, or check the eval cases without running an agent",
 		Long:  evalLong,
 		Args:  noArgs,
 		// No argument, so no file names to offer.
 		ValidArgsFunction: cobra.NoFileCompletions,
-		RunE: func(*cobra.Command, []string) error {
-			if !opts.check {
-				return errors.New("eval runs only with --check, which checks the cases without running an agent")
-			}
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			if opts.dir == "" {
 				return errors.New("eval -C takes a directory, got \"\"")
 			}
-			*code = runEval(opts, stdout, stderr)
+			if opts.check {
+				for _, f := range []string{"plugin", "harness", "parallel", "dry-run"} {
+					if cmd.Flags().Changed(f) {
+						return fmt.Errorf("eval --check takes no --%s, which is for the release check", f)
+					}
+				}
+				*code = runEval(opts, stdout, stderr)
+				return nil
+			}
+			if h := opts.run.harness; h != "" && !slices.Contains(evals.Harnesses(), h) {
+				return fmt.Errorf("eval --harness takes %s, got %q", strings.Join(evals.Harnesses(), " or "), h)
+			}
+			if opts.run.parallel < 0 {
+				return fmt.Errorf("eval --parallel takes a number of runs, or 0 for the default, got %d", opts.run.parallel)
+			}
+			opts.run.dir, opts.run.asJSON = opts.dir, opts.asJSON
+			// An interrupt cancels the runs, so their containers are removed
+			// and the finished runs kept (criterion 30).
+			ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+			defer stop()
+			// After the first signal, a second ends cech eval at once,
+			// as when the clean-up hangs.
+			// The deferred unregister runs before the deferred stop, which
+			// cancels ctx too, so the message comes only after a signal.
+			unregister := context.AfterFunc(ctx, func() {
+				stop()
+				_, _ = fmt.Fprintln(stderr, "cech: stopping the runs and removing their containers; interrupt again to stop at once")
+			})
+			defer unregister()
+			*code = runRelease(ctx, opts.run, stdout, stderr)
 			return nil
 		},
 	}
 	f := c.Flags()
-	f.BoolVar(&opts.check, "check", false, "check the cases; cech eval runs only with --check")
+	f.BoolVar(&opts.check, "check", false, "check the cases and their recordings without running an agent")
+	f.StringSliceVar(&opts.run.plugins, "plugin", nil, "check these plugins, not those changed since the latest final release")
+	f.StringVar(&opts.run.harness, "harness", "", "run on this harness only, claude-code or codex")
+	f.IntVar(&opts.run.parallel, "parallel", 0, "how many runs share a harness at once; by default 6 on claude-code and 4 on codex")
+	f.BoolVar(&opts.run.dryRun, "dry-run", false, "print the runs it would make and their estimated time, and write nothing")
 	f.BoolVar(&opts.asJSON, "json", false,
 		"print one JSON object with whether it passed, the numbers of cases and recordings found, the findings, "+
 			"and the errors that kept it from checking something")

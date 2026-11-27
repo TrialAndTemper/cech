@@ -1,6 +1,6 @@
 # Evals
 
-What a plugin's eval folder holds, and what `cech eval --check` checks in it ([ADR 25](../adr/0025-evals.md)).
+What a plugin's eval folder holds, what `cech eval --check` checks in it ([ADR 25](../adr/0025-evals.md)), and the run results, report and values of the release check.
 The two harnesses are named `claude-code` and `codex` in files and messages.
 
 ## Layout
@@ -107,3 +107,49 @@ A trigger recording is graded by the load detector of its harness:
 
 A recording marked pass loads the skill for `expect = "load"` and does not for `expect = "skip"`; one marked fail, the other way round.
 A finding about a verdict names the recording and the graders, or the detector, that gave the other verdict.
+
+## Run results and reports
+
+The release check ([ADR 27](../adr/0027-the-release-check.md), the [`cech eval` command](cli.md#the-release-check)) writes each run to `evals/results/<commit>/<harness>/<case>/<arm>/<n>/`, where `<n>` counts the arm's runs from 1; a run that errors is made once more, in `<n>-rerun/`, and the rerun takes its place.
+The arms are `with` and `without` for content and control cases, with `latest-release` too for a content case of a changed plugin that the latest final release had, and `routed` and `unrouted` for trigger cases.
+A run's folder holds a recording, as [Recordings](#recordings) defines it, and:
+
+- `loaded.json`, the plugins, skills and MCP servers the harness loaded;
+- `run.json`, the run's time in seconds, harness, image ID, model and kind of credential, and why it errored, if it did;
+- `telemetry.json`, only these from the run's telemetry: the tokens, the cost when the harness gives one, the model requests, the highest retry attempt, the skills and plugins seen, and the whole input of the first request of the main loop;
+- `key.json`, the image ID, model, `cech` version, kind of credential and harness version the run was made with, written once it finished; a later `cech eval` on the same commit with the same key reuses the run, or its rerun, instead of making it again.
+
+An interrupt removes the folder of each run it stopped.
+
+The report file `evals/reports/<commit>.md` comes from a template the CLI holds, so it has the same form at every release.
+It names the CLI's version, the commit, and the image with its ID, and for each harness its version, model, kind of credential, runs made or reused, the tokens of its finished runs and, on Claude Code, their cost, and why the check stopped early if it did.
+It then has these sections for each harness:
+
+- Bars: each bar's result, its range and the runs it read, then each control or drop bar whose range shows a difference smaller than the threshold;
+- Arms: each arm's runs, passes, errors and pass rate range;
+- Graders: each grader's passes in each arm of a content or control case;
+- What each skill version costs: its description size and the input tokens it adds to the first request;
+- Why runs errored: each reason and how many runs it holds;
+- Cases without a result: those whose runs errored too often.
+
+A range is the span of pass rates, or of differences between two arms, that the runs allow at the false-alarm rate.
+It gives no path from the machine it ran on.
+
+The CLI holds these values for every marketplace:
+
+| Value | Is |
+| --- | --- |
+| Image | The image `CECH_EVAL_IMAGE` names, or else the digest the eval image workflow published, which a pull request puts in the CLI; until then the CLI holds none |
+| Models | `claude-haiku-5-5` on Claude Code and `gpt-6-luna` on Codex |
+| Hosts | The only hosts a run may reach, through the proxy: `api.anthropic.com`, `statsig.anthropic.com` and `console.anthropic.com` for Claude Code; `chatgpt.com`, `api.openai.com` and `auth.openai.com` for Codex |
+| Run timeout | 10 minutes |
+| Error share | A case has no result when more than 10% of its runs still error after their rerun, checked from its 20th run on and at the end |
+| Runs at once | 6 on Claude Code and 4 on Codex |
+| Bars | `content passes with the plugin`: the `with` arm passes in more than 80% of runs; `routed skill loads when it should`: in more than 70% of the `routed` runs of `load` cases; `routed skill seldom loads otherwise`: in less than 10% of the `routed` runs of `skip` cases; `control does not differ`: `with` and `without` within the threshold; `no drop since the latest final release`: `with` no more than the threshold below `latest-release` |
+| Threshold | 10 points, for the control bar and for a drop since the latest final release |
+| False-alarm rate | 1 in 20 per bar |
+| Cap | 500 runs per arm per case, enough to miss a 15-point drop 1 in 5 times; the estimates of `--dry-run` read it |
+| Budget | 10,000 runs per harness per release |
+| Median run time | 10 s on Claude Code and 20 s on Codex, for the estimates of `--dry-run` |
+
+A drop near the threshold usually ends with no result; a person then decides whether to release ([ADR 27](../adr/0027-the-release-check.md) item 5).

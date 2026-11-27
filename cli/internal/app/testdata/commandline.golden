@@ -7,7 +7,7 @@ Usage:
 Available Commands:
   build       write the files generated from a marketplace's sources
   completion  print the completion script of a shell
-  eval        check the eval cases in evals/ without running an agent
+  eval        run the release check, or check the eval cases without running an agent
   help        print the help of cech or of a command
   version     print the version of cech
 
@@ -52,9 +52,18 @@ Flags:
 
 Use "cech completion [command] --help" for more information about a command.
 === cech eval
-Check the eval cases in evals/ without running an agent.
+Run the release check, or with --check check the eval cases in
+evals/ without running an agent.
 
-For each plugin, it checks the fixture project, the routing rows, and
+Without --check, it runs the eval cases of each plugin changed since the
+latest final release, or of each plugin --plugin names, with a model on
+each harness, each run in a fresh container from the eval image, until
+each bar of the release check is clear or has no result. It writes each
+run's results under evals/results/<commit>/ and the report file
+evals/reports/<commit>.md. With --dry-run it prints the runs it would
+make and writes nothing.
+
+With --check, for each plugin, it checks the fixture project, the routing rows, and
 that the plugin has every case it needs. For each case, it checks
 prompt.md and cech.toml with its graders.
 
@@ -69,10 +78,14 @@ Usage:
   cech eval [flags]
 
 Flags:
-      --check              check the cases; cech eval runs only with --check
+      --check              check the cases and their recordings without running an agent
   -C, --directory string   run in this directory, the marketplace's root, instead of the current one (default ".")
+      --dry-run            print the runs it would make and their estimated time, and write nothing
+      --harness string     run on this harness only, claude-code or codex
   -h, --help               help for eval
       --json               print one JSON object with whether it passed, the numbers of cases and recordings found, the findings, and the errors that kept it from checking something
+      --parallel int       how many runs share a harness at once; by default 6 on claude-code and 4 on codex
+      --plugin strings     check these plugins, not those changed since the latest final release
 === cech help
 Print the help of cech, or of the command named, as cech help completion bash.
 

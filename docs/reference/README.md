@@ -11,7 +11,7 @@ Where a page and the code disagree, the code and its tests are right, and the pa
 
 - [The `cech` CLI](cli.md): its commands, flags, output and exit statuses.
 - [A marketplace](marketplace.md): its data file, layout, name rules, categories, release builds, advice for a private extension, and how to measure its skills in a harness's telemetry.
-- [Evals](evals.md): a plugin's eval folder, its cases and recordings, and what `cech eval --check` checks.
+- [Evals](evals.md): a plugin's eval folder, its cases and recordings, what `cech eval --check` checks, and the run results, report and values of the release check.
 - [Generated files](generated-files.md): what `cech build` writes, and from what.
 - [The harness data file](harness-data.md): its entries, their keys, and how its probes are run.
 - [The term check](term-check.md): the `terms` gate's tiers, what it scans, its exceptions and its output.

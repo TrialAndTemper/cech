@@ -56,7 +56,9 @@ func TestRun(t *testing.T) {
 		{"build --release with another pre-release", []string{"build", "--release", "0.1.0-beta.1"}, ExitUsage, "", `build --release takes X.Y.Z or X.Y.Z-rc.N, got "0.1.0-beta.1"`},
 		{"build --json -C empty", []string{"build", "--json", "-C", ""}, ExitUsage, "", `build -C takes a directory, got ""`},
 		{"build --release empty", []string{"build", "--release", ""}, ExitUsage, "", `build --release takes X.Y.Z or X.Y.Z-rc.N, got ""`},
-		{"eval --json without --check", []string{"eval", "--json"}, ExitUsage, "", "eval runs only with --check"},
+		{"eval --check with a release-check flag", []string{"eval", "--check", "--dry-run"}, ExitUsage, "", "eval --check takes no --dry-run"},
+		{"eval --harness of no harness", []string{"eval", "--harness", "cursor"}, ExitUsage, "", "eval --harness takes claude-code or codex"},
+		{"eval --parallel below zero", []string{"eval", "--parallel", "-1"}, ExitUsage, "", "eval --parallel takes a number of runs, or 0 for the default"},
 		{"eval --check --json with an argument", []string{"eval", "--check", "--json", "extra"}, ExitUsage, "", `eval takes no arguments, got "extra"`},
 		{"eval --check --json -C empty", []string{"eval", "--check", "--json", "-C", ""}, ExitUsage, "", `eval -C takes a directory, got ""`},
 	}

@@ -3,7 +3,7 @@
 ## Where am I?
 
 The root of CECH, a marketplace of agent skills for Claude Code and Codex that organisations extend rather than fork ([README](README.md)).
-It has no skills yet: the tree holds the decision records, the pages on what CECH does now, a first `cech` CLI that prints its version, generates a marketplace's files and checks a marketplace's eval cases, the gates that check every change, and their tests.
+It has no skills yet: the tree holds the decision records; the pages on what CECH does now; a first `cech` CLI that prints its version, generates a marketplace's files, and checks and runs a marketplace's eval cases; the image `cech eval` runs them in; the gates that check every change; and their tests.
 This is the only `AGENTS.md` layer, so it answers for every path.
 An `AGENTS.md` in an eval fixture project (`project/` or `project.staged/`), whether under `evals/` or in a fixture marketplace under `cli/internal/app/testdata/`, is test data for eval runs, not a layer.
 
@@ -39,7 +39,7 @@ A lower `AGENTS.md`, once one exists, adds or narrows rules for its own paths an
 | A CLI command or package, with its Go tests | `cli/` | [ADR 15](docs/adr/0015-the-cech-cli.md); [ADR 18](docs/adr/0018-generated-files.md) for what `cech build` reads and writes |
 | The catalogue's namespace, description, owner or code owners team, or the roles it defines, then `mise run build:fix` | `data/marketplace.toml` | [ADR 17](docs/adr/0017-repository-data-and-state.md) item 7 |
 | Adding, removing or merging one of CECH's categories, then `mise run build:fix` | `cli/internal/marketplace/categories.toml` | [ADR 12](docs/adr/0012-categories-and-names.md) item 1; [ADR 24](docs/adr/0024-what-a-version-change-means.md) for removing or merging |
-| A plugin's evals: its fixture project, routing rows and cases, each case with its `cech.toml` and recorded runs of both harnesses, checked by `mise run lint:evals` | `evals/<category>/<plugin>/` | [ADR 25](docs/adr/0025-evals.md) item 2, [evals](docs/reference/evals.md) |
+| A plugin's evals: its fixture project, routing rows and cases, each case with its `cech.toml` and recorded runs of both harnesses, checked by `mise run lint:evals`; the release check's report `evals/reports/<commit>.md`, which `cech eval` writes and a pull request commits, never edited by hand | `evals/<category>/<plugin>/`, `evals/reports/` | [ADR 25](docs/adr/0025-evals.md) item 2, [evals](docs/reference/evals.md) |
 | The image `cech eval` starts every run in: its `Containerfile`, Codex's version in `package.json` and `package-lock.json`, and in `claude-code/` the version of Claude Code, which `cech-install-claude-code` installs at run time since its licence keeps it out of the image; `.github/workflows/eval-image.yml` publishes it, and a pull request then puts its digest in the CLI | `images/eval/` | [ADR 26](docs/adr/0026-eval-runs-in-containers.md) item 1, [ADR 5](docs/adr/0005-gates-and-tool-pins.md) items 8 and 10 |
 | A Go dependency, with its reason on its line | `cli/go.mod` | [ADR 16](docs/adr/0016-building-the-cech-cli.md) item 1 |
 | A public term rule or an allowlisted email address | `checks/terms/` | [ADR 4](docs/adr/0004-vendor-neutrality.md) |
