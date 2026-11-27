@@ -39,9 +39,13 @@ Keep it short: someone writing by hand should not face a form.
 
 ## Acceptance criteria
 
-1. <A rule a test can check.>
+1. <A rule that always holds, such as a format or a layout.>
    Test: `test/<suite>.bats` "<case name>"
-2. <See docs/reference/<page>.md#<section>, edited with the code, plus anything the page does not say.>
+2. WHEN <input or event>, THEN <result>.
+   Test: `test/<suite>.bats` "<case name>"
+3. IF <bad input or failure>, THEN <exit status and what it reports>.
+   Test: `test/<suite>.bats` "<case name>"
+4. <See docs/reference/<page>.md#<section>, edited with the code, plus anything the page does not say.>
    Test: by hand: <how>
 
 ## Out of scope
@@ -55,9 +59,16 @@ Keep it short: someone writing by hand should not face a form.
 
 - The goal, the criteria and their `Test:` lines are required; the last two sections are optional.
   Until the test exists, a criterion's line is `Test: to be written`.
+- Write each criterion, or the part a reference page does not say, in one of three forms:
+  - a plain sentence, for a rule that always holds;
+  - `WHEN …, THEN …`, for behaviour that something triggers;
+  - `IF …, THEN …`, for unwanted behaviour: bad input, such as a malformed line, or a failure, such as a missing tool.
+- Each `IF` criterion has at least one test that gives the bad input or causes the failure.
+- Where a criterion says what input is valid, an `IF` criterion says what happens to input it rejects.
 - Number the criteria, so commits and test comments can cite them.
 - Group the criteria under subheadings, or add a section such as an example, where that helps.
 - The reasons for a decision belong in its ADR or commit message; the steps and raw results behind its findings go in research beside the spec.
+- Write a new spec from this template, not from an older spec.
 - A spec in an open change that predates this template may keep its form, and link and typo fixes do not change that; specs in `done/` keep theirs.
 - A task list may sit beside the spec as its own file while the change is in progress.
 
