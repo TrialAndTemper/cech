@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -25,9 +26,13 @@ import (
 // Dir is the folder of eval cases at the marketplace root.
 const Dir = "evals"
 
-// resultsDir is where cech eval will write its run results; it is
+// resultsDir is where cech eval writes its run results; it is
 // git-ignored and not checked.
 const resultsDir = "evals/results"
+
+// ReportsDir is where cech eval writes its report files, one per commit
+// it ran on, which a pull request commits (eval-runs spec criteria 13 and 27).
+const ReportsDir = "evals/reports"
 
 // Finding is one way the eval cases break a rule, at a path from the
 // marketplace root.
@@ -42,6 +47,16 @@ type Result struct {
 	Cases, Recordings int
 	// Findings are sorted by path, then message.
 	Findings []Finding
+	// Found are the cases whose cech.toml it read, in path order.
+	Found []Case
+}
+
+// Case is a case Check read: its plugin, its folder and what its
+// cech.toml says.
+type Case struct {
+	Plugin, Name, Dir, Family, Expect string
+	// Graders are the names of its graders, in cech.toml's order.
+	Graders []string
 }
 
 // The folders and file of a plugin's eval folder that are not cases
@@ -116,9 +131,13 @@ func Check(fsys fs.FS, m *marketplace.Marketplace) (Result, error) {
 	plugins := map[string]marketplace.Plugin{}
 	for _, p := range m.Plugins {
 		plugins[path.Join(p.Category, p.Name)] = p
-		// cech eval will write its run results to evals/results/.
-		if path.Join(Dir, p.Category) == resultsDir {
-			c.bad(p.Dir(), "is in the category results, whose eval folder would be evals/results/, where cech eval will write its run results")
+		// cech eval writes its run results to evals/results/ and its
+		// reports to evals/reports/.
+		switch path.Join(Dir, p.Category) {
+		case resultsDir:
+			c.bad(p.Dir(), "is in the category results, whose eval folder would be evals/results/, where cech eval writes its run results")
+		case ReportsDir:
+			c.bad(p.Dir(), "is in the category reports, whose eval folder would be evals/reports/, where cech eval writes its report files")
 		}
 	}
 	c.walk(plugins)
@@ -127,6 +146,7 @@ func Check(fsys fs.FS, m *marketplace.Marketplace) (Result, error) {
 			c.minimums(p)
 		}
 	}
+	sort.Slice(c.res.Found, func(i, j int) bool { return c.res.Found[i].Dir < c.res.Found[j].Dir })
 	sort.Slice(c.res.Findings, func(i, j int) bool {
 		a, b := c.res.Findings[i], c.res.Findings[j]
 		if a.Path != b.Path {
@@ -151,7 +171,11 @@ func (c *checker) walk(plugins map[string]marketplace.Plugin) {
 	}
 	for _, cat := range categories {
 		catDir := path.Join(Dir, cat.Name())
-		if catDir == resultsDir {
+		switch catDir {
+		case resultsDir:
+			continue
+		case ReportsDir:
+			c.checkReports(catDir, cat)
 			continue
 		}
 		if !cat.IsDir() {
@@ -428,6 +452,11 @@ func (c *checker) checkCase(p marketplace.Plugin, dir string) error {
 		return nil
 	}
 	graders, gradable := c.checkGraders(dir, meta)
+	found := Case{Plugin: p.Name, Name: name, Dir: dir, Family: meta.Family, Expect: meta.Expect}
+	for _, g := range graders {
+		found.Graders = append(found.Graders, g.name)
+	}
+	c.res.Found = append(c.res.Found, found)
 	if c.families[p.Name] == nil {
 		c.families[p.Name] = map[string]int{}
 	}
@@ -774,3 +803,38 @@ func (c *checker) minimums(p marketplace.Plugin) {
 		}
 	}
 }
+
+// checkReports checks the report files in evals/reports/: each is a
+// file <commit>.md, named by a full commit id, that holds no local path
+// (eval-runs spec criterion 27).
+func (c *checker) checkReports(dir string, d fs.DirEntry) {
+	if !d.IsDir() {
+		c.bad(dir, "is not a folder of report files")
+		return
+	}
+	entries, err := c.readDir(dir)
+	if err != nil {
+		c.errs = append(c.errs, fmt.Errorf("%w; skipped the report files", err))
+		return
+	}
+	for _, e := range entries {
+		p := path.Join(dir, e.Name())
+		name, isMD := strings.CutSuffix(e.Name(), ".md")
+		if e.IsDir() || !isMD || !commitID.MatchString(name) {
+			c.bad(p, "is not a report file <commit>.md, named by the full id of the commit it ran on")
+			continue
+		}
+		src, exists, err := c.read(p)
+		if err != nil || !exists {
+			continue
+		}
+		for i, line := range strings.Split(string(src), "\n") {
+			if localPath(line) {
+				c.bad(p, "line %d holds a local path", i+1)
+			}
+		}
+	}
+}
+
+// commitID is a full git commit id, in SHA-1 or SHA-256.
+var commitID = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)

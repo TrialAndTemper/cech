@@ -19,11 +19,28 @@ func TestCheckResultsCategory(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, f := range res.Findings {
-		if f.Path == "plugins/results/acme-tally" && strings.Contains(f.Message, "cech eval will write its run results") {
+		if f.Path == "plugins/results/acme-tally" && strings.Contains(f.Message, "cech eval writes its run results") {
 			return
 		}
 	}
 	t.Errorf("findings %+v hold none for the category results", res.Findings)
+}
+
+// TestCheckReportsCategory checks that a category named reports is a
+// finding (eval-runs spec criterion 13): its eval folder would be
+// evals/reports/, where cech eval writes its report files.
+func TestCheckReportsCategory(t *testing.T) {
+	m := &marketplace.Marketplace{Plugins: []marketplace.Plugin{{Category: "reports", Name: "acme-tally"}}}
+	res, err := Check(fstest.MapFS{}, m)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range res.Findings {
+		if f.Path == "plugins/reports/acme-tally" && strings.Contains(f.Message, "report files") {
+			return
+		}
+	}
+	t.Errorf("findings %+v hold none for the category reports", res.Findings)
 }
 
 // TestSkillLines checks the name line and description line the Codex

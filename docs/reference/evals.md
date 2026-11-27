@@ -12,11 +12,12 @@ It holds:
 - `routing.md`, the skill's routing rows;
 - one folder per case, named after the case.
 
-`evals/` holds nothing else, apart from `evals/results/`, where `cech eval` will write the results of its runs, which stay out of git.
+`evals/` holds nothing else, apart from `evals/results/`, where `cech eval` writes the results of its runs, which stay out of git, and `evals/reports/`, where it writes its report files, which a pull request commits.
 The check reports as a finding:
 
 - anything else in `evals/`;
-- a plugin category named `results`, whose eval folders would fall in the git-ignored `evals/results/`;
+- a plugin category named `results` or `reports`, whose eval folders would fall in `evals/results/` or `evals/reports/`;
+- in `evals/reports/`, anything but a file `<commit>.md` named by the full id of a commit, and a line of a report file that holds a local path, as [Recordings](#recordings) defines one;
 - an eval folder for a plugin that does not exist;
 - a folder where a file belongs, or a file where a folder belongs.
 

@@ -117,6 +117,8 @@ func TestEvalCheckPasses(t *testing.T) {
 		}},
 		// Rule 11: file_exists grades by the glob, here with ** matching
 		// no folder and * a part of a name.
+		// Criteria 13 and 27 of the eval-runs spec: a report file.
+		{"a report file", writeTo("evals/reports/0123456789abcdef0123456789abcdef01234567.md", "# Release check\n\nRan on /cech/workspace.\n")},
 		{"file_exists globs", replaceIn(evalTrailer+"cech.toml", "type = \"file_exists\"\npath = \"COMMIT_MSG\"", "type = \"file_exists\"\npath = \"**/*_MSG\"")},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -507,6 +509,9 @@ func TestEvalCheckFindings(t *testing.T) {
 		{"a fail recording names the Codex detector", copyFile(evalSkip+codexRecs+"loaded/trace.jsonl", evalSkip+codexRecs+"not-loaded/trace.jsonl"), evalSkip + codexRecs + "not-loaded", "the codex load detector reads a load"},
 		// Rule 4 holds at any depth.
 		{"CLAUDE.md deep in the project", writeTo(evalProject+"src/CLAUDE.md", "x\n"), evalProject + "src/CLAUDE.md", "skip AGENTS.md"},
+		// Criteria 13 and 27 of the eval-runs spec: report files.
+		{"a report file not named by a commit", writeTo("evals/reports/latest.md", "x\n"), "evals/reports/latest.md", "is not a report file <commit>.md"},
+		{"a local path in a report file", writeTo("evals/reports/0123456789abcdef0123456789abcdef01234567.md", "# Report\n\nRan in /home/runner/x.\n"), "evals/reports/0123456789abcdef0123456789abcdef01234567.md", "line 3 holds a local path"},
 		{"skills deep in a staged change", writeTo(evalPlugin+"project.staged/src/.agents/skills/x/SKILL.md", "x\n"), evalPlugin + "project.staged/src/.agents", "settings or skills"},
 		// Rules 10 and 11: each required key, and each value a key takes.
 		{"regex without a pattern", replaceIn(controlToml, "pattern = '^391$'\n", ""), controlToml, "grader answer: has no pattern"},
