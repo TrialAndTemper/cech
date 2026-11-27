@@ -64,7 +64,9 @@ func Bad() { fmt.Printf("%d\n", "x") }
 // Remove drops its error.
 func Remove() { os.Remove("x") }
 '
-  printf '\nrequire example.com/unused v1.0.0\n' >> "${REPO}/cli/go.mod"
+  plant unused/go.mod 'module example.com/unused
+'
+  printf '\nrequire example.com/unused v1.0.0\n\nreplace example.com/unused => ./unused\n' >> "${REPO}/cli/go.mod"
   run_go lint
   assert_status 1
   assert_output_has "fmt.Printf format %d has arg"
