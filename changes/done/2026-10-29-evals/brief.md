@@ -1,6 +1,6 @@
 # Notes for the runner and the release check
 
-Working notes, not rules: the change that builds `cech eval`'s runs (ADR 25 item 6) and the release check starts from them and writes its own spec.
+Working notes, not rules: the change that builds `cech eval`'s runs (ADR 25 item 6) and the release check ([ADR 27](../../../docs/adr/0027-the-release-check.md)) starts from them and writes its own spec.
 They come from the probes in [research/probes.md](research/probes.md).
 
 ## Running each harness

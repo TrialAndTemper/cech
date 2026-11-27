@@ -15,6 +15,7 @@ Words the ADRs use, in short:
 - **Role:** a kind of skill that other skills rely on, such as the issue tracker ([ADR 21](0021-roles.md)).
 - **Extension:** an organisation's own marketplace, built on CECH ([ADR 20](0020-the-extension-model.md)).
 - **Gate:** a check that a change must pass before it merges ([ADR 5](0005-gates-and-tool-pins.md)).
+- **Bar:** a condition the release check requires before a release, as a gate does before a merge ([ADR 27](0027-the-release-check.md)).
 - **Probe:** a repeatable check of how a harness behaves ([ADR 9](0009-native-harness-features-first.md)).
 - **Managed marketplace:** one that a project's `.cech/config.toml` lists ([ADR 19](0019-per-project-plugin-enablement.md)).
 - **Eval case:** a prompt with its graders, which test what a skill changes or whether it loads ([ADR 25](0025-evals.md)).
@@ -75,3 +76,5 @@ Words the ADRs use, in short:
     - Eval cases beside each plugin, an offline gate on them, and the runner that drives both harnesses.
 26. [Eval runs in containers](0026-eval-runs-in-containers.md)
     - Each run in a fresh container from a pinned image, on a maintainer's logins until CECH has API keys.
+27. [The release check](0027-the-release-check.md)
+    - Model runs before a release, added until each bar is clear, to show a skill works and has not got worse.
