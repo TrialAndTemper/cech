@@ -29,8 +29,8 @@ insert_final_newline = unset
 trim_trailing_whitespace = unset
 
 # shfmt reads these for the POSIX sh scripts: executables with no
-# extension and *.sh libraries.
-[scripts/**]
+# extension and *.sh libraries, and the image's executables.
+[{scripts/**,images/**}]
 shell_variant = posix
 switch_case_indent = true
 space_redirects = true

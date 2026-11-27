@@ -1,0 +1,9 @@
+{
+  "name": "cech-eval-harnesses",
+  "private": true,
+  "description": "The harness that the cech eval image holds, at an exact version; package-lock.json holds each package's integrity hash.",
+  "license": "MIT",
+  "dependencies": {
+    "@openai/codex": "0.171.0"
+  }
+}

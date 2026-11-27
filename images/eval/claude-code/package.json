@@ -1,0 +1,9 @@
+{
+  "name": "cech-eval-claude-code",
+  "private": true,
+  "description": "The Claude Code version that cech eval installs at run time, outside the image; package-lock.json holds each package's integrity hash.",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.330"
+  }
+}

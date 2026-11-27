@@ -1,0 +1,82 @@
+# The image that cech eval starts every model run in (ADR 26), and the
+# allowlist proxy beside it. It pins each harness, as ADR 5 item 8
+# allows, and cech eval pins the image itself by digest.
+#
+# Claude Code's licence does not let CECH publish it, so the image holds
+# only its pins: claude-code/package.json and its lockfile, in
+# /cech/claude-code/. cech-install-claude-code installs that version at
+# run time, on the maintainer's machine, into a folder that cech eval
+# mounts into each run. Codex, under Apache-2.0, is in the image.
+#
+# Pins, each with its checksum:
+# - Both base images by digest: the official Node.js image, whose
+#   digest fixes the Node.js and npm builds, for the install stage, and
+#   the Debian release it is built on for the image itself.
+# - The harnesses from npm, with npm ci from a package.json and its
+#   package-lock.json, whose integrity hashes are the checksums: the
+#   ones here for Codex, those in claude-code/ for Claude Code. npm is
+#   how both harnesses ship their builds for each platform, so each
+#   lockfile covers amd64 and arm64.
+# - The Debian packages from snapshot.debian.org, at the time the
+#   Debian base image was built, so a rebuild gets the same packages;
+#   apt checks them against the snapshot's signed Release file.
+# On a bump, change both digests and the snapshot time together, to a
+# Debian release and a Node.js image at least a week old (ADR 5 item
+# 10). Pick harness versions at least a week old too, and rewrite each
+# lockfile with npm install --package-lock-only.
+#
+# The image holds no credential, harness setting, MCP server or plugin:
+# cech eval mounts each run's workspace and home, and sets its
+# environment.
+
+FROM docker.io/library/node:24.22.2-trixie-slim@sha256:0820eaa85e07d0490446dd01d14707e17e6108a36988cf374899cd057eb3812d AS harnesses
+
+WORKDIR /opt/cech
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts --no-audit --no-fund
+
+FROM docker.io/library/debian:trixie-20261104-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2
+
+# tinyproxy is the allowlist proxy, from tinyproxy-bin, which leaves out
+# the service and its log rotation, and socat forwards the OTLP port
+# from the internal network to the host; cech eval writes the config of
+# each. apt reaches the snapshot over http, since the image has no CA
+# certificates yet, and checks the Release file's signature instead;
+# the grep fails the build if a source was left unpinned.
+ARG SNAPSHOT=20261104T212339Z
+RUN sed -i \
+    -e "s|^URIs: http://deb.debian.org/debian\$|URIs: http://snapshot.debian.org/archive/debian/${SNAPSHOT}|" \
+    -e "s|^URIs: http://deb.debian.org/debian-security\$|URIs: http://snapshot.debian.org/archive/debian-security/${SNAPSHOT}|" \
+    /etc/apt/sources.list.d/debian.sources \
+  && ! grep -q '^URIs: .*deb\.debian\.org' /etc/apt/sources.list.d/debian.sources \
+  && apt-get -o Acquire::Check-Valid-Until=false update \
+  && DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends \
+    ca-certificates git socat tinyproxy-bin \
+  && rm -rf /var/lib/apt/lists/*
+
+# Node.js runs Codex's launcher, and npm installs Claude Code at run
+# time; both come from the Node.js image, without its yarn and corepack.
+COPY --from=harnesses /usr/local/bin/node /usr/local/bin/node
+COPY --from=harnesses /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/npm
+COPY --from=harnesses /opt/cech/node_modules /opt/cech/node_modules
+RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
+  && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
+  && ln -s /opt/cech/node_modules/@openai/codex/bin/codex.js /usr/local/bin/codex
+
+COPY claude-code/package.json claude-code/package-lock.json /cech/claude-code/
+COPY --chmod=755 cech-install-claude-code /usr/local/bin/cech-install-claude-code
+
+# uid 1000, the usual first user on a host, so files in a mounted
+# workspace keep their owner under Podman's keep-id.
+RUN groupadd --gid 1000 cech \
+  && useradd --uid 1000 --gid cech --home-dir /cech/home --no-create-home --shell /bin/sh cech \
+  && mkdir -p /cech/home /cech/workspace \
+  && chown cech:cech /cech/home /cech/workspace
+
+# The source label links the published package to the repository.
+LABEL org.opencontainers.image.source="https://github.com/TrialAndTemper/cech" \
+  org.opencontainers.image.description="The container that cech eval runs Claude Code and Codex in"
+
+ENV HOME=/cech/home
+USER cech
+WORKDIR /cech/workspace
