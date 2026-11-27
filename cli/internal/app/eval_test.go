@@ -229,12 +229,12 @@ func TestEvalCheckFindings(t *testing.T) {
 		// The heart of the gate: a grader that always passes is caught by
 		// the recording that must fail it (ADR 25 item 4), on each harness.
 		{
-			"grader always passes", replaceIn(controlToml, `'^391$'`, `'\d'`),
+			"grader always passes", replaceIn(controlToml, `'\b391\b'`, `'\d'`),
 			evalControl + claudeRecs + "wrong", "must fail a grader, but passes answer",
 		},
-		{"grader always passes on Codex", replaceIn(controlToml, `'^391$'`, `'\d'`), evalControl + codexRecs + "wrong", "must fail a grader"},
+		{"grader always passes on Codex", replaceIn(controlToml, `'\b391\b'`, `'\d'`), evalControl + codexRecs + "wrong", "must fail a grader"},
 		{
-			"grader never passes", replaceIn(controlToml, `'^391$'`, `'^390$'`),
+			"grader never passes", replaceIn(controlToml, `'\b391\b'`, `'\b390\b'`),
 			evalControl + claudeRecs + "right", "fails answer",
 		},
 		// On Codex, last_message is the last agent message, not the first.
@@ -423,13 +423,13 @@ func TestEvalCheckFindings(t *testing.T) {
 		{"exists not a boolean", replaceIn(trailerToml, "type = \"file_exists\"\npath = \"COMMIT_MSG\"", "type = \"file_exists\"\npath = \"COMMIT_MSG\"\nexists = \"maybe\""), trailerToml, "exists is not a boolean"},
 		{"glob with braces", replaceIn(trailerToml, "type = \"file_exists\"\npath = \"COMMIT_MSG\"", "type = \"file_exists\"\npath = \"{COMMIT_MSG,x}\""), trailerToml, "glob character"},
 		{
-			"no graders", replaceIn(controlToml, "[[graders]]\nname = \"answer\"\ntype = \"regex\"\npattern = '^391$'\n", ""),
+			"no graders", replaceIn(controlToml, "[[graders]]\nname = \"answer\"\ntype = \"regex\"\npattern = '\\b391\\b'\n", ""),
 			controlToml, "has no [[graders]]",
 		},
 		{"a trigger case with a grader", appendTo(loadToml, "\n[[graders]]\nname = \"x\"\ntype = \"regex\"\npattern = 'x'\n"), loadToml, "has [[graders]], but a trigger case has none"},
 		// Rules 14 and 15: patterns.
 		{
-			"pattern that does not compile", replaceIn(controlToml, `'^391$'`, `'^391('`),
+			"pattern that does not compile", replaceIn(controlToml, `'\b391\b'`, `'^391('`),
 			controlToml, `grader answer: pattern "^391("`,
 		},
 		{
@@ -514,7 +514,7 @@ func TestEvalCheckFindings(t *testing.T) {
 		{"a local path in a report file", writeTo("evals/reports/0123456789abcdef0123456789abcdef01234567.md", "# Report\n\nRan in /home/runner/x.\n"), "evals/reports/0123456789abcdef0123456789abcdef01234567.md", "line 3 holds a local path"},
 		{"skills deep in a staged change", writeTo(evalPlugin+"project.staged/src/.agents/skills/x/SKILL.md", "x\n"), evalPlugin + "project.staged/src/.agents", "settings or skills"},
 		// Rules 10 and 11: each required key, and each value a key takes.
-		{"regex without a pattern", replaceIn(controlToml, "pattern = '^391$'\n", ""), controlToml, "grader answer: has no pattern"},
+		{"regex without a pattern", replaceIn(controlToml, "pattern = '\\b391\\b'\n", ""), controlToml, "grader answer: has no pattern"},
 		{"grader without a name", replaceIn(controlToml, "name = \"answer\"\n", ""), controlToml, "grader #1: has no name"},
 		{"a grader name not in its form", replaceIn(controlToml, `name = "answer"`, `name = "Answer"`), controlToml, "grader #1: has no name of lowercase letters"},
 		{"a grader name used twice", replaceIn(trailerToml, `name = "file-written"`, `name = "file-listed"`), trailerToml, "grader file-listed: the name is used twice"},
@@ -566,7 +566,7 @@ func TestEvalCheckKeepsChecking(t *testing.T) {
 	}{
 		{"unknown cech.toml key", func(t *testing.T, dir string) {
 			replaceIn(evalControl+"cech.toml", "family", "extra = 1\nfamily")(t, dir)
-			replaceIn(evalControl+"cech.toml", `'^391$'`, `'\d'`)(t, dir)
+			replaceIn(evalControl+"cech.toml", `'\b391\b'`, `'\d'`)(t, dir)
 		}, []string{evalControl + "cech.toml: has the unknown key", evalControl + claudeRecs + "wrong: must fail", evalControl + codexRecs + "wrong: must fail"}},
 		{"a file where recordings/ belongs", func(t *testing.T, dir string) {
 			removeAll(evalControl+"recordings")(t, dir)
@@ -615,7 +615,7 @@ func TestEvalCheckOneFinding(t *testing.T) {
 	for _, tt := range []struct{ name, from, to, want string }{
 		{"a name that is not a string", `name = "answer"`, "name = 1", "grader #1: name is not a string"},
 		{"a type that is not a string", `type = "regex"`, "type = 1", "grader answer: type is not a string"},
-		{"a table in a grader key", "pattern = '^391$'", "pattern = {a = 1}", "grader answer: pattern is not a string"},
+		{"a table in a grader key", "pattern = '\\b391\\b'", "pattern = {a = 1}", "grader answer: pattern is not a string"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
