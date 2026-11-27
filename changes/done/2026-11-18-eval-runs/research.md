@@ -1,8 +1,8 @@
 # Research for eval runs and the release check
 
-Findings for the change that builds `cech eval`'s runs ([ADR 25](../../docs/adr/0025-evals.md) item 6) and the release check ([ADR 27](../../docs/adr/0027-the-release-check.md)).
+Findings for the change that builds `cech eval`'s runs ([ADR 25](../../../docs/adr/0025-evals.md) item 6) and the release check ([ADR 27](../../../docs/adr/0027-the-release-check.md)).
 Each was checked on 2026-11-18 against the source it links, unless it gives another date.
-The notes on the runner in [the evals brief](../done/2026-10-29-evals/brief.md) still hold, apart from running Codex one at a time (see [Time and cost of a run](#time-and-cost-of-a-run)).
+The notes on the runner in [the evals brief](../2026-10-29-evals/brief.md) still hold, apart from running Codex one at a time (see [Time and cost of a run](#time-and-cost-of-a-run)).
 
 ## Telemetry from the harnesses
 
@@ -220,6 +220,38 @@ Each check used a 15-point threshold and a false alarm once in 20, and read the 
 - So splitting the false-alarm rate across cases nearly doubles the runs for almost no change in what passes or fails.
 - At a cap of 500 with no split, a changed plugin with 10 content cases takes about 3,300 runs per harness: about 4.5 hours on Codex at 4 runs at once, and 1.5 hours on Claude Code at 6, at the measured run times.
 
+## The hand checks
+
+Run on 2026-11-27 with the full release check, on the test plugin, in an image built from `images/eval/`.
+It ran three times: with the bars and threshold from before [decision 28](#questions-and-decisions), with those of decision 28, and on Claude Code alone once the control case's grader accepted the answer anywhere in the reply:
+
+| Bars and threshold | Harness | Runs | Errors | Bars | Tokens the plugin adds | Cost |
+| --- | --- | --- | --- | --- | --- | --- |
+| Before decision 28 | Codex CLI 0.171.0 | 375 | 0 | all four passed | 72, over 105 pairs | not reported |
+| Before decision 28 | Claude Code 2.1.330 | 770 | 0 | all four passed | 40, over 320 pairs | $0.75 |
+| Decision 28 | Codex CLI 0.171.0 | 540, all new | 0 | all four passed | 72, over 155 pairs | not reported |
+| Decision 28 | Claude Code 2.1.330 | 1,265, of which 770 reused | 0 | three passed, the control case no result | 40, over 505 pairs | $1.28 over all 1,265 |
+| Decision 28, new grader | Claude Code 2.1.330 | 500, all new | 0 | all four passed | 40, over 155 pairs | $0.56 |
+
+- On Claude Code, the control case passed in 97% of the runs with the plugin and 90% without it.
+  Before decision 28, with a 15-point threshold, the bar passed.
+  At the 10 points of decision 28, it read 500 runs in each arm, the cap, with a range of +2 to +12 points, and ended with no result, so `cech eval` exited 1.
+  Every one of the 1,000 replies had the right answer, 391.
+  The 64 runs graded as failures, 15 with the plugin and 49 without, wrote it as "17 × 23 = 391", and the grader accepted only a bare 391.
+  So the case measured how closely the model followed the format, not the plugin's effect on the task.
+  With a grader that takes 391 anywhere as a whole number, both arms passed 150 of 150 runs, and the bar passed.
+- When the first check made its Codex runs, the key that decides whether a run can be reused named the image by its name or tag, which a rebuild can move.
+  By the second check the key named it by its ID, so the second check did not reuse those runs; the first check's Claude Code runs came after that change.
+- An earlier Claude Code run, on an image built before the install marker existed, had its Claude Code install emptied by a second check running at the same time.
+  Since then, runs name the image by its ID and the install waits on a lock.
+- No credential appears in the 11,156 files of the run results and the report, or in the command's output: neither the Claude Code token nor any value of the Codex login's `auth.json`.
+- With no Codex credential, `cech eval --harness codex` gave Codex's bars no result, said how to set one and exited 1, and `cech eval --harness claude-code` did not name Codex.
+- With an image the engine does not hold and cannot pull, `cech eval` said so and exited 3.
+- An interrupt of `cech eval --harness codex` after 10 finished runs ended it in 7 seconds with exit 1, and it said the finished runs were kept.
+  It left no container or network of its batch and no folder of a stopped run, kept the 10 runs, and left the commit's report file unchanged.
+  A second interrupt 0.3 seconds after the first ended it at once, killed by the signal.
+  It left the proxy and forwarder containers and the two networks, which the CLI reference's `--filter` commands found, and the telemetry receiver's folder in the user's cache.
+
 ## Choosing the bars
 
 Simulated on 2026-11-27 with the sequence the bars read, a false alarm once in 20, read after every five runs per arm, and a cap of 500 runs per arm.
@@ -279,41 +311,41 @@ The maintainer decided each question, from a recommendation, on the date given, 
 Where a later decision replaces part of an earlier one, both say so.
 
 1. Should runs record tokens, cost, time and retries from the harnesses' telemetry?
-   Decided on 2026-11-18: yes, in the run results only, never in recordings ([ADR 27](../../docs/adr/0027-the-release-check.md) item 6, [spec](spec.md) criterion 24).
+   Decided on 2026-11-18: yes, in the run results only, never in recordings ([ADR 27](../../../docs/adr/0027-the-release-check.md) item 6, [spec](spec.md) criterion 24).
 2. Should a release that changes a skill also run the latest final release as a third arm?
-   Decided on 2026-11-18: yes, with a bar on it ([ADR 27](../../docs/adr/0027-the-release-check.md) items 2 and 3, [spec](spec.md) criteria 1, 8 and 23).
+   Decided on 2026-11-18: yes, with a bar on it ([ADR 27](../../../docs/adr/0027-the-release-check.md) items 2 and 3, [spec](spec.md) criteria 1, 8 and 23).
 3. Should content cases run more than three times, with ranges per case and pass^k in the report?
    Decided on 2026-11-18: runs start at five per arm and grow, up to a cap, until a sequential test is clear; pass^k is left out of the report.
    Decision 17 picks the test and the first values ([spec](spec.md) criteria 1 to 4).
 4. Should a grader be able to run a script on the files a run wrote, for formats such as `.docx`?
-   Decided on 2026-11-18: yes, checked offline against the recordings like any other grader ([ADR 25](../../docs/adr/0025-evals.md) item 4); it comes with the first plugin that writes such files.
+   Decided on 2026-11-18: yes, checked offline against the recordings like any other grader ([ADR 25](../../../docs/adr/0025-evals.md) item 4); it comes with the first plugin that writes such files.
 5. Should CECH ship anything that sends telemetry to CECH?
-   Decided on 2026-11-18: no ([ADR 28](../../docs/adr/0028-telemetry.md) item 1); the marketplace reference says how an organisation measures CECH's skills in its own telemetry.
+   Decided on 2026-11-18: no ([ADR 28](../../../docs/adr/0028-telemetry.md) item 1); the marketplace reference says how an organisation measures CECH's skills in its own telemetry.
 6. Should the report show what each skill's description costs, since every session loads it?
    Decided on 2026-11-20: yes, as a size and as the input tokens its plugin adds, not as a bar ([spec](spec.md) criteria 25 and 27).
    The offline checks of a skill's structure that Plugin Eval suggests go to `cech validate`.
 7. Should organisations be able to share telemetry, so CECH learns how its skills are used?
-   Decided on 2026-11-20: yes, as a summary that `cech` makes from the organisation's own export and the organisation submits by hand ([ADR 28](../../docs/adr/0028-telemetry.md) item 2).
+   Decided on 2026-11-20: yes, as a summary that `cech` makes from the organisation's own export and the organisation submits by hand ([ADR 28](../../../docs/adr/0028-telemetry.md) item 2).
    The command and an issue form for summaries are a later change.
 8. When does a content or control run pass, and what is a grader's `weight` for?
    Decided on 2026-11-25: a run passes when every grader of its case passes, the same rule a recording must meet; `weight` is dropped, and the report gives each grader's pass rate ([spec](spec.md) criteria 11, 13 and 27).
 9. What is a grader's `arm` for?
    Decided on 2026-11-25: nothing the report does not already show, so `arm` is dropped and every grader runs in every arm ([spec](spec.md) criteria 11 and 13).
 10. Should the release check put a bar only on the content cases an author marks `critical`?
-    Decided on 2026-11-25: no; its bars read every content case, and `critical` is dropped, since every claim a skill makes must hold ([ADR 10](../../docs/adr/0010-claude-code-and-codex-from-one-source.md) item 4, [spec](spec.md) criteria 5, 8 and 13).
+    Decided on 2026-11-25: no; its bars read every content case, and `critical` is dropped, since every claim a skill makes must hold ([ADR 10](../../../docs/adr/0010-claude-code-and-codex-from-one-source.md) item 4, [spec](spec.md) criteria 5, 8 and 13).
 11. What makes a plugin changed?
-    Decided on 2026-11-25: any change under its plugin folder since the commit of `main` that the latest final release was cut from, the same commits its changelog lists ([ADR 14](../../docs/adr/0014-releases-and-versions.md) item 4, [spec](spec.md) criterion 22).
+    Decided on 2026-11-25: any change under its plugin folder since the commit of `main` that the latest final release was cut from, the same commits its changelog lists ([ADR 14](../../../docs/adr/0014-releases-and-versions.md) item 4, [spec](spec.md) criterion 22).
     A new plugin has no comparison with a latest final release.
     Decision 12 replaces what this decision said about cases added since that release.
 12. Should the comparison with the latest final release pool a plugin's content cases, or test each case?
     Decided on 2026-11-26: each case on its own, since pooling lets a gain in one case hide a large drop in another; a case added since that release is not compared ([spec](spec.md) criteria 1, 4, 8 and 23).
     This decision also split the false-alarm rate across the cases; decision 22 replaces that.
 13. Who runs the release check, and on whose account, while CECH cannot pay for API keys?
-    Decided on 2026-11-26: a maintainer, on their own machine and logins, with every run in a fresh container from a pinned image, so the same command can run in CI with API keys later ([ADR 26](../../docs/adr/0026-eval-runs-in-containers.md), [spec](spec.md) criteria 14 to 21, 28 and 29).
+    Decided on 2026-11-26: a maintainer, on their own machine and logins, with every run in a fresh container from a pinned image, so the same command can run in CI with API keys later ([ADR 26](../../../docs/adr/0026-eval-runs-in-containers.md), [spec](spec.md) criteria 14 to 21, 28 and 29).
 14. Where does the release check's report go?
-    Decided on 2026-11-26: `cech eval` writes a report file from a template built into the CLI, so it keeps one form between releases, and a pull request commits it; the full run results are attached to the release ([ADR 27](../../docs/adr/0027-the-release-check.md) item 6, [spec](spec.md) criteria 13, 26 and 27).
+    Decided on 2026-11-26: `cech eval` writes a report file from a template built into the CLI, so it keeps one form between releases, and a pull request commits it; the full run results are attached to the release ([ADR 27](../../../docs/adr/0027-the-release-check.md) item 6, [spec](spec.md) criteria 13, 26 and 27).
 15. Must an extension's releases pass the release check, and how do runs treat a plugin's dependencies?
-    Decided on 2026-11-26: the check binds CECH's own releases, and an extension may require it ([ADR 27](../../docs/adr/0027-the-release-check.md) item 1).
+    Decided on 2026-11-26: the check binds CECH's own releases, and an extension may require it ([ADR 27](../../../docs/adr/0027-the-release-check.md) item 1).
     An arm installs the plugin's dependencies, and a changed one makes its dependents changed ([spec](spec.md) criteria 22 and 23).
     This decision also had arms install the plugins a fixture project binds to roles; decision 25 replaces that.
 16. What happens to a run that loads a plugin or MCP server it should not, or whose telemetry cannot be read?
@@ -367,7 +399,7 @@ Where a later decision replaces part of an earlier one, both say so.
 
     This replaces the split of decisions 12 and 21, the boundary of decision 21, and the cap and budget of decision 17.
 23. How does the image get Claude Code, whose npm package reserves all rights to Anthropic, and which harness versions does it pin?
-    Decided on 2026-11-26: the published image leaves Claude Code out and holds its pinned lockfile, from which `cech eval` installs it on the maintainer's machine, so CECH passes on no copy ([ADR 26](../../docs/adr/0026-eval-runs-in-containers.md) item 1, [spec](spec.md) criteria 18 and 19).
+    Decided on 2026-11-26: the published image leaves Claude Code out and holds its pinned lockfile, from which `cech eval` installs it on the maintainer's machine, so CECH passes on no copy ([ADR 26](../../../docs/adr/0026-eval-runs-in-containers.md) item 1, [spec](spec.md) criteria 18 and 19).
     Both harnesses are pinned to the newest release at least a week old (ADR 5 item 10), newer than the versions of the timing runs.
 24. Where may a maintainer keep the credentials, besides the environment?
     Decided on 2026-11-27: in the system keyring too, under the service `cech` with the variable's name as the user name ([spec](spec.md) criterion 20).
