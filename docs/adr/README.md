@@ -18,6 +18,7 @@ Words the ADRs use, in short:
 - **Probe:** a repeatable check of how a harness behaves ([ADR 9](0009-native-harness-features-first.md)).
 - **Managed marketplace:** one that a project's `.cech/config.toml` lists ([ADR 19](0019-per-project-plugin-enablement.md)).
 - **Eval case:** a prompt with its graders, which test what a skill changes or whether it loads ([ADR 25](0025-evals.md)).
+- **Arm:** one way an eval case runs, such as with or without the plugin ([ADR 25](0025-evals.md)).
 - **Native files:** the harnesses' project settings, `.claude/settings.json` and `.codex/config.toml` ([ADR 19](0019-per-project-plugin-enablement.md)).
 
 ## Records
@@ -72,3 +73,5 @@ Words the ADRs use, in short:
     - What each kind of release may change, for the catalogue and the CLI.
 25. [Evals](0025-evals.md)
     - Eval cases beside each plugin, an offline gate on them, and the runner that drives both harnesses.
+26. [Eval runs in containers](0026-eval-runs-in-containers.md)
+    - Each run in a fresh container from a pinned image, on a maintainer's logins until CECH has API keys.
