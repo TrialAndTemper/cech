@@ -43,7 +43,6 @@ A case folder holds `prompt.md`, `cech.toml` and `recordings/`, and may hold a `
 | `family` | all | yes | `content`, `control` or `trigger` |
 | `expect` | all | yes | content `better`; control `same`; trigger `load` or `skip` |
 | `wording` | trigger | yes | with `load`, `matched` or `oblique` (avoiding the description's words); with `skip`, `unrelated` or `near-miss` (close to the skill's subject but outside it) |
-| `critical` | content | no | boolean, default false; checked, but used only by the runner |
 | `claim` | content | yes | the skill rule the case tests, one line |
 | `graders` | content, control | yes | an array of tables, `[[graders]]`, at least one; see below |
 | `recordings.<harness>.pass` | all | yes | names of recordings that must pass, at least one |
@@ -61,8 +60,6 @@ A trigger case has no graders: its verdict comes from the load detectors below.
 | --- | --- | --- | --- |
 | `name` | all | yes | lowercase letters and digits, in words joined by single `-`, unique in the case; findings name the grader by it |
 | `type` | all | yes | `regex` or `file_exists` |
-| `weight` | all | no | a finite positive number; checked, but used only by the runner |
-| `arm` | all | no | `with-only` (graded only in the arm with the plugin) or `both`; checked, but used only by the runner |
 | `pattern` | `regex` | yes | a regular expression in [Go's syntax](https://pkg.go.dev/regexp/syntax), such as `'(?m)^Refs: #\d+$'`, best written as a TOML literal string in single quotes |
 | `match` | `regex` | no | `contains` (the default), `not_contains` or `count` |
 | `count` | `regex` | with `match = "count"` | a whole number: the pattern matches exactly this many times |

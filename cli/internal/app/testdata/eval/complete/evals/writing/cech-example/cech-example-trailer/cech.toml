@@ -1,6 +1,5 @@
 family = "content"
 expect = "better"
-critical = true
 claim = "A commit message ends with a Change-Kind trailer that matches the change."
 
 [[graders]]
@@ -20,14 +19,12 @@ path = "COMMIT_MSG"
 name = "file-written"
 type = "file_exists"
 path = "COMMIT_MSG"
-arm = "with-only"
 
 [[graders]]
 name = "no-feat"
 type = "regex"
 pattern = '(?i)change-kind: feat'
 match = "not_contains"
-arm = "both"
 
 [[graders]]
 name = "one-trailer"
@@ -40,7 +37,6 @@ count = 1
 name = "reply-trailer"
 type = "regex"
 pattern = '\nChange-Kind: fix\s*$'
-weight = 2
 
 [recordings.claude-code]
 pass = ["real-run", "trailer"]

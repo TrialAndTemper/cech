@@ -77,7 +77,6 @@ type caseMeta struct {
 	Family     string                    `toml:"family"`
 	Expect     string                    `toml:"expect"`
 	Wording    *string                   `toml:"wording"`
-	Critical   *bool                     `toml:"critical"`
 	Claim      *string                   `toml:"claim"`
 	Recordings map[string]recordingLists `toml:"recordings"`
 	Graders    []map[string]any          `toml:"graders"`
@@ -621,13 +620,8 @@ func (c *checker) readMeta(dir string) (*caseMeta, error) {
 		if meta.Claim == nil || strings.TrimSpace(*meta.Claim) == "" || strings.Contains(*meta.Claim, "\n") {
 			c.bad(file, "claim is not one line naming the skill rule the case tests")
 		}
-	} else {
-		if meta.Critical != nil {
-			c.bad(file, "critical is for content cases only")
-		}
-		if meta.Claim != nil {
-			c.bad(file, "claim is for content cases only")
-		}
+	} else if meta.Claim != nil {
+		c.bad(file, "claim is for content cases only")
 	}
 	if !ok {
 		return nil, nil
