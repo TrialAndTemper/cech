@@ -78,3 +78,5 @@ Words the ADRs use, in short:
     - Each run in a fresh container from a pinned image, on a maintainer's logins until CECH has API keys.
 27. [The release check](0027-the-release-check.md)
     - Model runs before a release, added until each bar is clear, to show a skill works and has not got worse.
+28. [Telemetry](0028-telemetry.md)
+    - CECH sends no telemetry; organisations may share summaries of their own telemetry.
