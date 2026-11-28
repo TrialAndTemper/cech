@@ -1,13 +1,14 @@
 #!/bin/sh
-# Shell lint and format check over the shell code tracked under scripts/
-# and test/: the lint and format gates of ADR 5 for shell, run as
+# Shell lint and format check over the shell code tracked under scripts/,
+# images/ and test/: the lint and format gates of ADR 5 for shell, run as
 # `mise run lint`, `mise run format:check` and `mise run format:fix`.
 # POSIX sh (ADR 5): it must run under dash, macOS sh and Git Bash.
 #
 # Each kind of file declares its dialect on its first lines, which the
-# linter reads; shfmt takes it from .editorconfig in scripts/ and from the
-# extension in test/:
-#   scripts/ executables   executable, first line #!/bin/sh
+# linter reads; shfmt takes it from .editorconfig in scripts/ and images/
+# and from the extension in test/:
+#   scripts/ executables   executable, first line #!/bin/sh; so are the
+#                          executables in images/, which run in an image
 #   scripts/ libraries     *.sh, not executable, first line
 #                          `# shellcheck shell=sh`
 #   test/ suites           *.bats, not executable, first lines
@@ -17,8 +18,8 @@
 # In lint mode, a file that breaks its kind's rule is a finding, and so is
 # a suite line that starts with [[ or ((, which bash before 4.1 does not
 # treat as a failure. The format modes skip files that break their kind's
-# rule; lint reports them. Other files in test/ are fixtures and are not
-# checked.
+# rule; lint reports them. Other files in test/ are fixtures, and files in
+# images/ that are not executable are image sources; neither is checked.
 #
 # Usage: scripts/check-shell lint | format | fix
 #
@@ -106,10 +107,10 @@ main() {
     *) require_tool shfmt ;;
   esac
 
-  # Check the tracked files under scripts/ and test/ against the rules in
+  # Check the tracked files under scripts/, images/ and test/ against the rules in
   # the header, and collect the shell code. A file deleted but not yet
   # staged has nothing to check.
-  git ls-files -s -z -- scripts test > "${SCRATCH}/files.z"
+  git ls-files -s -z -- scripts images test > "${SCRATCH}/files.z"
   tr '\0' '\n' < "${SCRATCH}/files.z" > "${SCRATCH}/files"
   tab=$(printf '\t')
   STATUS=0
@@ -148,6 +149,18 @@ main() {
         continue
         ;;
       test/*) continue ;;
+      images/*)
+        case "${meta%% *}:${first}" in
+          100755:'#!/bin/sh' | 100755:'#!/bin/sh '*) set -- "$@" "${f}" ;;
+          100755:*) finding '%s: first line is not #!/bin/sh' "${f}" ;;
+          100644:'#!'*)
+            finding '%s: has a shebang but is not executable; run git add --chmod=+x %s' \
+              "${f}" "${f}"
+            ;;
+          *) ;;
+        esac
+        continue
+        ;;
       *.sh)
         case "${meta%% *}:${first}" in
           100644:'# shellcheck shell=sh') set -- "$@" "${f}" ;;
@@ -170,7 +183,7 @@ main() {
       *) ;;
     esac
   done < "${SCRATCH}/files"
-  [ "$#" -gt 0 ] || die "no shell code found under scripts/ or test/"
+  [ "$#" -gt 0 ] || die "no shell code found under scripts/, images/ or test/"
 
   case "${MODE}" in
     lint)

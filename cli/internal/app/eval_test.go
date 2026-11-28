@@ -117,9 +117,9 @@ func TestEvalCheckPasses(t *testing.T) {
 		}},
 		// Rule 11: file_exists grades by the glob, here with ** matching
 		// no folder and * a part of a name.
+		// Criteria 13 and 27 of the eval-runs spec: a report file.
+		{"a report file", writeTo("evals/reports/0123456789abcdef0123456789abcdef01234567.md", "# Release check\n\nRan on /cech/workspace.\n")},
 		{"file_exists globs", replaceIn(evalTrailer+"cech.toml", "type = \"file_exists\"\npath = \"COMMIT_MSG\"", "type = \"file_exists\"\npath = \"**/*_MSG\"")},
-		// Rule 10: a weight may be any positive number.
-		{"a fractional weight", replaceIn(evalTrailer+"cech.toml", "weight = 2", "weight = 0.5")},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()
@@ -229,12 +229,12 @@ func TestEvalCheckFindings(t *testing.T) {
 		// The heart of the gate: a grader that always passes is caught by
 		// the recording that must fail it (ADR 25 item 4), on each harness.
 		{
-			"grader always passes", replaceIn(controlToml, `'^391$'`, `'\d'`),
+			"grader always passes", replaceIn(controlToml, `'\b391\b'`, `'\d'`),
 			evalControl + claudeRecs + "wrong", "must fail a grader, but passes answer",
 		},
-		{"grader always passes on Codex", replaceIn(controlToml, `'^391$'`, `'\d'`), evalControl + codexRecs + "wrong", "must fail a grader"},
+		{"grader always passes on Codex", replaceIn(controlToml, `'\b391\b'`, `'\d'`), evalControl + codexRecs + "wrong", "must fail a grader"},
 		{
-			"grader never passes", replaceIn(controlToml, `'^391$'`, `'^390$'`),
+			"grader never passes", replaceIn(controlToml, `'\b391\b'`, `'\b390\b'`),
 			evalControl + claudeRecs + "right", "fails answer",
 		},
 		// On Codex, last_message is the last agent message, not the first.
@@ -409,22 +409,27 @@ func TestEvalCheckFindings(t *testing.T) {
 			"unknown target", replaceIn(controlToml, "type = \"regex\"\n", "type = \"regex\"\ntarget = \"trace\"\n"),
 			controlToml, `target "trace" is not last_message, files or file`,
 		},
+		// Criterion 13 of the eval-runs spec: weight and arm are gone.
 		{
-			"bad weight", replaceIn(controlToml, "type = \"regex\"\n", "type = \"regex\"\nweight = 0\n"),
-			controlToml, "weight is not a finite positive number",
+			"a weight", replaceIn(controlToml, "type = \"regex\"\n", "type = \"regex\"\nweight = 1\n"),
+			controlToml, `grader answer: takes no key "weight" for type regex`,
+		},
+		{
+			"an arm", replaceIn(controlToml, "type = \"regex\"\n", "type = \"regex\"\narm = \"both\"\n"),
+			controlToml, `grader answer: takes no key "arm" for type regex`,
 		},
 		{"absolute glob", replaceIn(trailerToml, "type = \"file_exists\"\npath = \"COMMIT_MSG\"", "type = \"file_exists\"\npath = \"/COMMIT_MSG\""), trailerToml, "not a relative glob"},
 		{"file target outside the workspace", replaceIn(trailerToml, "target = \"file\"\npath = \"COMMIT_MSG\"", "target = \"file\"\npath = \"../COMMIT_MSG\""), trailerToml, "not a relative path"},
 		{"exists not a boolean", replaceIn(trailerToml, "type = \"file_exists\"\npath = \"COMMIT_MSG\"", "type = \"file_exists\"\npath = \"COMMIT_MSG\"\nexists = \"maybe\""), trailerToml, "exists is not a boolean"},
 		{"glob with braces", replaceIn(trailerToml, "type = \"file_exists\"\npath = \"COMMIT_MSG\"", "type = \"file_exists\"\npath = \"{COMMIT_MSG,x}\""), trailerToml, "glob character"},
 		{
-			"no graders", replaceIn(controlToml, "[[graders]]\nname = \"answer\"\ntype = \"regex\"\npattern = '^391$'\n", ""),
+			"no graders", replaceIn(controlToml, "[[graders]]\nname = \"answer\"\ntype = \"regex\"\npattern = '\\b391\\b'\n", ""),
 			controlToml, "has no [[graders]]",
 		},
 		{"a trigger case with a grader", appendTo(loadToml, "\n[[graders]]\nname = \"x\"\ntype = \"regex\"\npattern = 'x'\n"), loadToml, "has [[graders]], but a trigger case has none"},
 		// Rules 14 and 15: patterns.
 		{
-			"pattern that does not compile", replaceIn(controlToml, `'^391$'`, `'^391('`),
+			"pattern that does not compile", replaceIn(controlToml, `'\b391\b'`, `'^391('`),
 			controlToml, `grader answer: pattern "^391("`,
 		},
 		{
@@ -441,14 +446,14 @@ func TestEvalCheckFindings(t *testing.T) {
 		},
 		{"content without a claim", replaceIn(trailerToml, "claim = ", "# claim = "), trailerToml, "claim is not one line"},
 		{"claim on two lines", replaceIn(trailerToml, `claim = "A commit`, `claim = "A\ncommit`), trailerToml, "claim is not one line"},
-		{"critical on a control", replaceIn(controlToml, "expect = \"same\"\n", "expect = \"same\"\ncritical = true\n"), controlToml, "critical is for content cases only"},
+		// Criterion 13 of the eval-runs spec: critical is gone.
+		{"critical on a content case", replaceIn(trailerToml, "expect = \"better\"\n", "expect = \"better\"\ncritical = true\n"), trailerToml, `unknown key "critical"`},
 		{"unknown family", replaceIn(controlToml, `family = "control"`, `family = "other"`), controlToml, `family "other"`},
 		{"trigger without a wording", replaceIn(loadToml, "wording = \"matched\"\n", ""), loadToml, "wording is missing"},
 		{"wording not for the expect", replaceIn(loadToml, `wording = "matched"`, `wording = "near-miss"`), loadToml, `wording "near-miss"`},
 		{"wording on a control", replaceIn(controlToml, "expect = \"same\"\n", "expect = \"same\"\nwording = \"matched\"\n"), controlToml, "wording is for trigger cases only"},
 		{"no family", replaceIn(controlToml, "family = \"control\"\n", ""), controlToml, "family is missing"},
 		{"no expect", replaceIn(controlToml, "expect = \"same\"\n", ""), controlToml, `expect "" is not one of`},
-		{"critical not a boolean", replaceIn(trailerToml, "critical = true", `critical = "yes"`), trailerToml, `"critical"`},
 		{"empty claim", replaceIn(trailerToml, `claim = "A commit message ends with a Change-Kind trailer that matches the change."`, `claim = ""`), trailerToml, "claim is not one line"},
 		{"too few load cases", removeAll(evalLoad), evalPlugin[:len(evalPlugin)-1], `2 of the 3 trigger cases with expect = "load"`},
 		{"too few skip cases", removeAll(evalSkip), evalPlugin[:len(evalPlugin)-1], `2 of the 3 trigger cases with expect = "skip"`},
@@ -504,23 +509,24 @@ func TestEvalCheckFindings(t *testing.T) {
 		{"a fail recording names the Codex detector", copyFile(evalSkip+codexRecs+"loaded/trace.jsonl", evalSkip+codexRecs+"not-loaded/trace.jsonl"), evalSkip + codexRecs + "not-loaded", "the codex load detector reads a load"},
 		// Rule 4 holds at any depth.
 		{"CLAUDE.md deep in the project", writeTo(evalProject+"src/CLAUDE.md", "x\n"), evalProject + "src/CLAUDE.md", "skip AGENTS.md"},
+		// Criteria 13 and 27 of the eval-runs spec: report files.
+		{"a report file not named by a commit", writeTo("evals/reports/latest.md", "x\n"), "evals/reports/latest.md", "is not a report file <commit>.md"},
+		{"a local path in a report file", writeTo("evals/reports/0123456789abcdef0123456789abcdef01234567.md", "# Report\n\nRan in /home/runner/x.\n"), "evals/reports/0123456789abcdef0123456789abcdef01234567.md", "line 3 holds a local path"},
 		{"skills deep in a staged change", writeTo(evalPlugin+"project.staged/src/.agents/skills/x/SKILL.md", "x\n"), evalPlugin + "project.staged/src/.agents", "settings or skills"},
 		// Rules 10 and 11: each required key, and each value a key takes.
-		{"regex without a pattern", replaceIn(controlToml, "pattern = '^391$'\n", ""), controlToml, "grader answer: has no pattern"},
+		{"regex without a pattern", replaceIn(controlToml, "pattern = '\\b391\\b'\n", ""), controlToml, "grader answer: has no pattern"},
 		{"grader without a name", replaceIn(controlToml, "name = \"answer\"\n", ""), controlToml, "grader #1: has no name"},
 		{"a grader name not in its form", replaceIn(controlToml, `name = "answer"`, `name = "Answer"`), controlToml, "grader #1: has no name of lowercase letters"},
 		{"a grader name used twice", replaceIn(trailerToml, `name = "file-written"`, `name = "file-listed"`), trailerToml, "grader file-listed: the name is used twice"},
-		{"count without match count", replaceIn(trailerToml, "weight = 2", "weight = 2\ncount = 1"), trailerToml, "count is only for match"},
+		{"count without match count", replaceIn(trailerToml, `name = "reply-trailer"`, "name = \"reply-trailer\"\ncount = 1"), trailerToml, "count is only for match"},
 		{"match count without count", replaceIn(trailerToml, "count = 1\n", ""), trailerToml, `grader one-trailer: match = "count" has no count`},
-		{"path without target file", replaceIn(trailerToml, "weight = 2", "weight = 2\npath = \"COMMIT_MSG\""), trailerToml, "path is only for target"},
+		{"path without target file", replaceIn(trailerToml, `name = "reply-trailer"`, "name = \"reply-trailer\"\npath = \"COMMIT_MSG\""), trailerToml, "path is only for target"},
 		{"target file without a path", replaceIn(trailerToml, "target = \"file\"\npath = \"COMMIT_MSG\"\n", "target = \"file\"\n"), trailerToml, "has no path"},
 		{"grader without a type", replaceIn(controlToml, "type = \"regex\"\n", ""), controlToml, "grader answer: type is missing"},
 		{"file_exists without a path", replaceIn(trailerToml, "type = \"file_exists\"\npath = \"COMMIT_MSG\"\n", "type = \"file_exists\"\n"), trailerToml, "grader file-written: has no path"},
-		{"unknown arm", replaceIn(trailerToml, `arm = "with-only"`, `arm = "without"`), trailerToml, `arm "without"`},
 		{"unknown match", replaceIn(trailerToml, `match = "not_contains"`, `match = "equals"`), trailerToml, `match "equals" is not contains`},
 		{"count of no number", replaceIn(trailerToml, "count = 1", "count = -1"), trailerToml, "count is not a whole number"},
 		{"a .. part in a glob", replaceIn(trailerToml, "type = \"file_exists\"\npath = \"COMMIT_MSG\"", "type = \"file_exists\"\npath = \"x/../COMMIT_MSG\""), trailerToml, "not a relative glob"},
-		{"an infinite weight", replaceIn(trailerToml, "weight = 2", "weight = inf"), trailerToml, "weight is not a finite positive number"},
 		{"a drive letter in a file target", replaceIn(trailerToml, `path = "COMMIT_MSG"`+"\n\n", `path = "C:COMMIT_MSG"`+"\n\n"), trailerToml, "not a relative path inside the workspace"},
 		{"a backslash in a glob", replaceIn(trailerToml, "type = \"file_exists\"\npath = \"COMMIT_MSG\"", "type = \"file_exists\"\npath = \"x\\\\COMMIT_MSG\""), trailerToml, "not a relative glob"},
 		{"an empty part in a glob", replaceIn(trailerToml, "type = \"file_exists\"\npath = \"COMMIT_MSG\"", "type = \"file_exists\"\npath = \"x//COMMIT_MSG\""), trailerToml, "not a relative glob"},
@@ -560,7 +566,7 @@ func TestEvalCheckKeepsChecking(t *testing.T) {
 	}{
 		{"unknown cech.toml key", func(t *testing.T, dir string) {
 			replaceIn(evalControl+"cech.toml", "family", "extra = 1\nfamily")(t, dir)
-			replaceIn(evalControl+"cech.toml", `'^391$'`, `'\d'`)(t, dir)
+			replaceIn(evalControl+"cech.toml", `'\b391\b'`, `'\d'`)(t, dir)
 		}, []string{evalControl + "cech.toml: has the unknown key", evalControl + claudeRecs + "wrong: must fail", evalControl + codexRecs + "wrong: must fail"}},
 		{"a file where recordings/ belongs", func(t *testing.T, dir string) {
 			removeAll(evalControl+"recordings")(t, dir)
@@ -595,7 +601,7 @@ func TestEvalCheckFindingsInOneFile(t *testing.T) {
 	replaceIn(evalControl+"cech.toml", "type = \"regex\"\n", "type = \"regex\"\nexists = true\nweight = 0\n")(t, dir)
 	code, stdout, _ := runIn(t, "eval", "--check", "-C", dir)
 	file := evalControl + "cech.toml: grader answer: "
-	if code != ExitFailure || !strings.Contains(stdout, file+`takes no key "exists" for type regex`) || !strings.Contains(stdout, file+"weight") {
+	if code != ExitFailure || !strings.Contains(stdout, file+`takes no key "exists" for type regex`) || !strings.Contains(stdout, file+`takes no key "weight" for type regex`) {
 		t.Errorf("exit %d; want %d and both findings in %s; stdout:\n%s", code, ExitFailure, file, stdout)
 	}
 }
@@ -609,7 +615,7 @@ func TestEvalCheckOneFinding(t *testing.T) {
 	for _, tt := range []struct{ name, from, to, want string }{
 		{"a name that is not a string", `name = "answer"`, "name = 1", "grader #1: name is not a string"},
 		{"a type that is not a string", `type = "regex"`, "type = 1", "grader answer: type is not a string"},
-		{"a table in a grader key", "pattern = '^391$'", "pattern = {a = 1}", "grader answer: pattern is not a string"},
+		{"a table in a grader key", "pattern = '\\b391\\b'", "pattern = {a = 1}", "grader answer: pattern is not a string"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			dir := t.TempDir()

@@ -70,6 +70,43 @@ if [[ -n "${x}" ]]; then :; fi
   assert_output_has "SC3010"
 }
 
+# Guards the image's scripts dropping out of the check, while its other
+# files, such as a Containerfile, stay out of it.
+@test "image script is linted" {
+  # shellcheck disable=SC2016 # the planted script holds literal expansions
+  plant 755 images/x/run '#!/bin/sh
+echo $1
+'
+  plant 644 images/x/Containerfile 'FROM scratch
+'
+  run_shell lint
+  assert_status 1
+  assert_output_has "images/x/run"
+  assert_output_has "SC2086"
+}
+
+# Guards an image script that loses its exec bit, and so its lint, while
+# the image's COPY --chmod still ships it.
+@test "image script without its exec bit" {
+  plant 644 images/x/run '#!/bin/sh
+echo x
+'
+  run_shell lint
+  assert_status 1
+  assert_output_has "images/x/run: has a shebang but is not executable"
+}
+
+# Guards the .editorconfig section that gives shfmt the POSIX dialect and
+# its settings for images/.
+@test "image script format finding" {
+  plant 755 images/x/run '#!/bin/sh
+echo x >/dev/null
+'
+  run_shell format
+  assert_status 1
+  assert_output_has "images/x/run"
+}
+
 # Guards a shfmt bump that ignores .editorconfig, which alone asks for a
 # space after >, or exits 0 on a diff.
 @test "format finding" {

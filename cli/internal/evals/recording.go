@@ -95,8 +95,9 @@ func wordByte(b byte) bool {
 
 // readRecording reads the recording folder dir of a run on harness. It
 // returns every problem it finds; a recording with problems is not
-// graded.
-func readRecording(fsys fs.FS, dir, harness string) (*recording, []Finding, error) {
+// graded. Besides the recording's own files, the folder may hold the
+// names in also.
+func readRecording(fsys fs.FS, dir, harness string, also ...string) (*recording, []Finding, error) {
 	r := &recording{harness: harness, files: map[string]string{}, results: map[string]bool{}}
 	var finds []Finding
 	bad := func(p, format string, a ...any) { finds = append(finds, Finding{p, fmt.Sprintf(format, a...)}) }
@@ -188,6 +189,9 @@ func readRecording(fsys fs.FS, dir, harness string) (*recording, []Finding, erro
 		switch e.Name() {
 		case "trace.jsonl", "created.txt", "workspace":
 		default:
+			if slices.Contains(also, e.Name()) {
+				continue
+			}
 			bad(path.Join(dir, e.Name()), "is not trace.jsonl, workspace/ or created.txt")
 		}
 	}

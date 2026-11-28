@@ -50,7 +50,7 @@ Probed with mise 2026.10.3 on 2026-10-19:
    Jobs such as probes of harness behaviour run on a schedule, open an issue on failure, and never block a pull request.
 8. **Exact versions.**
    Every tool that builds or checks CECH is pinned to an exact version in `mise.toml`, and the lockfile records each download's checksum, or a Go tool's version, which the Go checksum database checks.
-   The harnesses are not pinned: CECH tests its work against them, but does not build with them.
+   Only the eval image pins the harnesses: CECH tests against them, never builds with them.
 9. **Locked installs.**
    CI installs an exact mise version, then the tools with `locked` set, and `mise.toml` names the oldest mise it accepts.
 10. **Bumps wait a week.**

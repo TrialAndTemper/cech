@@ -339,3 +339,72 @@ verified = { version = "0.165.0", date = 2026-10-29 }
 source = "https://learn.chatgpt.com/docs/sandboxing"
 read = 2026-10-29
 version = "0.165.0"
+
+[claude-code-run-telemetry]
+harness = "claude-code"
+kind = "behaviour"
+summary = "With CLAUDE_CODE_ENABLE_TELEMETRY=1 and an OTLP exporter, Claude Code logs a claude_code.api_request event per model request, with input_tokens, cache_read_tokens, cache_creation_tokens, output_tokens, cost_usd, attempt, event.sequence and query_source. The three input counts add up to the request's whole input, and query_source is sdk for the main loop under -p. cech eval reads a run's tokens, cost and first request of the main loop from these."
+decision = "ADR 27 item 6"
+probe = """
+Run claude -p --output-format stream-json --verbose --model haiku with \
+a short prompt, with CLAUDE_CODE_ENABLE_TELEMETRY=1, \
+OTEL_LOGS_EXPORTER=otlp, OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf and \
+OTEL_EXPORTER_OTLP_ENDPOINT set to an OTLP receiver that saves what it \
+gets, and list the attributes of each claude_code.api_request record."""
+expect = "Each claude_code.api_request record has the attributes the summary names, and the record with the lowest event.sequence whose query_source is sdk is the first request of the main loop."
+verified = { version = "2.1.330", date = 2026-11-27 }
+
+[[claude-code-run-telemetry.sources]]
+source = "https://code.claude.com/docs/en/monitoring-usage"
+read = 2026-11-18
+version = "2.1.324"
+
+[claude-code-run-loaded]
+harness = "claude-code"
+kind = "behaviour"
+summary = "The system init line of claude -p --output-format stream-json lists the skills, the plugins and the MCP servers the run loaded; cech eval reads what a run loaded from it."
+decision = "ADR 26 item 2"
+probe = """
+With the plugin cech-example installed from a local marketplace into an \
+empty CLAUDE_CONFIG_DIR, run claude -p --output-format stream-json \
+--verbose --model haiku hi, and read the first line whose type is \
+system and subtype is init."""
+expect = "The line's skills list holds cech-example:cech-example, its plugins list holds cech-example, and it has an mcp_servers list."
+verified = { version = "2.1.330", date = 2026-11-27 }
+
+[codex-run-telemetry]
+harness = "codex"
+kind = "behaviour"
+summary = "With [otel] in config.toml naming an otlp-http exporter with protocol binary, Codex logs a codex.sse_event record with event.kind response.completed per model request, with input_token_count, cached_token_count and output_token_count, and a codex.user_prompt record for the prompt; input_token_count counts the cached input too. Each record names its event in the event.name attribute, while the OTLP event name field holds the place in Codex's source. Before the prompt, Codex makes a warm-up request of a few tokens; its requests go over a websocket, so codex.api_request comes only for its model list. cech eval reads a run's tokens and first request from these."
+decision = "ADR 27 item 6"
+probe = """
+With an empty CODEX_HOME holding a login and a config.toml whose \
+[otel] exporter is otlp-http with protocol binary and an endpoint of an \
+OTLP receiver that saves what it gets, run codex exec --json \
+--ephemeral --skip-git-repo-check with the prompt Reply with the word \
+hi. Decode the saved logs and list, for each record, its event name \
+field, its event.name attribute, its time and its token counts."""
+expect = "Two codex.sse_event records have event.kind response.completed: one of a few input tokens before the codex.user_prompt record and one after it, whose input_token_count is more than its cached_token_count; every event name field starts with event and names a source file, and codex.api_request records have the endpoint /models."
+verified = { version = "0.171.0", date = 2026-11-27 }
+
+[[codex-run-telemetry.sources]]
+source = "https://learn.chatgpt.com/docs/config-file/config-advanced"
+read = 2026-11-26
+version = "0.171.0"
+
+[codex-run-loaded]
+harness = "codex"
+kind = "gap"
+summary = "codex exec --json names no skill, plugin or MCP server a run loaded."
+workaround = """
+Before each run, in the run's container, cech eval runs codex debug \
+prompt-input, whose skills list names each skill the model would see, \
+a plugin's as <plugin>:<skill>, and codex mcp list --json. It takes the \
+plugins from those the arm installs."""
+decision = "ADR 26 item 2"
+probe = """
+With the plugin cech-example installed from a local marketplace into an \
+empty CODEX_HOME, in a project folder, run codex debug prompt-input x \
+and codex mcp list --json."""
+expect = "The prompt input's skills list has a line starting - cech-example:cech-example: with the skill's description, and codex mcp list --json prints a JSON array."
+verified = { version = "0.171.0", date = 2026-11-27 }

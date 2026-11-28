@@ -1,0 +1,36 @@
+#!/bin/sh
+# Installs the Claude Code version pinned in /cech/claude-code/ into the
+# folder mounted at /cech/tools/claude-code, which cech eval then mounts
+# read-only into each run, with node_modules/.bin on PATH. Claude Code's
+# licence does not let CECH ship it in the image, so each maintainer's
+# machine installs it, from the lockfile the image carries.
+#
+# npm ci installs exactly the packages and integrity hashes of that
+# lockfile, with no install scripts; then Claude Code's own install
+# step links its native build in place of the stub, and downloads
+# nothing. It needs the network to registry.npmjs.org.
+#
+# Its last step writes .cech-installed, which cech eval reads as a
+# finished install, so a stopped install is never taken for one.
+#
+# Exit status: 0 installed, 1 a step failed, 2 the folder is missing.
+
+set -eu
+
+pins=/cech/claude-code
+target=/cech/tools/claude-code
+
+if [ ! -d "${target}" ] || [ ! -w "${target}" ]; then
+  printf 'cech-install-claude-code: mount a writable folder at %s\n' "${target}" >&2
+  exit 2
+fi
+
+# A cache of its own, so nothing from this install is left in the home.
+cache=$(mktemp -d)
+trap 'rm -rf "${cache}"' EXIT
+
+cp "${pins}/package.json" "${pins}/package-lock.json" "${target}/" || exit 1
+npm ci --ignore-scripts --no-audit --no-fund --no-update-notifier --cache "${cache}" --prefix "${target}" || exit 1
+(cd -- "${target}/node_modules/@anthropic-ai/claude-code" && node install.cjs) || exit 1
+"${target}/node_modules/.bin/claude" --version > /dev/null || exit 1
+: > "${target}/.cech-installed" || exit 1

@@ -1,0 +1,66 @@
+# Release check of {{.Commit}}
+
+`cech eval` {{.Cech}} wrote this report from its template.
+It ran on commit `{{.Commit}}` in the image `{{.Image}}`, whose ID is `{{.ImageID}}`.
+{{range .Harnesses}}
+## {{.Name}}
+
+- Harness version: {{.Version}}.
+- Model: `{{.Model}}`.
+- Credential: {{.Credential}}.
+- Runs made or reused: {{.Result.Runs}}{{if .Result.BudgetSpent}}, which spent the budget{{end}}.
+- Result: {{if .Result.Passed}}every bar passed{{else}}not every bar passed{{end}}.
+{{- if .Result.Aborted}}
+- Stopped early: {{cell .Result.Aborted}}.
+{{- end}}
+- Usage over the {{.Usage.Runs}} finished runs with telemetry: {{.Usage.InputTokens}} input tokens, {{.Usage.CacheReadTokens}} read from the cache, {{.Usage.CacheCreationTokens}} written to it, and {{.Usage.OutputTokens}} output tokens{{if .Usage.CostReported}}, at a cost of {{usd .Usage.CostUSD}}{{end}}.
+
+### Bars
+
+| Plugin | Case | Bar | Result | Range | Runs read |
+| --- | --- | --- | --- | --- | --- |
+{{- range .Result.Bars}}
+| `{{.Plugin}}` | {{caseOf .}} | {{.Kind}} | {{.Verdict}} | {{interval .}} | {{runs .Runs}} |
+{{- end}}
+{{$below := false}}{{range .Result.Bars}}{{if belowThreshold .}}{{$below = true}}{{end}}{{end}}{{if $below}}
+Bars that passed, but whose range allows a drop smaller than the threshold:
+{{range .Result.Bars}}{{if belowThreshold .}}
+- `{{.Plugin}}` {{.Case}}, {{.Kind}}: {{interval .}}.
+{{- end}}{{end}}
+{{end}}
+### Arms
+
+| Plugin | Case | Arm | Runs | Passed | Errored | Pass rate range |
+| --- | --- | --- | --- | --- | --- | --- |
+{{- range .Result.Arms}}
+| `{{.Plugin}}` | {{.Case}} | {{.Name}} | {{.Runs}} | {{.Passes}} | {{.Errors}} | {{pct .Interval.Low}} to {{pct .Interval.High}} |
+{{- end}}
+{{if hasGraders .Result.Arms}}
+### Graders
+
+| Plugin | Case | Arm | Grader | Passed |
+| --- | --- | --- | --- | --- |
+{{- range $a := .Result.Arms}}{{range .Graders}}
+| `{{$a.Plugin}}` | {{$a.Case}} | {{$a.Name}} | `{{.Name}}` | {{.Passes}} of {{$a.Runs}} |
+{{- end}}{{end}}
+{{end}}{{if .Skills}}
+### What each skill version costs
+
+| Plugin | Version | Description size (characters) | Tokens added | Run pairs read | Run pairs left out |
+| --- | --- | --- | --- | --- | --- |
+{{- range .Skills}}
+| `{{.Plugin}}` | {{.Version}} | {{.DescriptionSize}} | {{.AddedTokens}} | {{.Pairs}} | {{if .Skipped}}{{join .Skipped ", "}}{{else}}none{{end}} |
+{{- end}}
+{{end}}{{if .Result.Errors}}
+### Why runs errored
+
+| Reason | Runs |
+| --- | --- |
+{{- range .Result.Errors}}
+| {{cell .Message}} | {{.Runs}} |
+{{- end}}
+{{end}}{{if .Result.NoResult}}
+### Cases without a result
+
+{{range .Result.NoResult}}- {{.}}
+{{end}}{{end}}{{end}}

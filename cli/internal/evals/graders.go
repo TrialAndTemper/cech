@@ -3,7 +3,6 @@ package evals
 import (
 	"fmt"
 	"maps"
-	"math"
 	"regexp"
 	"slices"
 	"strings"
@@ -15,8 +14,7 @@ const (
 	typeFileExists = "file_exists"
 )
 
-// graderKeys are the keys each grader type takes, besides name, type,
-// weight and arm (spec rule 10).
+// graderKeys are the keys each grader type takes, besides name and type.
 var graderKeys = map[string][]string{
 	typeRegex:      {"pattern", "match", "count", "target", "path"},
 	typeFileExists: {"path", "exists"},
@@ -95,25 +93,10 @@ func parseGrader(i int, fields map[string]any) (*grader, string, []string) {
 	g := &grader{name: name, typ: typ, match: matchContains, target: targetLastMessage, exists: true}
 	if known {
 		for _, k := range slices.Sorted(maps.Keys(fields)) {
-			if k != "name" && k != "type" && k != "weight" && k != "arm" && !slices.Contains(keys, k) {
+			if k != "name" && k != "type" && !slices.Contains(keys, k) {
 				bad("takes no key %q for type %s", k, typ)
 			}
 		}
-	}
-	if w, has := fields["weight"]; has {
-		var f float64
-		switch w := w.(type) {
-		case int64:
-			f = float64(w)
-		case float64:
-			f = w
-		}
-		if !(f > 0) || math.IsInf(f, 0) {
-			bad("weight is not a finite positive number")
-		}
-	}
-	if arm, _, ok := str("arm"); ok && arm != "with-only" && arm != "both" {
-		bad("arm %q is not with-only or both", arm)
 	}
 	switch typ {
 	case typeRegex:

@@ -1,0 +1,117 @@
+# Builds the image that cech eval runs every model run in (ADR 26) from
+# images/eval/, and publishes it to the GitHub container registry as
+# ghcr.io/trialandtemper/cech-eval, tagged with the commit. Each
+# platform builds on a runner of its own, so no emulation is needed,
+# and only the publish job may write packages. The job summary gives
+# the pushed digest, which a maintainer then puts in the CLI by a pull
+# request; the CLI never follows a tag.
+name: eval-image
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - images/eval/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Runs wait for the running one rather than cancel it, so a push never
+# stops halfway; a newer waiting run replaces an older one, since only
+# the latest image matters.
+concurrency:
+  group: eval-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build (${{ matrix.arch }})
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Docker, which both runner images have; the publish job reads the
+      # saved image with Podman.
+      - name: build
+        env:
+          ARCH: ${{ matrix.arch }}
+          REVISION: ${{ github.sha }}
+        run: |
+          docker build --platform "linux/${ARCH}" --file images/eval/Containerfile \
+            --label "org.opencontainers.image.revision=${REVISION}" \
+            --tag "cech-eval:${ARCH}" images/eval
+          docker save --output "cech-eval-${ARCH}.tar" "cech-eval:${ARCH}"
+
+      # Claude Code's licence keeps it out of the published image: the
+      # image holds only its pins and the script that installs it at run
+      # time, so this step never runs claude, and fails if it is there.
+      - name: smoke test
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          for command in "codex --version" "npm --version" "tinyproxy -v" "socat -V" "git --version" \
+            "test -x /usr/local/bin/cech-install-claude-code" "test -r /cech/claude-code/package-lock.json"; do
+            # shellcheck disable=SC2086 # split the command into its words
+            docker run --rm "cech-eval:${ARCH}" ${command}
+          done
+          if docker run --rm "cech-eval:${ARCH}" sh -c 'command -v claude || find / -xdev -name claude.exe -print -quit 2> /dev/null | grep .'; then
+            echo "::error::the image holds Claude Code, which it must not publish"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: cech-eval-${{ matrix.arch }}
+          path: cech-eval-${{ matrix.arch }}.tar
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: publish
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      packages: write # push the image
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: cech-eval-*
+          merge-multiple: true
+
+      - name: push
+        env:
+          IMAGE: ghcr.io/trialandtemper/cech-eval
+          TAG: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s' "${REGISTRY_TOKEN}" | podman login ghcr.io --username "${ACTOR}" --password-stdin
+          podman manifest create cech-eval
+          for arch in amd64 arm64; do
+            podman manifest add cech-eval "docker-archive:cech-eval-${arch}.tar"
+          done
+          podman manifest push --all --format oci --digestfile digest cech-eval "docker://${IMAGE}:${TAG}"
+          podman logout ghcr.io
+          {
+            echo "## Eval image"
+            echo
+            echo "Pushed \`${IMAGE}:${TAG}\`, for linux/amd64 and linux/arm64, with the digest:"
+            echo
+            echo "\`\`\`text"
+            echo "${IMAGE}@$(cat digest)"
+            echo "\`\`\`"
+            echo
+            echo "Put this digest in the CLI by a pull request."
+          } >> "${GITHUB_STEP_SUMMARY}"
