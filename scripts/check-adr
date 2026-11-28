@@ -1,9 +1,9 @@
 #!/bin/sh
 # ADR gate: the numbering and index of ADR 1 items 4 and 7, and the
-# length limit of item 6, run as `mise run lint:adr` and, on the staged
-# tree, by the pre-commit hook. POSIX sh and POSIX awk (ADR 5): it must
-# run under dash, macOS sh and Git Bash, with BSD awk, mawk and gawk, so
-# the awk programs use no interval expressions.
+# length limit and links of item 6, run as `mise run lint:adr` and, on
+# the staged tree, by the pre-commit hook. POSIX sh and POSIX awk (ADR 5):
+# it must run under dash, macOS sh and Git Bash, with BSD awk, mawk and
+# gawk, so the awk programs use no interval expressions.
 #
 # The tracked docs/adr/NNNN-*.md files must be numbered from 1 with no
 # gap and no number used twice, and each must start with the title line
@@ -39,6 +39,13 @@
 # code wrongly; the other simplifications can only count more words or
 # add a finding.
 #
+# Every link `[ADR N](NNNN-name.md)` outside a fenced code block must
+# point to an earlier ADR than the one it is in, or to that ADR itself,
+# so the log reads in order, and N must be the number of the file it
+# links to. A link in the `- Status:` line may point forward, as in
+# `superseded by ADR N`. A link to a file that is not NNNN-*.md is not
+# read, and a `#` anchor after the file name is ignored.
+#
 # Usage: scripts/check-adr
 #
 # Requires: git and awk.
@@ -68,14 +75,18 @@ Usage: mise run lint:adr (scripts/check-adr)
 Checks that the ADRs in docs/adr/ are numbered from 1 with no gaps,
 that each title carries its number, that docs/adr/README.md lists them
 all in order, and that each has fewer than 800 words of prose outside
-fenced code blocks, with every fence closed.
+fenced code blocks, with every fence closed, and that each link to
+another ADR points to an earlier one, except in a status line, and
+names the number of the file it links to.
 
 Exit status: 0 clean, 1 findings, 2 the check could not run.
 EOF2
 }
 
-# COUNT is the awk program that reads one ADR. It prints "words N", and
-# "unclosed L" for a fence opened on line L that never closes.
+# COUNT is the awk program that reads one ADR, whose number is the
+# variable self. It prints "words N", "unclosed L" for a fence opened on
+# line L that never closes, and "link L: message" for each link on line
+# L outside a fence that breaks the links rule.
 # shellcheck disable=SC2016 # the dollars are awk's, not the shell's
 COUNT='
     # run(s, c): the number of characters c at the start of s.
@@ -94,6 +105,22 @@ COUNT='
       }
       T = s
       return col
+    }
+    # links(s, line, status): report each link to an ADR file in s that
+    # breaks the links rule; a status line may point forward.
+    function links(s, line, status, m, text, num) {
+      while (match(s, /\[[^]]*\]\([0-9][0-9][0-9][0-9]-[^) \t#]*\.md(#[^)]*)?\)/)) {
+        m = substr(s, RSTART, RLENGTH)
+        s = substr(s, RSTART + RLENGTH)
+        text = substr(m, 2, index(m, "](") - 2)
+        num = substr(m, index(m, "](") + 2, 4) + 0
+        if (text ~ /^ADR [0-9][0-9]*$/ && substr(text, 5) + 0 != num) {
+          printf "link %d: the text \"%s\" names another ADR than the file it links to, ADR %d\n", line, text, num
+        }
+        if (num > self && !status) {
+          printf "link %d: links to ADR %d, a later ADR (ADR 1 item 6)\n", line, num
+        }
+      }
     }
     BEGIN { lcol = -1; prevblank = 1 }
     {
@@ -143,6 +170,7 @@ COUNT='
       }
       words += NF
       prevblank = blank
+      links(t, NR, t ~ /^[-*+][ \t]+Status:/)
     }
     END {
       printf "words %d\n", words
@@ -200,7 +228,7 @@ INDEX='
 readonly INDEX
 
 main() {
-  local f words from status n index head
+  local f words from status n index head num
 
   case "${1:-}" in
     '') ;;
@@ -230,7 +258,9 @@ main() {
     n=$((n + 1))
     head=$(sed -n 1p "${f}") || die "cannot read ${f}"
     printf '%s\t%s\n' "${f##*/}" "${head}" >> "${SCRATCH}/titles"
-    LC_ALL=C awk "${COUNT}" "${f}" > "${SCRATCH}/count" ||
+    num=${f##*/}
+    num=$(printf '%s' "${num}" | cut -c1-4 | sed 's/^0*//') || die "cannot read the number of ${f}"
+    LC_ALL=C awk -v self="${num}" "${COUNT}" "${f}" > "${SCRATCH}/count" ||
       die "cannot count the words in ${f}"
     words=$(sed -n 's/^words //p' "${SCRATCH}/count")
     from=$(sed -n 's/^unclosed //p' "${SCRATCH}/count")
@@ -238,6 +268,10 @@ main() {
     if [ -n "${from}" ]; then
       printf 'adr: %s:%s: this fence never closes, so the rest of the file would count as code\n' \
         "${f}" "${from}" >&2
+      status=1
+    fi
+    if grep -q '^link ' "${SCRATCH}/count"; then
+      sed -n "s|^link \\([0-9]*\\): |adr: ${f}:\\1: |p" "${SCRATCH}/count" >&2
       status=1
     fi
     if [ "${words}" -ge "${LIMIT}" ]; then

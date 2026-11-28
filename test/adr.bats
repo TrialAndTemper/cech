@@ -1,8 +1,8 @@
 #!/usr/bin/env bats
 # shellcheck shell=bats
 # shellcheck disable=SC2154 # bats sets BATS_*, status and output; helpers.bash sets SRC
-# Tests of scripts/check-adr, the gate on ADR numbering, index and
-# length (ADR 1 items 4, 6 and 7). As CONTRIBUTING.md asks of gate tests, each
+# Tests of scripts/check-adr, the gate on ADR numbering, index, length
+# and links (ADR 1 items 4, 6 and 7). As CONTRIBUTING.md asks of gate tests, each
 # case guards a way the gate could pass when it should fail, where
 # review would likely miss it, and says which. The other ways were
 # checked by hand when the gate was added. The pre-commit hook's run
@@ -57,6 +57,17 @@ set_index() {
   printf '# ADRs\n\n' > "${REPO}/docs/adr/README.md"
   printf '%s\n' "$@" >> "${REPO}/docs/adr/README.md"
   g add docs/adr/README.md
+}
+
+# plant_linked <lines...>: stage ADRs 2 and 3, with an index of the
+# three, so that ADR 2 holds the lines after its title and a clean tree
+# passes; ADR 3 is the target of a link that points forward.
+plant_linked() {
+  printf '# 2. Second\n\n' > "${REPO}/docs/adr/0002-second.md"
+  printf '%s\n' "$@" >> "${REPO}/docs/adr/0002-second.md"
+  g add docs/adr/0002-second.md
+  add_adr 3 0003-third.md Third
+  set_index '1. [First](0001-first.md)' '2. [Second](0002-second.md)' '3. [Third](0003-third.md)'
 }
 
 # run_adr: run the gate in the case's repository.
@@ -306,4 +317,73 @@ run_adr() {
   run_adr
   assert_status 1
   assert_output_has "no index of the ADRs"
+}
+
+# Guards the links rule of ADR 1 item 6 losing its direction: a link to
+# a later ADR must fail, and one to an earlier ADR or to the ADR itself,
+# or one with an anchor, must not make it fail.
+@test "a link to a later ADR is a finding" {
+  plant_linked 'See [ADR 3](0003-third.md).'
+  run_adr
+  assert_status 1
+  assert_output_has "0002-second.md:3: links to ADR 3, a later ADR"
+  plant_linked 'See [ADR 1](0001-first.md#decision), [ADR 2](0002-second.md).'
+  run_adr
+  assert_status 0
+  plant_linked 'See [ADR 3](0003-third.md#decision).'
+  run_adr
+  assert_status 1
+  assert_output_has "0002-second.md:3: links to ADR 3, a later ADR"
+}
+
+# Guards the status exception of ADR 1 item 6 being lost, or widening to
+# the whole file: `superseded by` may point forward in the status line
+# and nowhere else.
+@test "a link in a superseded by status may point to a later ADR" {
+  plant_linked '- Status: superseded by [ADR 3](0003-third.md)'
+  run_adr
+  assert_status 0
+  plant_linked '- Status: accepted' 'Superseded by [ADR 3](0003-third.md).'
+  run_adr
+  assert_status 1
+  assert_output_has "0002-second.md:4: links to ADR 3, a later ADR"
+}
+
+# Guards the number in a link's text going unchecked, so that a link
+# reads as one ADR and opens another.
+@test "a link whose text names another ADR than its file is a finding" {
+  plant_linked 'See [ADR 3](0001-first.md).'
+  run_adr
+  assert_status 1
+  assert_output_has 'the text "ADR 3" names another ADR than the file it links to, ADR 1'
+  # A link that is both wrong in text and forward gives both findings.
+  plant_linked 'See [ADR 1](0003-third.md).'
+  run_adr
+  assert_status 1
+  assert_output_has "0002-second.md:3: the text \"ADR 1\" names another ADR"
+  assert_output_has "0002-second.md:3: links to ADR 3, a later ADR"
+}
+
+# Guards a gate that reads links where it should not: inside a fenced
+# code block, where an ADR shows a link as an example, or in a link to
+# a file that is no ADR, which has no number to compare.
+@test "a link in a code block or to another file is not read" {
+  plant_linked '```md' '[ADR 3](0003-third.md)' '```' 'See [the guide](../reference/0009-guide.md) and [other](notes.md).'
+  run_adr
+  assert_status 0
+  # The link after the closed fence is read again.
+  plant_linked '```md' 'code' '```' 'See [ADR 3](0003-third.md).'
+  run_adr
+  assert_status 1
+  assert_output_has "0002-second.md:6: links to ADR 3, a later ADR"
+}
+
+# Guards a gate that stops at the first link on a line, so that a good
+# link in front hides a bad one behind it.
+@test "each link on a line is checked" {
+  plant_linked 'See [ADR 1](0001-first.md) and [ADR 3](0003-third.md) and [ADR 2](0001-first.md).'
+  run_adr
+  assert_status 1
+  assert_output_has "0002-second.md:3: links to ADR 3, a later ADR"
+  assert_output_has 'the text "ADR 2" names another ADR'
 }

@@ -26,8 +26,8 @@ Agents follow every line of an ADR as if it were a decision.
    Later statuses: `superseded by ADR N`, `deprecated`.
 4. ADR numbers on `main` run from 1 with no gaps.
    A pull request numbers its ADRs right after the highest on `main`, and renumbers if another merges first.
-   A gate checks this item, item 7 and the word limit of item 6.
-5. Until the first plugin merges, an accepted ADR is edited in place, whatever the change, and ADRs may be renumbered into the order they depend on; the commit says why, and a renumbering maps old numbers to new.
+   A gate checks this item, item 7, and the word limit and links of item 6.
+5. Until the first plugin merges, an accepted ADR is edited in place, and ADRs may be renumbered into the order they depend on; the commit says why, and a renumbering maps old numbers to new.
    From then on, an accepted ADR is not rewritten; typos, links and wording that keeps the meaning may be fixed, and the commit says so.
    - A refinement, such as a parameter, an edge case or a rename, goes in a dated `> **Amendment (YYYY-MM-DD).**` note with its evidence, under the paragraph it changes, and the status gains `Last amended: <date>`.
    - A different option, one an earlier ADR rejected, or a removed or reversed rule needs a new ADR that supersedes the old one, with links both ways.
