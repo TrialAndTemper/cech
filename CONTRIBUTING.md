@@ -274,11 +274,12 @@ Without a list this tier is skipped; set `CECH_REQUIRE_PRIVATE_TERMS=1` to make 
 ### For maintainers
 
 Being named a plugin's owner or maintainer ([ADR 13](docs/adr/0013-attribution.md)) is a request for write access: a CECH maintainer grants it, or the name is removed before merge.
-Code owners get review requests for their plugins, and a code owner's approval is required to merge.
+The maintainers team is also a code owner of each plugin's folders, so each folder keeps a code owner when no named person has write access.
+Code owners get review requests for their plugins, and each changed path needs a code owner's approval to merge.
 
 Two rulesets guard `main`.
 The gate ruleset holds the gates, the branch rules and the merge queue, and nobody bypasses it; to repair `main` or a gate, an organisation owner may lift it for that change and opens an issue saying what was done and why.
-The review ruleset requires the code owner's approval and dismisses stale approvals.
+The review ruleset requires code owner approval and dismisses stale approvals.
 The maintainers team is exempt from it, so a maintainer can queue their own pull request without review ([ADR 5](docs/adr/0005-gates-and-tool-pins.md) item 3).
 To queue one:
 

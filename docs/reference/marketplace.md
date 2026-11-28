@@ -17,7 +17,7 @@ The plugin folder, the skill folder, the manifest's `name` and the skill's `name
 | `namespace` | yes | The catalogue's name outside a release, and the prefix of every plugin name in an extension; a name that does not end in a version such as `-1-4-0` or `-1-4-0-rc-1` |
 | `description` | yes | The catalogue's description |
 | `owner.name`, `owner.email` | `name` only | The catalogue's owner |
-| `team` | no | The maintainer team, as `@org/team`, which owns every path the code owners file gives no plugin line; without it there is no code owners file |
+| `team` | no | The maintainer team, as `@org/team`, which owns every path, sharing each plugin's folders with the people its manifest names; without it there is no code owners file |
 | `cech` | in an extension only | The CECH release the extension builds on, as `X.Y.Z` or `X.Y.Z-rc.N` |
 | `categories` | no; an extension only | The categories it adds: `[[categories]]` tables with `name` and `holds` |
 | `roles` | no | The roles it defines: `[[roles]]` tables with `name`, `means` and an optional `many`, a bool |
